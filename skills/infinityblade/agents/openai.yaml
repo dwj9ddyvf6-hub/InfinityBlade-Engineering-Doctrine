@@ -1,0 +1,4 @@
+interface:
+  display_name: "InfinityBlade"
+  short_description: "Evidence-driven execution for coding agents"
+  default_prompt: "Use $infinityblade to complete this task with bounded scope and verified evidence."
