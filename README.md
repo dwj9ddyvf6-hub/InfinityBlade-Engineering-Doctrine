@@ -20,12 +20,23 @@ Its governing rule is simple:
 
 ## The non-negotiables
 
-These four rules are the spine of InfinityBlade. They are stated plainly here; the canonical skill carries the full operating detail.
+The core is stated plainly here; the canonical skill carries the full operating detail.
 
 - **SCOPE first.** Before changing anything, name the **Surface**, **Constraints**, **Outcome**, **Proof**, and **Edges**. If the task cannot be scoped, it is not understood well enough to change safely.
 - **Efficiency Breakthrough.** Do not stack patches around a recurring failure or slow path. Measure the complete path, find the dominant structural constraint, and repair that.
 - **Route Failure ≠ Task Impossibility.** A failed route proves that route failed; it does not prove the objective is impossible. Preserve the evidence, revise the hypothesis, and pursue safe authorized alternatives.
 - **Proof Before Green.** Report **GREEN** only when the final artifact or system state demonstrates the requested outcome. Otherwise say **PARTIAL**, **BLOCKED**, or **UNVERIFIED** and name what remains.
+
+The rest of the core is just as binding:
+
+- **Outcome Before Activity.** Define success as an observable result, not as a list of actions performed.
+- **Minimum Sufficient Change.** Make the smallest complete repair at the demonstrated source; do not build a second system around the first.
+- **Preserve Verified Paths.** Protect working authoritative paths, unrelated changes, safety controls, and recovery behavior.
+- **Do Not Accept First Failure.** Treat the first failure as evidence to classify, not as a verdict to stop.
+- **Anti-Spiral.** Every next action must reduce uncertainty; do not repeat equivalent attempts or widen the repair surface without new evidence.
+- **Authority Boundaries.** Persistence never expands permission, scope, publication rights, or destructive authority.
+- **Final-Artifact Integrity.** The artifact tested must be the artifact delivered; a later material change reopens the affected proof.
+- **Report Facts, Not Confidence.** Give receipts and name what remains open; “looks correct” is not evidence.
 
 ## Use it as an agent skill
 
