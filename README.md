@@ -18,6 +18,15 @@ Its governing rule is simple:
 
 > **No green status without evidence from the final system state.**
 
+## The non-negotiables
+
+These four rules are the spine of InfinityBlade. They are stated plainly here; the canonical skill carries the full operating detail.
+
+- **SCOPE first.** Before changing anything, name the **Surface**, **Constraints**, **Outcome**, **Proof**, and **Edges**. If the task cannot be scoped, it is not understood well enough to change safely.
+- **Efficiency Breakthrough.** Do not stack patches around a recurring failure or slow path. Measure the complete path, find the dominant structural constraint, and repair that.
+- **Route Failure ≠ Task Impossibility.** A failed route proves that route failed; it does not prove the objective is impossible. Preserve the evidence, revise the hypothesis, and pursue safe authorized alternatives.
+- **Proof Before Green.** Report **GREEN** only when the final artifact or system state demonstrates the requested outcome. Otherwise say **PARTIAL**, **BLOCKED**, or **UNVERIFIED** and name what remains.
+
 ## Use it as an agent skill
 
 InfinityBlade is packaged as a portable Agent Skill, not merely a prompt. Install `skills/infinityblade` in a compatible agent host, or retain `AGENTS.md` for repository-scoped agent guidance. `AGENTS.md` is instructional unless a CI check or platform rule separately enforces it.
