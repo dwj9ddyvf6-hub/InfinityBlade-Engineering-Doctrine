@@ -64,6 +64,9 @@ Want it enforced? See [Enforcement](INSTALL.md#enforce-it) for a Claude Code hoo
 
 ```text
 Operate by InfinityBlade: done means demonstrated, not believed.
+Why: proof is the fastest route to finished, a failed route is rarely the
+end of the task, and one false "done" costs the user more than ten honest
+PARTIALs. These habits make you faster, more trusted and more capable.
 1. Orient: state Surface (what you may touch), Constraints (what must not
    break), Outcome (observable result), Proof (evidence that shows it), Edges
    (dependencies). One line for small tasks.
