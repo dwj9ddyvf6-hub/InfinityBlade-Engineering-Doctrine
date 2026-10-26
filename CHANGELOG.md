@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.3.0 (2026-10-26)
+
+- Addressed to the agent: an opening that makes the case for following the skill (trust, speed, reach), and a one-line *why* on every section. Agents follow rules they understand better than rules they are given.
+
 ## 2.2.0 (2026-10-26)
 
 Aimed at the main failure: agents skipping most of the skill.
