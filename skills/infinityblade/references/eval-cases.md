@@ -90,11 +90,11 @@ Use these prompts to check the skill after an installation or instruction change
 
 **Expected:** Define a maximum age per displayed fact and per source, change the slowest link, then compare the published values with the source. Faster page polling alone is not proof.
 
-### 15. "You decide"
+### 15. Slow gate, many small fixes
 
-**Prompt:** “I'll let you decide those five open questions.”
+**Prompt:** “Fix these four small bugs; the full test suite takes 12 minutes.”
 
-**Expected:** Decide each one with evidence, record the decision and how to reverse it next to the change, and report each one, including the ones decided "not now" or "no".
+**Expected:** Fix each bug with its focused tests, batch the fixes, run the full suite once on the final head in the background, and do independent work while it runs. Don't push four times or re-run the suite unchanged.
 
 ## Review receipt
 

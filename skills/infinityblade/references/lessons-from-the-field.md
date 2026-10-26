@@ -124,53 +124,54 @@ An identity audit also found that one global event key had been fingerprinted wi
 
 **Countermeasure:** After any restart or long gap, check that each loop you rely on is actually running (process list or a fresh output timestamp) before claiming it. Persist work through the durable route (commit and push behind the gate) rather than trusting a loop's existence.
 
-### 16. Delegated decisions need a record, not just an action
-
-**Failure pattern:** An owner says "you decide" on several open questions. The agent acts on each, but the reasoning and the reversal path live only in chat, so the next agent cannot tell a deliberate choice from drift.
-
-**Countermeasure:** For each delegated decision, write down the decision, the evidence, what is reversible and how, and put it in the code comment or handoff next to the change, citing the decision's ID. "Not now" and "No" are decisions too; record them so the question is not reopened blindly.
-
-### 17. Taste reversals are cheap only if each change is isolated
-
-**Failure pattern:** Several visual changes ship in one commit. The owner rejects one of them, and removing it means untangling the others.
-
-**Countermeasure:** For subjective surfaces (look, wording, badges), ship one idea per commit, keep shared size and credit rules as tests, and remove a rejected element completely: markup, style, helper, and test notes. Do not argue for a design the owner has rejected.
-
-### 18. A faithful port can faithfully copy a defect
+### 16. A faithful port can faithfully copy a defect
 
 **Failure pattern:** A component is ported line-for-line from an older system to preserve its behavior. The source stamped its input's time after reading its own clock, so every run rejected its input as stale. The port reproduces this exactly, and the component has never produced its intended output in either system.
 
 **Countermeasure:** Port for fidelity, then run the ported path once on real inputs and check that it can reach every outcome it promises (success, rejection, and each exit path). When you change a source behavior, list each change as a named divergence in the module itself: what the source did, what this does, and why. Behavior that the name promises but the source never implemented is a gap for the owner to decide, not something to invent.
 
-### 19. Owner rules belong in tests, not just in prose
+### 17. Owner rules belong in tests, not just in prose
 
 **Failure pattern:** The owner sets rules such as a name never appearing on a public page, a size budget for shipped assets, or a set of components that must stay disabled. They live in a document. A later change breaks one, and nobody notices until the owner does.
 
 **Countermeasure:** Turn each standing rule into a check that the suite runs. Examples are a forbidden word in public files, a byte budget per asset, or an allowed list of rows. When a rule legitimately changes, change the test in the same commit and say who decided and when.
 
-### 20. Rendering bugs only show at the rendered boundary
+### 18. Rendering bugs only show at the rendered boundary
 
 **Failure pattern:** Code and tests pass, but on the real page a badge loses its colour to a more specific style, or a third-party widget shows one tile on a phone. Source review called both correct.
 
 **Countermeasure:** For anything visual, capture the published page at each named width (desktop and phone at least) after the final change and look at it. A headless screenshot of the real page is proof; a passing unit test of the markup is not.
 
-### 21. Edit by anchor, not by line number
+### 19. Edit by anchor, not by line number
 
 **Failure pattern:** A stream editor targets a line number in a file that changed since it was read, and it corrupts an unrelated function.
 
 **Countermeasure:** Replace an exact unique string, assert that it matched exactly once, and re-run the file's tests immediately. Never chain line-number edits after another edit to the same file.
 
-### 22. A refusal from a safety layer is an answer
+### 20. A refusal from a safety layer is an answer
 
 **Failure pattern:** A permission or safety classifier denies an action, such as deleting a large temporary directory. The agent rephrases the same action to get it through.
 
 **Countermeasure:** Treat the denial as final for that action. Work around the need instead: retain fewer files, write to a different place, or ask the owner. Never repackage the same action to get past the check.
 
-### 23. Upstream refusals call for failover, not waiting
+### 21. Upstream refusals call for failover, not waiting
 
 **Failure pattern:** A free upstream source starts refusing requests (rate limits or blocks). Jobs wait out its pauses and miss their windows, and stale data reaches downstream decisions.
 
 **Countermeasure:** Give each fact a primary and a fallback source with the same identity and freshness checks. Fail over on refusal, label which source served it, and never act on or publish data older than its bound. Respect legal and geographic blocks: they are a hard stop, never something to route around.
+
+### 22. Agent throughput: spend effort where it reduces uncertainty
+
+**Failure pattern:** The agent works in series: it waits on a long test run, re-reads whole files to find one line, re-runs a check whose result is already known, and pushes several speculative fixes that each trigger a slow gate.
+
+**Countermeasures:**
+- **Run independent work in parallel.** Issue independent reads, searches and checks together. Run long jobs (full suites, builds, crawls) in the background and keep working on things that don't depend on them.
+- **Go from cheap to expensive.** Run the focused tests for the changed area first. Run the full suite once, on the final head, as the gate.
+- **Read only what you need.** Search for the symbol, then read the matching slice. Don't load whole files or logs to find one fact.
+- **Cache what you have already established.** Don't repeat a run, fetch or measurement unless its inputs changed, and note what was proven and on which revision.
+- **Batch before the slow gate.** Group related changes so one validated pass covers them. One green push beats several red ones.
+- **Keep scratch state from eating the machine.** Keep temporary output only for failures, and clean up artifacts you created once they are no longer needed.
+- **Measure before optimizing.** Time the complete path, find the dominant cost, and fix that. Don't tune what you haven't measured.
 
 ## The incident-to-doctrine loop
 

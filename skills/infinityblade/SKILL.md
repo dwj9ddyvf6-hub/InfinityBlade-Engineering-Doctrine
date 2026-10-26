@@ -63,12 +63,13 @@ Repeated operational failures teach a few safeguards that are easy to miss when 
 - Name the real reason a gate stopped (failed, superseded by a newer head, dirty, rejected); a superseded run is not a failure.
 - Turn vague freshness words ("live", "current", "up to date") into a maximum age per fact, and prove it on the published surface.
 - After a restart or long gap, confirm that every background loop you rely on is running before claiming it.
-- Record delegated decisions (decision, evidence, reversal path) beside the change, including "not now" and "no".
 
 - After a faithful port, run it once on live inputs and check it can reach every promised outcome; list each deliberate divergence from the source in the module.
 - Encode the owner's standing rules (forbidden words, size budgets, allowed lists) as tests that the suite runs.
 - Prove visual changes with a capture of the published page at each named width.
 - A safety or permission denial is final for that action; change the approach, never the wording.
+
+- Work in parallel and from cheap to expensive: issue independent checks together, run long jobs in the background, run focused tests before one full-suite gate on the final head, read only the slice you need, and never repeat a check whose inputs have not changed.
 
 For concrete recurring failure patterns, a reusable incident-to-doctrine loop, and a compact receipt template, read [references/lessons-from-the-field.md](references/lessons-from-the-field.md). This guide is especially useful for repeated failures, multi-step UI work, bulk operations, and cross-machine handoffs.
 
