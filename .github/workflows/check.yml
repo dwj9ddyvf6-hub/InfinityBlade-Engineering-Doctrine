@@ -1,0 +1,8 @@
+name: check
+on: [push, pull_request]
+jobs:
+  prompt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/check_prompt.py

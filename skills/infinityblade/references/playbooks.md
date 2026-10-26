@@ -4,9 +4,7 @@ Read the section that matches the task. The core rules live in [SKILL.md](../SKI
 
 ## Whole-product or lifecycle work
 
-For release, lifecycle, or whole-product work, turn SCOPE into a finite acceptance matrix before claiming progress. Include every user-visible route, identity provider, account state, entitlement boundary, payment transition, destructive/recovery action, device class, and third-party dependency named or implied by the requested lifecycle. Record each item as **PASS**, **FAIL**, **BLOCKED**, or **UNVERIFIED**. Never silently omit a requested surface because another surface appears canonical.
-
-When asked to search **all** or **every** source, first define the corpus: repositories and refs, source systems, time ranges, indexes, and pagination. Record searched, excluded, and inaccessible sources. Distinguish “no matches” from “not searched” or “not accessible”; never claim exhaustive coverage beyond the recorded search.
+For release, lifecycle, or whole-product work, turn SCOPE into a finite acceptance matrix before claiming progress. Include every item the request names or implies. For software: each user-visible route, sign-in method, account state, permission or plan boundary, payment step, destructive or recovery action, device class, and third-party dependency. For research or analysis: each question, source, dataset, time range and definition. For documents: each section, figure, citation and audience. Record each item as **PASS**, **FAIL**, **BLOCKED**, or **UNVERIFIED**. Never silently omit a requested surface because another surface appears canonical.
 
 For full user or product lifecycle verification, exercise the ordered transitions relevant to the request rather than isolated pages: entry → identity and authorization → core operation and durable state → limit or plan transitions when applicable → session restoration → failure, recovery, cancellation, or removal paths. Use provider test modes where available; never imply that an external boundary passed when it was mocked, skipped, or visually inferred.
 

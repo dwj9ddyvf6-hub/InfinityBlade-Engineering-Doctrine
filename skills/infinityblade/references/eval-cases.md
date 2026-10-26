@@ -1,6 +1,6 @@
 # InfinityBlade skill smoke tests
 
-Use these prompts to check the skill after an installation or instruction change. They are manual behavior checks, not an automated benchmark. Record whether the skill activated as expected and whether it followed the stated safety and evidence gates.
+Use these prompts to check the skill after an installation or instruction change. Run them by hand, with and without the skill, and score them with the sheet under **Scoring** below.
 
 ## Activation cases
 
