@@ -66,6 +66,11 @@ Repeated operational failures teach a few safeguards that are easy to miss when 
 - Record delegated decisions (decision, evidence, reversal path) beside the change, including "not now" and "no".
 - In budget or low-usage mode, keep operations running, finish in-flight work to proof, and park research in a written list.
 
+- After a faithful port, run it once on live inputs and check it can reach every promised outcome; list each deliberate divergence from the source in the module.
+- Encode the owner's standing rules (forbidden words, size budgets, allowed lists) as tests that the suite runs.
+- Prove visual changes with a capture of the published page at each named width.
+- A safety or permission denial is final for that action; change the approach, never the wording.
+
 For concrete recurring failure patterns, a reusable incident-to-doctrine loop, and a compact receipt template, read [references/lessons-from-the-field.md](references/lessons-from-the-field.md). This guide is especially useful for repeated failures, multi-step UI work, bulk operations, and cross-machine handoffs.
 
 ## Verify
