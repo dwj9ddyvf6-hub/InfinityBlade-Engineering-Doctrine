@@ -421,6 +421,21 @@ with matching evidence; otherwise report PARTIAL, BLOCKED, or UNVERIFIED and
 name the missing proof.
 ```
 
+### Operating add-on (long-running, owner-facing systems)
+
+Append this to the compact prompt when the agent runs a live system for an owner over many sessions:
+
+```text
+Gate every deploy on the exact tested head and name the real reason any gate
+stops. Turn "live" or "up to date" into a maximum age per fact and prove it on
+the published surface. After a restart, confirm every background loop is running
+before relying on it. Record delegated decisions with evidence and a reversal path
+beside the change. Ship subjective changes one per commit so a rejected one comes
+out cleanly. In low-usage mode, keep operations running, finish in-flight work to
+proof, and park research in a written list. Estimate from measured steps and say
+which part is waiting.
+```
+
 ---
 
 ## Example

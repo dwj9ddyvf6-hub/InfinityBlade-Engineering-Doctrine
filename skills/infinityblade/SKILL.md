@@ -60,6 +60,12 @@ Repeated operational failures teach a few safeguards that are easy to miss when 
 - Local presence is not remote durability. Keep the source until the destination is independently verified; use checksums or durable receipts where the data warrants them.
 - Generated prose is a set of claims. Validate every source-derived statement against the underlying data, and fail closed on identity, unit, timeframe, or threshold mismatches.
 
+- Name the real reason a gate stopped (failed, superseded by a newer head, dirty, rejected); a superseded run is not a failure.
+- Turn vague freshness words ("live", "current", "up to date") into a maximum age per fact, and prove it on the published surface.
+- After a restart or long gap, confirm that every background loop you rely on is running before claiming it.
+- Record delegated decisions (decision, evidence, reversal path) beside the change, including "not now" and "no".
+- In budget or low-usage mode, keep operations running, finish in-flight work to proof, and park research in a written list.
+
 For concrete recurring failure patterns, a reusable incident-to-doctrine loop, and a compact receipt template, read [references/lessons-from-the-field.md](references/lessons-from-the-field.md). This guide is especially useful for repeated failures, multi-step UI work, bulk operations, and cross-machine handoffs.
 
 ## Verify

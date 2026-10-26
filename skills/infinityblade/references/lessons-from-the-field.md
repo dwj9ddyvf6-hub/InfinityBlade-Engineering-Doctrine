@@ -106,6 +106,48 @@ An identity audit also found that one global event key had been fingerprinted wi
 
 **Countermeasure:** Define the corpus before searching: source systems, repositories and refs, relevant time ranges, search terms or file classes, and pagination boundaries. Record each source as searched, excluded, unavailable, or not yet checked. Reconcile the ledger before making an exhaustive claim; say “no matches in the sources checked” when that is all the evidence supports.
 
+### 13. A gate's message must name the real reason it stopped
+
+**Failure pattern:** A merge gate runs the full suite, the suite passes, but a new commit lands meanwhile; the gate refuses to push (correct) and prints "suite not green" (false). The next reader chases a failure that never happened.
+
+**Countermeasure:** Gate on the exact head that was tested, and give every refusal its own reason: tests failed, head moved, tree dirty, push rejected. Report a stop caused by newer work as superseded, not failed, and let the run on the newer head cover both.
+
+### 14. "Live" is a staleness bound, not an adjective
+
+**Failure pattern:** An owner asks for a "live" page. The agent builds faster polling, but the data behind it is still the last daily close, so a refresh shows an old number with a fresh timestamp.
+
+**Countermeasure:** Translate "live" into a number: maximum age of each displayed fact, per source. Prove it on the published page by comparing the shown value and its as-of time against the source at that moment. Label each fact with its own as-of time, not the page's render time.
+
+### 15. Background loops die with their container
+
+**Failure pattern:** Autosave, snapshot, and watcher loops run in a sandbox. The container restarts, the loops vanish silently, and work done afterwards has no safety net while reports still say "saving every N minutes."
+
+**Countermeasure:** After any restart or long gap, check that each loop you rely on is actually running (process list or a fresh output timestamp) before claiming it. Persist work through the durable route (commit and push behind the gate) rather than trusting a loop's existence.
+
+### 16. Delegated decisions need a record, not just an action
+
+**Failure pattern:** An owner says "you decide" on several open questions. The agent acts on each, but the reasoning and the reversal path live only in chat, so the next agent cannot tell a deliberate choice from drift.
+
+**Countermeasure:** For each delegated decision, write down the decision, the evidence, what is reversible and how, and put it in the code comment or handoff next to the change, citing the decision's ID. "Not now" and "No" are decisions too; record them so the question is not reopened blindly.
+
+### 17. Taste reversals are cheap only if each change is isolated
+
+**Failure pattern:** Several visual changes ship in one commit. The owner rejects one of them, and removing it means untangling the others.
+
+**Countermeasure:** For subjective surfaces (look, wording, badges), ship one idea per commit, keep shared size and credit rules as tests, and remove a rejected element completely: markup, style, helper, and test notes. Do not argue for a design the owner has rejected.
+
+### 18. Budget mode changes what "done" means
+
+**Failure pattern:** The owner says usage is nearly spent. The agent keeps opening research threads, or freezes everything, including the operational loop the owner relies on.
+
+**Countermeasure:** Split work into keep-running (operations, defect fixes on live state), finish-now (in-flight changes close to proof), and parked (research, optional features). Write the parked list down where the next session will find it. In budget mode, prefer one validated push over several speculative ones and don't repeat expensive runs whose result is already known.
+
+### 19. Estimates come from measured steps, not from the feature's size
+
+**Failure pattern:** An agent says a feature will take "a few hours", then finishes it in minutes, or the reverse. The owner stops trusting estimates.
+
+**Countermeasure:** Estimate from the actual steps: files to touch, the length of the test gate, the deploy window, and waits for external events. State which part is waiting time (a scheduled job, market hours, a deploy) and which is work.
+
 ## The incident-to-doctrine loop
 
 Use this loop whenever the same class of failure returns, or whenever a workflow spans multiple tools or durable states:
