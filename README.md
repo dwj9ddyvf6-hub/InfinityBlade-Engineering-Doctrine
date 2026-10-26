@@ -113,6 +113,16 @@ access needed.
 
 The skill loads the references only when a task needs them, so everyday cost stays small.
 
+## Core maxims
+
+> **Green is not a feeling. Green is an evidence state.**
+
+> **A failed route is not a failed objective.**
+
+> **Every action must either solve the problem or reduce uncertainty.**
+
+> **Change as little as necessary, but prove as much as the claim requires.**
+
 ## What it is not
 
 Not a coding style, a test framework, or a demand for perfection. It does not slow small tasks: a one-line SCOPE and a quick check are enough. It never overrides the user's authority or a platform's safety rules.
