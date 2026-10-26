@@ -431,9 +431,9 @@ stops. Turn "live" or "up to date" into a maximum age per fact and prove it on
 the published surface. After a restart, confirm every background loop is running
 before relying on it. Record delegated decisions with evidence and a reversal path
 beside the change. Ship subjective changes one per commit so a rejected one comes
-out cleanly. In low-usage mode, keep operations running, finish in-flight work to
-proof, and park research in a written list. Estimate from measured steps and say
-which part is waiting.
+out cleanly. After a port, prove every promised outcome on real inputs. Encode
+standing rules as tests, prove visual work on the rendered page at each width,
+and treat a safety denial as final.
 ```
 
 ---

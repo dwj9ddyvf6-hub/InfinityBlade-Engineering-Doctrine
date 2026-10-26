@@ -136,59 +136,41 @@ An identity audit also found that one global event key had been fingerprinted wi
 
 **Countermeasure:** For subjective surfaces (look, wording, badges), ship one idea per commit, keep shared size and credit rules as tests, and remove a rejected element completely: markup, style, helper, and test notes. Do not argue for a design the owner has rejected.
 
-### 18. Budget mode changes what "done" means
+### 18. A faithful port can faithfully copy a defect
 
-**Failure pattern:** The owner says usage is nearly spent. The agent keeps opening research threads, or freezes everything, including the operational loop the owner relies on.
+**Failure pattern:** A component is ported line-for-line from an older system to preserve its behavior. The source stamped its input's time after reading its own clock, so every run rejected its input as stale. The port reproduces this exactly, and the component has never produced its intended output in either system.
 
-**Countermeasure:** Split work into keep-running (operations, defect fixes on live state), finish-now (in-flight changes close to proof), and parked (research, optional features). Write the parked list down where the next session will find it. In budget mode, prefer one validated push over several speculative ones and don't repeat expensive runs whose result is already known.
+**Countermeasure:** Port for fidelity, then run the ported path once on real inputs and check that it can reach every outcome it promises (success, rejection, and each exit path). When you change a source behavior, list each change as a named divergence in the module itself: what the source did, what this does, and why. Behavior that the name promises but the source never implemented is a gap for the owner to decide, not something to invent.
 
-### 19. Estimates come from measured steps, not from the feature's size
+### 19. Owner rules belong in tests, not just in prose
 
-**Failure pattern:** An agent says a feature will take "a few hours", then finishes it in minutes, or the reverse. The owner stops trusting estimates.
-
-**Countermeasure:** Estimate from the actual steps: files to touch, the length of the test gate, the deploy window, and waits for external events. State which part is waiting time (a scheduled job, market hours, a deploy) and which is work.
-
-### 20. A faithful port can faithfully copy a defect
-
-**Failure pattern:** A component is ported byte-for-byte from an older system to preserve its behavior. The source read its clock before fetching a quote, so every decision judged its own quote "stale" and blocked. The port reproduces the source exactly, and it has never done anything.
-
-**Countermeasure:** Port for fidelity, then run the ported path once on live inputs and check that it can reach every outcome it promises, including a trade, an exit and a block. When you change a source behavior, list each change as a named divergence in the module itself: what the source did, what this does, and why. Behavior the name promises but the source never implemented is a gap for the owner to decide, not something to invent.
-
-### 21. Owner rules belong in tests, not just in prose
-
-**Failure pattern:** The owner sets rules such as a product name never appearing on a public page, a size budget for page assets, or a set of rows that must stay disabled. They live in a document. A later change breaks one, and nobody notices until the owner does.
+**Failure pattern:** The owner sets rules such as a name never appearing on a public page, a size budget for shipped assets, or a set of components that must stay disabled. They live in a document. A later change breaks one, and nobody notices until the owner does.
 
 **Countermeasure:** Turn each standing rule into a check that the suite runs. Examples are a forbidden word in public files, a byte budget per asset, or an allowed list of rows. When a rule legitimately changes, change the test in the same commit and say who decided and when.
 
-### 22. Rendering bugs only show at the rendered boundary
+### 20. Rendering bugs only show at the rendered boundary
 
 **Failure pattern:** Code and tests pass, but on the real page a badge loses its colour to a more specific style, or a third-party widget shows one tile on a phone. Source review called both correct.
 
 **Countermeasure:** For anything visual, capture the published page at each named width (desktop and phone at least) after the final change and look at it. A headless screenshot of the real page is proof; a passing unit test of the markup is not.
 
-### 23. Edit by anchor, not by line number
+### 21. Edit by anchor, not by line number
 
 **Failure pattern:** A stream editor targets a line number in a file that changed since it was read, and it corrupts an unrelated function.
 
 **Countermeasure:** Replace an exact unique string, assert that it matched exactly once, and re-run the file's tests immediately. Never chain line-number edits after another edit to the same file.
 
-### 24. A refusal from a safety layer is an answer
+### 22. A refusal from a safety layer is an answer
 
 **Failure pattern:** A permission or safety classifier denies an action, such as deleting a large temporary directory. The agent rephrases the same action to get it through.
 
 **Countermeasure:** Treat the denial as final for that action. Work around the need instead: retain fewer files, write to a different place, or ask the owner. Never repackage the same action to get past the check.
 
-### 25. Upstream refusals call for failover, not waiting
+### 23. Upstream refusals call for failover, not waiting
 
-**Failure pattern:** A free data source starts refusing requests (rate limits or blocks). Jobs wait out its pauses and miss their windows, and stale data reaches decisions.
+**Failure pattern:** A free upstream source starts refusing requests (rate limits or blocks). Jobs wait out its pauses and miss their windows, and stale data reaches downstream decisions.
 
-**Countermeasure:** Give each fact a primary and a fallback source with the same identity and freshness checks. Fail over on refusal, label which source served it, and never trade or publish on data older than its bound. Respect legal and geographic blocks: they are a hard stop, never something to route around.
-
-### 26. Evidence for a trading rule comes forward, not from a fitted past
-
-**Failure pattern:** An improvement is justified by a backtest tuned on the same history it is scored on, and it is shipped as if proven.
-
-**Countermeasure:** Where the owner requires it, gather improvement evidence forward: paired shadow variants, or a record that already exists. Label every replay as a replay. A change to a live decision needs either the owner's decision or a demonstrated defect with a regression test.
+**Countermeasure:** Give each fact a primary and a fallback source with the same identity and freshness checks. Fail over on refusal, label which source served it, and never act on or publish data older than its bound. Respect legal and geographic blocks: they are a hard stop, never something to route around.
 
 ## The incident-to-doctrine loop
 

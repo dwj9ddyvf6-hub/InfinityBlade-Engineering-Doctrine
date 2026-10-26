@@ -64,7 +64,6 @@ Repeated operational failures teach a few safeguards that are easy to miss when 
 - Turn vague freshness words ("live", "current", "up to date") into a maximum age per fact, and prove it on the published surface.
 - After a restart or long gap, confirm that every background loop you rely on is running before claiming it.
 - Record delegated decisions (decision, evidence, reversal path) beside the change, including "not now" and "no".
-- In budget or low-usage mode, keep operations running, finish in-flight work to proof, and park research in a written list.
 
 - After a faithful port, run it once on live inputs and check it can reach every promised outcome; list each deliberate divergence from the source in the module.
 - Encode the owner's standing rules (forbidden words, size budgets, allowed lists) as tests that the suite runs.

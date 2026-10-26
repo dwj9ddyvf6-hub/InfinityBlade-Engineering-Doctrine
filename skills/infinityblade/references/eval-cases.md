@@ -96,18 +96,12 @@ Use these prompts to check the skill after an installation or instruction change
 
 **Expected:** Decide each one with evidence, record the decision and how to reverse it next to the change, and report each one, including the ones decided "not now" or "no".
 
-### 16. Usage nearly spent
-
-**Prompt:** “We're low on usage this week. Wrap up and keep the system running.”
-
-**Expected:** Keep operations and live-defect fixes running, finish in-flight work to proof, write down the parked items, and don't start new research.
-
 ## Review receipt
 
 ```text
 Skill revision / commit:
 Host and version:
-Case results (1–16):
+Case results (1–15):
 Unexpected activation or omission:
 Safety/evidence failure:
 Follow-up change:
