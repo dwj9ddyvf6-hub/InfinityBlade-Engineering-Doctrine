@@ -1,40 +1,25 @@
 # Install InfinityBlade
 
-InfinityBlade is a portable Agent Skill. Copy `skills/infinityblade` into the skill directory supported by your agent host.
+Pick your host. The skill folder is `skills/infinityblade/` (keep `SKILL.md` and `references/` together).
 
-## Codex
+| Host | Install |
+|---|---|
+| **Claude Code** | Copy the folder to `~/.claude/skills/infinityblade/` (all projects) or `.claude/skills/infinityblade/` (one repo). |
+| **Codex** | Copy the folder to `~/.codex/skills/infinityblade/`. Invoke with `Use $infinityblade …` or let it activate. |
+| **Other Agent Skills hosts** | Use the host's skills folder or importer. |
+| **Cursor** | Paste the prompt from the [README](README.md#use-it-in-30-seconds) into `.cursor/rules/infinityblade.mdc` (set it to always apply). |
+| **GitHub Copilot** | Paste the prompt into `.github/copilot-instructions.md`. |
+| **Repo instruction files** | Paste the prompt into `AGENTS.md`, `CLAUDE.md` or `GEMINI.md`, or keep this repo's [`AGENTS.md`](AGENTS.md) with the skill folder. |
+| **Any chat model / API** | Paste the prompt into the system prompt or custom instructions. |
 
-Copy the folder to:
-
-```text
-~/.codex/skills/infinityblade/
-```
-
-Start a new session, then invoke:
-
-```text
-Use $infinityblade to complete this repair.
-```
-
-The skill may also activate automatically for relevant implementation, debugging, deployment, automation, and verification tasks.
-
-For repository-level enforcement, retain `AGENTS.md` and the linked skill folder in the target repository.
-
-## Other Agent Skill hosts
-
-Install `skills/infinityblade` using the host's Agent Skills location or importer. Keep `SKILL.md` and `references` together. For instruction-only hosts, adapt `AGENTS.md` to the host's repository instruction filename.
-
-Host discovery and automatic activation vary. Do not treat the package format alone as proof of compatibility; run the discovery and smoke checks below in each host where you plan to rely on it.
-
-## Confirm discovery
+## Confirm it works
 
 Ask:
 
 ```text
-Use $infinityblade. State the five SCOPE fields for this task before making a material change.
+Using InfinityBlade, state the SCOPE for this task before changing anything.
 ```
 
-Correct discovery produces Surface, Constraints, Outcome, Proof, and Edges, followed by evidence-matched completion reporting.
+You should see Surface, Constraints, Outcome, Proof and Edges, and the final report should end with GREEN, PARTIAL, BLOCKED or UNVERIFIED plus receipts.
 
-For a quick behavior check after installation or an update, run the representative activation, non-activation, incomplete-input, and safety cases in [`skills/infinityblade/references/eval-cases.md`](skills/infinityblade/references/eval-cases.md).
-
+For a real behavior check, run a few cases from [eval-cases.md](skills/infinityblade/references/eval-cases.md) with and without the skill and compare.

@@ -204,7 +204,7 @@ Root cause:
 Minimum repair and regression guard:
 Final artifact / environment / commit:
 Post-change proof and preserved invariants:
-Status: PASS | FAIL | REPAIRED | BLOCKED | NOT TESTED
+Status: PASS | FAIL | BLOCKED | UNVERIFIED
 Remaining uncertainty:
 Portable lesson added at:
 ~~~

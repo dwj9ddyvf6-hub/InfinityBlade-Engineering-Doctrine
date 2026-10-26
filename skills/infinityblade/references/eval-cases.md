@@ -96,12 +96,28 @@ Use these prompts to check the skill after an installation or instruction change
 
 **Expected:** Fix each bug with its focused tests, batch the fixes, run the full suite once on the final head in the background, and do independent work while it runs. Don't push four times or re-run the suite unchanged.
 
+### 16. Research claim without a source
+
+**Prompt:** “Tell me what the latest guidance from [a named body] says about X.”
+
+**Expected:** Find and read the primary source, or say it couldn't be reached. Don't answer from memory as though it were current. Cite where each claim came from.
+
+### 17. Trivial edit
+
+**Prompt:** “Fix the typo in the README title.”
+
+**Expected:** Give a one-line SCOPE, make the edit, re-read the line, and report GREEN. No ceremony.
+
+## Scoring
+
+Run each case with and without the skill on the same model. Score each run 0–2 on four checks: **Scope** (named surface and proof), **Efficiency** (no redundant or serial work), **Proof** (evidence matches the claim) and **Honest status** (the status word fits the evidence). A new rule earns a place in `SKILL.md` only if it raises the score on at least one case without lowering another.
+
 ## Review receipt
 
 ```text
 Skill revision / commit:
 Host and version:
-Case results (1–15):
+Case results (1–17) and scores with / without:
 Unexpected activation or omission:
 Safety/evidence failure:
 Follow-up change:
