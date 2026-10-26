@@ -65,7 +65,7 @@ Repeated operational failures teach a few safeguards that are easy to miss when 
 - After a restart or long gap, confirm that every background loop you rely on is running before claiming it.
 
 - After a faithful port, run it once on live inputs and check it can reach every promised outcome; list each deliberate divergence from the source in the module.
-- Encode the owner's standing rules (forbidden words, size budgets, allowed lists) as tests that the suite runs.
+- Encode the user's standing rules (forbidden words, size budgets, allowed lists) as tests that the suite runs.
 - Prove visual changes with a capture of the published page at each named width.
 - A safety or permission denial is final for that action; change the approach, never the wording.
 

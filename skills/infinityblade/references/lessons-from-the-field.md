@@ -114,13 +114,13 @@ An identity audit also found that one global event key had been fingerprinted wi
 
 ### 14. "Live" is a staleness bound, not an adjective
 
-**Failure pattern:** An owner asks for a "live" page. The agent builds faster polling, but the data behind it is still the last daily close, so a refresh shows an old number with a fresh timestamp.
+**Failure pattern:** A user asks for a "live" page. The agent builds faster polling, but the data behind it is still the last daily snapshot, so a refresh shows an old number with a fresh timestamp.
 
 **Countermeasure:** Translate "live" into a number: maximum age of each displayed fact, per source. Prove it on the published page by comparing the shown value and its as-of time against the source at that moment. Label each fact with its own as-of time, not the page's render time.
 
-### 15. Background loops die with their container
+### 15. Background work dies with its process
 
-**Failure pattern:** Autosave, snapshot, and watcher loops run in a sandbox. The container restarts, the loops vanish silently, and work done afterwards has no safety net while reports still say "saving every N minutes."
+**Failure pattern:** Autosave, snapshot, and watcher loops run in a session or sandbox. The process or machine restarts, the loops vanish silently, and work done afterwards has no safety net while reports still say "saving every N minutes."
 
 **Countermeasure:** After any restart or long gap, check that each loop you rely on is actually running (process list or a fresh output timestamp) before claiming it. Persist work through the durable route (commit and push behind the gate) rather than trusting a loop's existence.
 
@@ -128,11 +128,11 @@ An identity audit also found that one global event key had been fingerprinted wi
 
 **Failure pattern:** A component is ported line-for-line from an older system to preserve its behavior. The source stamped its input's time after reading its own clock, so every run rejected its input as stale. The port reproduces this exactly, and the component has never produced its intended output in either system.
 
-**Countermeasure:** Port for fidelity, then run the ported path once on real inputs and check that it can reach every outcome it promises (success, rejection, and each exit path). When you change a source behavior, list each change as a named divergence in the module itself: what the source did, what this does, and why. Behavior that the name promises but the source never implemented is a gap for the owner to decide, not something to invent.
+**Countermeasure:** Port for fidelity, then run the ported path once on real inputs and check that it can reach every outcome it promises (success, rejection, and each exit path). When you change a source behavior, list each change as a named divergence in the module itself: what the source did, what this does, and why. Behavior that the name promises but the source never implemented is a gap for the user to decide, not something to invent.
 
-### 17. Owner rules belong in tests, not just in prose
+### 17. Standing user rules belong in tests, not just in prose
 
-**Failure pattern:** The owner sets rules such as a name never appearing on a public page, a size budget for shipped assets, or a set of components that must stay disabled. They live in a document. A later change breaks one, and nobody notices until the owner does.
+**Failure pattern:** The user sets rules such as a name never appearing on a public page, a size budget for shipped assets, or a set of components that must stay disabled. They live in a document. A later change breaks one, and nobody notices until the user does.
 
 **Countermeasure:** Turn each standing rule into a check that the suite runs. Examples are a forbidden word in public files, a byte budget per asset, or an allowed list of rows. When a rule legitimately changes, change the test in the same commit and say who decided and when.
 
@@ -152,7 +152,7 @@ An identity audit also found that one global event key had been fingerprinted wi
 
 **Failure pattern:** A permission or safety classifier denies an action, such as deleting a large temporary directory. The agent rephrases the same action to get it through.
 
-**Countermeasure:** Treat the denial as final for that action. Work around the need instead: retain fewer files, write to a different place, or ask the owner. Never repackage the same action to get past the check.
+**Countermeasure:** Treat the denial as final for that action. Work around the need instead: retain fewer files, write to a different place, or ask the user. Never repackage the same action to get past the check.
 
 ### 21. Upstream refusals call for failover, not waiting
 
