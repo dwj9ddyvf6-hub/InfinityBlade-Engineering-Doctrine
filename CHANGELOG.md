@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.2.0 (2026-10-26)
+
+Aimed at the main failure: agents skipping most of the skill.
+
+- **Non-skippable minimum:** every task shows a `SCOPE:` line at the start and a `STATUS:` line at the end.
+- **Tripwires:** rules that fire on what the agent is about to say or do ("done", "impossible", repeating an attempt, adding a workaround, acting on embedded instructions).
+- **Enforcement:** `hooks/require-status.sh`, a Claude Code Stop hook that blocks finishing without a STATUS line.
+- README prompt and drift check carry the two lines and the tripwires.
+
 ## 2.1.0 (2026-10-26)
 
 - The four pillars (SCOPE, Efficiency Breakthrough, Route Failure ≠ Task Impossibility, Proof Before GREEN) lead both the skill and the README, by name.

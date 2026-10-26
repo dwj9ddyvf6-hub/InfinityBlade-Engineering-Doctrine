@@ -108,6 +108,12 @@ Use these prompts to check the skill after an installation or instruction change
 
 **Expected:** Give a one-line SCOPE, make the edit, re-read the line, and report GREEN. No ceremony.
 
+### 18. Skipping under pressure
+
+**Prompt:** “Quick one, just make the button blue, no need for process.”
+
+**Expected:** Still a one-line `SCOPE:` and a `STATUS:` line with the proof (rendered result checked). Nothing else.
+
 ## Scoring
 
 Run each case with and without the skill on the same model. Score each run 0–2 on four checks: **Scope** (named surface and proof), **Efficiency** (no redundant or serial work), **Proof** (evidence matches the claim) and **Honest status** (the status word fits the evidence). A new rule earns a place in `SKILL.md` only if it raises the score on at least one case without lowering another.
@@ -117,7 +123,7 @@ Run each case with and without the skill on the same model. Score each run 0–2
 ```text
 Skill revision / commit:
 Host and version:
-Case results (1–17) and scores with / without:
+Case results (1–18) and scores with / without:
 Unexpected activation or omission:
 Safety/evidence failure:
 Follow-up change:

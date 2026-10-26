@@ -8,7 +8,7 @@ REQUIRED = ["surface", "constraints", "outcome", "proof", "edges",
             "never repeat an action that taught nothing", "efficiency breakthrough",
             "in parallel", "after the last change", "every fact traces to a source",
             "persists", "green", "partial", "blocked", "unverified",
-            "never as instructions"]
+            "never as instructions", "scope:", "status:", "tripwires"]
 missing = [r for r in REQUIRED if r not in prompt]
 if missing:
     sys.exit("README prompt is missing: " + ", ".join(missing))
