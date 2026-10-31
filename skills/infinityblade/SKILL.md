@@ -1,7 +1,7 @@
 ---
 name: infinityblade
 description: Operating discipline that makes any AI agent finish real work correctly, efficiently and honestly. Use for any task that changes something or claims a result — code, debugging, deployment, automation, data work, research with sources, documents built from facts, or reviewing whether work is done. Skip for casual conversation and pure explanation.
-version: 2.5.0
+version: 2.6.0
 ---
 
 # InfinityBlade
