@@ -6,7 +6,7 @@
 
 Works with Claude, GPT/Codex, Gemini, Cursor, Copilot, or any agent that accepts instructions. One file, about 80 lines.
 
-[The skill](skills/infinityblade/SKILL.md) · [Install](INSTALL.md) · [Lessons](skills/infinityblade/references/lessons-from-the-field.md) · [Tests](skills/infinityblade/references/eval-cases.md) · [Changelog](CHANGELOG.md)
+[The skill](skills/infinityblade/SKILL.md) · [Install](INSTALL.md) · [Lessons](skills/infinityblade/references/lessons-from-the-field.md) · [Tests](skills/infinityblade/references/eval-cases.md) · [Enhancement](skills/infinityblade/references/agent-enhancement.md) · [Changelog](CHANGELOG.md)
 
 ---
 
@@ -110,8 +110,22 @@ access needed.
 | [`references/review-mode.md`](skills/infinityblade/references/review-mode.md) | Reviewing someone else's work or completion claim. |
 | [`references/examples.md`](skills/infinityblade/references/examples.md) | Short worked examples, code and non-code. |
 | [`references/eval-cases.md`](skills/infinityblade/references/eval-cases.md) | Prompts to test that the skill changes behavior. |
+| [`references/agent-enhancement.md`](skills/infinityblade/references/agent-enhancement.md) | Memory, initiative, skill-craft and self-grading disciplines for the systems around the work. |
 
 The skill loads the references only when a task needs them, so everyday cost stays small.
+
+## Agent enhancement
+
+The core governs a task. A second layer governs the agent across tasks: [`references/agent-enhancement.md`](skills/infinityblade/references/agent-enhancement.md) distils an inspected sweep of public memory, skill and proactivity systems into ten adopted disciplines:
+
+- **Priced initiative:** every proactive lane carries a benefit-minus-cost threshold, a cheap surface-or-stay-silent gate, and feedback-scored tuning.
+- **Instincts:** corrections, error resolutions and repeated workflows become confidence-scored procedural memory, promoted to skills only through a human gate.
+- **Honest memory:** a static/dynamic profile split, typed supersession edges, active expiry, recall that reports supported / closest-only / not present, and erasure that counts as done only when every derived copy is clean.
+- **Gates on the gates:** false-green audits of the tests themselves, eval sets and security scans before anything enters the skill library, and a mechanical check that a completion claim carries evidence in the same turn.
+- **Authority hygiene:** compaction and delegation carry context, never authority; capability is minted per turn and mismatches fail closed.
+- **Skill craft and prose:** playbooks pressure-tested against recorded rationalizations before they ship, and a bounded internal rubric pass on deliverables no gate covers.
+
+A recorded backlog of deferred ideas, each with its revisit trigger, ships in the same reference.
 
 ## Core maxims
 
