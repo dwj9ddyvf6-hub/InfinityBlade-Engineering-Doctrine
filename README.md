@@ -124,11 +124,13 @@ The skill loads the references only when a task needs them, so everyday cost sta
 
 ## Agent enhancement
 
-The core governs a task. A second layer governs the agent across tasks: [`references/agent-enhancement.md`](skills/infinityblade/references/agent-enhancement.md) distils an inspected sweep of public memory, skill and proactivity systems into ten adopted disciplines:
+The core governs a task. A second layer governs the agent across tasks: [`references/agent-enhancement.md`](skills/infinityblade/references/agent-enhancement.md) distils an inspected sweep of public memory, skill and proactivity systems into twelve adopted disciplines:
 
 - **Priced initiative:** every proactive lane carries a benefit-minus-cost threshold, a cheap surface-or-stay-silent gate, and feedback-scored tuning.
 - **Instincts:** corrections, error resolutions and repeated workflows become confidence-scored procedural memory, promoted to skills only through a human gate.
 - **Honest memory:** a static/dynamic profile split, typed supersession edges, active expiry, recall that reports supported / closest-only / not present, and erasure that counts as done only when every derived copy is clean.
+- **Rationale memory:** decisions are stored with the alternatives they beat, why those lost, an evidence grade, and the trigger that should reopen them, so a rejected design stays rejected instead of being re-proposed.
+- **Freshness:** every stored fact is timeless, dated, or a pointer; nothing claims to be current without a stamp, and aged lines are re-observed, converted to pointers, or retired.
 - **Gates on the gates:** false-green audits of the tests themselves, eval sets and security scans before anything enters the skill library, and a mechanical check that a completion claim carries evidence in the same turn.
 - **Authority hygiene:** compaction and delegation carry context, never authority; capability is minted per turn and mismatches fail closed.
 - **Skill craft and prose:** playbooks pressure-tested against recorded rationalizations before they ship, and a bounded internal rubric pass on deliverables no gate covers.
