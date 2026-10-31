@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.5.0 (2026-10-31)
+
+- Mandatory full read: the README and this skill now open with an explicit instruction to any AI agent or language model to read the entire repository in full before applying any part of it, to state its coverage explicitly, and to stop rather than proceed on partial coverage. The doctrine is a single system whose parts qualify and correct each other; the note exists because a fragment applied confidently is the failure the doctrine most reliably produces in new readers.
+
 ## 2.4.0 (2026-10-31)
 
 - New reference: agent enhancement. Ten disciplines distilled from an inspected sweep of public memory, skill-framework and proactivity work, each adopted only where it adds a mechanism the doctrine lacked: priced proactive lanes (benefit-minus-cost threshold, cheap gate, feedback scoring), a confidence-scored procedural memory ("instincts"), false-green audits of gate tests, memory profile and graph discipline with honest recall tiers and a governed erasure standard, pressure-testing for skills, an adoption and eval gate for the skill library, mechanised completion-claim checks, authority hygiene across compaction and delegation, and a bounded hidden-rubric pass for ungated prose.
