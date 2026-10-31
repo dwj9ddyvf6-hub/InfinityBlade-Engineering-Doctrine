@@ -13,7 +13,13 @@ this doctrine did not already have. Ideas the doctrine already covers
 delegated work) are not restated here. A second pass the same day read the
 source artifacts in full, corrected several first-pass accounts of how these
 mechanisms actually work, and added disciplines 11 and 12; the corrections
-are itemised in the changelog for 2.6.0, not smoothed over here.
+are itemised in the changelog for 2.6.0, not smoothed over here. A third
+pass then read the layers the first two skipped (issue trackers, release
+notes, test corpora, fork networks, the official vendor layer, the
+benchmark literature) and graded every discipline against what it found:
+2 confirmed, 8 qualified, 1 warned, 1 with no contact. Its corrections
+are itemised in the changelog for 2.7.0, and each discipline below
+carries its standing where the pass produced one.
 
 ## The twelve disciplines
 
@@ -45,6 +51,11 @@ cannot state its cost defaults to silent logging.
   threshold the gate applies is a calibrated probability of acceptance
   against a per-context price set by the scorer, not a number copied from
   any paper.
+- **The gate must block, not merely observe.** Vendor guardrails
+  commonly run in parallel with the tools they watch and can let an
+  action execute before a tripwire fires. Where effects matter, the
+  gate is blocking or enforced per tool. "There is a gate" is not
+  evidence anything was prevented.
 - **Expectation-set the gate.** Gate quality is a data pipeline, not a
   prompt: majority-vote labels, a unanimity-preferred test set,
   label-conditioned rationales, a consistency filter, and a human-scored
@@ -77,6 +88,16 @@ thunlp/ProactiveAgent (sensing, the judge prompt shape, the labelling
 pipeline), liutj9/ProactiveEval (the two-stage rubric; rubric adopted,
 code not), and the calibrated-threshold gate design cited inside the list
 (PRISM).
+
+*Standing after the third pass: QUALIFIED, with the warned component
+above. Three independent 2026 papers in the survey list converge on
+the same cheap-gate / expensive-actor shape, and a practitioner
+product's deterministic script-watchers corroborate the deterministic
+variant. But the reward model's headline numbers could not be
+reproduced from the published recipe by an independent trainer
+(per-category 0.54 to 0.74 against the paper's figures, the thread
+closed unexplained): no lane may budget for the fine-tuned figure,
+and the gate needs a local holdout before any lane relies on it.*
 
 ### 2. Keep instincts: a confidence-scored procedural memory
 
@@ -130,6 +151,17 @@ affaan-m/ECC, its continuous-learning-v2 skill (build spec adopted
 natively, corrected at artifact level on the second pass; the framework
 itself not installed).
 
+*Standing after the third pass: QUALIFIED. Session-start injection is
+still unbuilt upstream; it exists only as an open, unmerged proposal
+for tool-use enforcement, and the observer's event scoping carries
+live bugs under active repair, so the capture layer above is a design
+to harden, not a reference implementation to trust. A major framework
+independently shipping procedural memory as a first-class type
+confirms the direction, with a boundary warning: that framework
+updates procedural memory by automatic prompt rewriting with no
+scored evidence gate. The landed form keeps promotion human-gated and
+must not drift toward the automatic form.*
+
 ### 3. Audit the gates for false greens
 
 **Rule:** a passing test is a claim, and claims need independent expected
@@ -160,6 +192,15 @@ values. Periodically audit gate-wired tests with a six-judgement protocol:
   the six judgements on the generated test until clean. Unchecked
   generated output is labelled FAILED or UNVERIFIED, never presented as
   verified.
+> **Warning: do not run the source's Mode C executor as shipped.**
+> The F7 contract stands, but the shipped `fix` executor runs
+> model-generated tests with the full ambient process environment
+> inherited, credentials included, with absolute-path writes and open
+> network. The defect is self-disclosed in the source's own tracker
+> and unfixed. Mode C may only be adopted behind an environment
+> allowlist and a jailed working directory, or with a locally
+> controlled executor.
+
 - **Name the Break before writing the test:** state the production change
   that would make this test fail. If you cannot name one, the test is
   wrong. Exercise the real thing; never mock the behaviour under test.
@@ -169,6 +210,17 @@ values. Periodically audit gate-wired tests with a six-judgement protocol:
 - **Two named risks in model-era suites:** S14, a recorded model output
   used as the oracle; S21, a live self-judging model used as the oracle.
   Both manufacture agreement. Both are findings on sight.
+- **The semantic codes are unproven until each carries a firing
+  example and a look-alike.** By the author's own filed issue, 19 of
+  the 24 semantic (S-series) codes ship with neither, and the
+  S-series load path was silently broken for two releases for exactly
+  this reason. The structural codes and the J-protocol stand; S-code
+  detection, S14 and S21 included, is a hypothesis until then. Hence
+  the general rule for any audit catalog: every code ships with one
+  firing example and one look-alike, gate-checked.
+- **Oracle staleness is a named false-green class.** A test whose
+  traced specification changed since it was written is suspect even
+  while green; pair the audit with a spec-change check.
 - **Per fix, the cheap form of F7:** revert the fix, confirm the test
   goes red, restore. Mechanical, and it proves the fail direction on the
   actual change.
@@ -179,8 +231,16 @@ un-guards a past bug. This extends the regression-blocker law; it does not
 replace it. Sources: vinicq/falsegreen-skill (the J1 to J6 protocol, the
 full 125-code catalog, the authoring and fix modes, and the F7 contract,
 all in the one repo; the one code adoption in this set, reviewed before
-use), obra/superpowers (Name the Break), RooAGI/red-green-proof (the
+use; Mode C's shipped executor is not adopted, see the warning above), obra/superpowers (Name the Break), RooAGI/red-green-proof (the
 revert-proof as a named step).
+
+*Standing after the third pass: QUALIFIED, with one warned component
+(the Mode C executor, above). The source repo's own release gate,
+planted-defect probes at 9 of 9 detection parity, independently
+confirms the mutation-first half of this discipline, and the vendor
+layer confirms its premise: official eval doctrine grades outcomes
+over transcripts and treats removing or editing tests as
+unacceptable.*
 
 ### 4. Run memory as a profile plus a graph
 
@@ -218,6 +278,23 @@ age, and leave.
   flag until a human approves it (flag cleared), declines it (fact
   forgotten), or undoes it. The review queue is ranked by support count,
   so the most-relied-on inferences are judged first.
+- **Audit the stored corpus for junk, on a schedule.** Extraction at
+  volume rots. A production audit of one unreviewed ADD-only
+  accumulation (10,134 entries after 32 days) found 97.8% junk; of
+  the 224 survivors only 38 were clean enough to keep as-is, and one
+  failure cluster was 668 copies of a single feedback-loop
+  hallucination, the agent re-extracting its own prior output. The
+  review queue above is therefore load-bearing, not a refinement.
+  The audit method: hash dedup, near-duplicate clustering, a full
+  read of survivors, classification as clean / duplicate /
+  hallucinated / malformed / feedback-loop, and the junk rate
+  reported.
+- **Interim, until write-time supersession fully lands: present
+  memories date-ordered.** A controlled result moved a
+  knowledge-update set from 59/76 to 68/76 by date-sorting the same
+  memories before answering, with no deletion or rewrite. Cheap, and
+  it mitigates the stale-fact failure the shipped fusion formula
+  (which has no temporal term) cannot.
 - Forgetting is four contracts, not one mechanism: forget-by-ID (check
   the per-ID result; a success response does not prove every ID changed);
   semantic forget-matching (a dry-run is mandatory, and the delete is
@@ -228,7 +305,15 @@ age, and leave.
   are what can be adopted, and they are enough.
 - Keep a small fixed evaluation set for memory itself (knowledge-update,
   temporal, and preference questions) and run it against synthesis output,
-  so recall regressions are detected, not anecdoted.
+  so recall regressions are detected, not anecdoted. Score the pipeline's
+  operations separately, not only end-to-end answers: extraction
+  precision and false-memory rate, and update correct / hallucination /
+  omission rates. A benchmark scoring exactly these three operations
+  exists (MemTensor/HaluMem) and is the shape to copy.
+
+- Per-item control: a memory can opt out of the search index and
+  select which of its fields are indexed. Privacy and noise control
+  live at item level, not only at store level.
 
 *Why:* search-led recall fails precisely on standing preferences, which
 are rarely semantically similar to the query that needs them. Typed edges
@@ -238,6 +323,29 @@ queue, forgetting contracts; mechanisms adopted, hosted product not, and
 its extraction engine is closed, so only its published contracts are
 adopted), mem0ai/mem0 (the V3 extraction spec and fusion formula, named by
 constant), getzep/graphiti (bi-temporal validity windows).
+
+*Standing after the third pass: WARNED. Production reports contradict
+three properties this discipline's sources describe as specifications:
+success is not store-confirmed only (partial embedding failures drop
+silently; a neighbouring false-success path was real enough to be
+release-noted as fixed); the shipped fusion formula has no temporal
+term, so contradiction-resolving retrieval cannot be assumed and
+stale facts surface; and extraction at volume rots (the junk audit
+above). The source vendor's own shipped build also currently
+violates its expiry contract and silently writes non-ASCII memories
+that can never be searched. None of this weakens the adopted designs
+(the integrity block, the review queue, bi-temporal supersession);
+it shows they are load-bearing, and that no behaviour may be assumed
+from "the source does it this way": every adopted property needs its
+own local test. By contrast, the official layer confirms the
+sophistication here is not duplicated upstream: the vendor's shipped
+memory is plain client-side file CRUD, and the official MCP
+reference memory server has no supersession, provenance, or temporal
+validity at all. The benchmark evidence behind this discipline is
+also downgraded: LoCoMo ranks are retired as supporting evidence (an
+independent audit finds 99 of its 1,540 questions, 6.4%, with wrong
+golden answers), and one source's "#1 on three benchmarks" claim
+reduces to a single published Recall@15 figure.*
 
 ### 5. Make recall honest and maintenance governed
 
@@ -252,6 +360,9 @@ is not done until every derived copy is clean.
   (index incomplete) from "empty", and degraded from abstaining: a
   degraded index still answers, with tiers labelled; abstention is
   reserved for when the record itself cannot be read.
+- Injected context declares its own omissions. When context is
+  injected under a budget, the injection states what was left out, so
+  a truncated picture is never mistaken for a complete one.
 - Corrections are a reviewed two-phase lifecycle, never a silent replace.
   A correction creates an immutable successor plus a profile-scoped
   proposed case; the predecessor stays current until a reviewer applies
@@ -259,12 +370,20 @@ is not done until every derived copy is clean.
   successors, admission is enforced twice (before fusion and after
   expansion), and if the lifecycle record cannot be read, recall fails
   closed and abstains.
+- **Unchecked is not rejected.** A candidate a deadline left
+  unexamined stays unchecked: it never enters the accepted set, and
+  a state counts as explored only after its evidence is accepted, so
+  one failed attempt cannot suppress a later valid path.
 - Maintenance is layered. Enrichment passes are addition-only. Zone
   movement (active, warm, cold, archived, driven by decay) is autonomous
   but bounded and protection-gated: maintenance never archives a memory
   that is in use. Corrections are never machine-applied. Erasure is a
   dedicated workflow, never a maintenance side effect. Every maintenance
   fix is reversible.
+- Migration fixtures gate any memory-store migration: fixtures seeded
+  with real prior-format data must remain retrievable after the
+  upgrade. An emergency patch whose upgrade silently wiped search
+  vectors is the cautionary case.
 - Forgetting follows a completion definition: summaries, caches, indexes,
   and derived syntheses are cleaned too; the erasure writes a receipt and
   a projection tombstone, so downstream copies can prove the deletion
@@ -279,13 +398,25 @@ is not done until every derived copy is clean.
   recall probes, score whether the returned tier matches the known
   answer, and review the calibration monthly. A tier system nobody
   measures is a labelling ritual.
+- **Gate recall depth on confidence.** A cheap first recall scores
+  its own confidence: above 0.8, return directly; below 0.5, spend a
+  bounded number of deeper exploration rounds (default exactly 1);
+  short queries are exempt from the analysis. If a composite score is
+  needed, start from the simple shipped weighting (semantic 0.5,
+  recency 0.3 with a 30-day half-life, importance 0.2,
+  consolidation-on-save at 0.85 similarity) and justify added
+  complexity, including discipline 4's fuller fusion, against
+  measured need rather than adopting it as the baseline.
 - Edit memory by principles, not by accreting narrow rules: provenance
   lives in the commit, not the file; a contrastive example teaches more
   than an added rule; store analysis, not logs; after every add, trace
   the index to confirm the new entry is reachable; and place each item by
   test (core, deferred, skill, or do not store). Reference sizing from
   the source's current generation: 20,000 characters per file, 65,536
-  total core.
+  total core. Those limits describe the current letta-code generation
+  only: the V1 server line deprecated and removed block-limit
+  enforcement in its 0.16.7 release, so they must not be cited as
+  enforced V1 behaviour.
 
 *Why:* this is Route Failure ≠ Task Impossibility applied to memory: a
 failed lookup proves the lookup failed, not that the fact does not exist,
@@ -297,6 +428,16 @@ code not, on licence grounds), michielhdoteth/squish-memory (calibration
 measurement), topoteretes/cognee (the session-to-permanent promotion
 gate), letta-ai/letta in its current letta-code generation (editing
 doctrine and reference sizing).
+
+*Standing after the third pass: CONFIRMED, by counterexample. A
+production delete-all cleaned memories and entity records but never
+touched the raw-message store, so deleted content was fed back to
+the model and re-extracted: exactly the derived-copy failure the
+receipt and tombstone design exists to prevent. A
+silent-non-indexing report is the write-then-unrecallable failure
+tiered recall exists to surface. One caution attaches at the
+margins: a stored profile's hard part is downstream application, not
+recall accuracy, so a recall-only eval overstates profile quality.*
 
 ### 6. Test skills the way blockers test code
 
@@ -327,6 +468,12 @@ its guidance must be written in the form its failures take.
   different interpretations across five reps means the wording is not
   binding; tighten the form before adding words. Micro-tests verify
   wording; they do not replace pressure scenarios.
+- **Gate skill changes on planted defects.** Before a revised skill
+  ships, run it against tasks with known planted defects and require
+  detection parity with the prior version. The false-green source
+  repo runs exactly this gate on its own releases (9 of 9 detection
+  parity); a detection regression blocks the ship the way a failing
+  eval does (discipline 7).
 - For any new or materially revised high-stakes skill, run pressure
   scenarios with subagents *without* the skill and record the exact
   rationalizations used to break the rule. Write the minimal skill
@@ -336,15 +483,39 @@ its guidance must be written in the form its failures take.
   playbooks: the excuse in one column, the fact in the other. Tables are
   the discipline-failure form; the first row of the table above decides
   where they belong.
-- Skill descriptions state triggers and the negative boundary only. A
-  description that summarises the workflow gets skipped or mis-triggered;
-  lint the library against this standard periodically.
+- Skill descriptions state triggers and the negative boundary only,
+  and are written assertively. Models systematically undertrigger,
+  so a merely accurate description under-fires; all trigger context
+  belongs in the description itself. (The second pass read this rule
+  as triggers-only minimalism; the vendor's own guidance is pushier,
+  and this text now matches it.) A description that summarises the
+  workflow gets skipped or mis-triggered; lint the library against
+  this standard periodically. One structural limit: a one-step task
+  may never trigger a skill however good the description is, so
+  skills wrapping one-step jobs are structurally unreliable and must
+  not be gated as if triggering were under the author's control.
+- **Test descriptions at vendor numbers.** Build a balanced 20-query
+  trigger set (should-trigger plus near-miss should-not), split
+  60/40 train/held-out, select the wording on the held-out score,
+  and benchmark with-skill against without-skill in fresh subagents.
+  The second pass supplied the method without these numbers; they
+  are the vendor skill-creator's shipped defaults.
 - Improve playbooks by generation and selection: produce candidate
   wordings, score them on fixed examples, keep the winner. Offload
   deterministic work to code rather than asking the model to simulate it,
   and decompose multi-step work into chained steps with inspectable
   joins; these are the prompting practices that survived evidence grading
   in the source guides.
+- Run that improvement as a loop with named roles: an Executor runs
+  the skill, an Analyst grades the run against binary criteria, a
+  Mutator makes exactly one surgical change per round (add_example,
+  add_constraint, restructure, add_edge_case), kept if better,
+  reverted if worse. One mutation per round is what makes the
+  keep/revert verdict attributable.
+- Price the ceremony. The source pipeline's cost is its top user
+  complaint (context overhead; a simple plan consuming a full token
+  budget). The heavier forms in this discipline carry an explicit
+  cost budget, or users will disable them rather than obey them.
 - Keep a session-diagnosis pass available, run as a forensic protocol,
   not a chat about the session: case-file intake, a fixed set of report
   dimensions, and a citation-or-discard rule (every finding cites file
@@ -368,6 +539,17 @@ completion; the diagnosing protocol), findscripter/everything-skills
 (the description rule), dair-ai/Prompt-Engineering-Guide (the surviving
 practices, as provenance).
 
+*Standing after the third pass: QUALIFIED, and confirmed in
+strengthened form from three directions: the source corpus's
+maintainer ran the micro-testing method in public on a real
+form-matching failure (a fixed opener template applied regardless of
+context), reproduced the failures at 6 of 6 and 24 of 24 runs,
+changed the form, and shipped the retune; the platform vendor's own
+skill-creator independently prescribes the same run-eval-rewrite loop
+and a separate description-triggering optimisation pass; an unrelated
+extraction kept the same four domain-neutral skills. The
+qualification is the narrowed description rule above.*
+
 ### 7. Gate what enters the library, and grade reliability
 
 **Rule:** third-party skills, plugins, and connectors are untrusted input
@@ -377,6 +559,11 @@ set.
 - Every important skill carries a small fixed eval set (inputs, expected
   properties, a rubric grader) run before a revision ships. Regressions
   block the ship. Define the evals before the code they grade.
+- Every eval set carries a reference solution proving the task is
+  solvable, balanced should/should-not cases, and isolated trials so
+  prior-trial artifacts cannot leak. Model judges get an explicit
+  "Unknown" exit. A 0% pass rate across many trials is treated first
+  as a broken-task signal, not a model failure.
 - Grade agent reliability across skill or doctrine changes with pass@k
   (can it succeed) and pass^k (does it succeed every time), against
   declared thresholds: capability pass@3 of at least 0.90; regression
@@ -400,6 +587,9 @@ set.
   no candidates on any platform and says so in its own receipts; match
   that refusal posture, and do not claim promotion evidence the mechanism
   cannot produce.
+- Every reported metric distinguishes measured-this-run from
+  replayed. A headline metric that silently replays a prior run's
+  cached measurement overstates what was observed.
 - Audit the configuration surface against a concrete checklist: secrets
   (10 rules over a 25-pattern table), permissions (17), hooks (40), MCP
   configuration (49 across four modules), and prompt-defense posture:
@@ -407,6 +597,11 @@ set.
   instruction files, the single highest-value item for a stack whose
   control surface is largely prompt and skill text. The full taxonomy is
   268 rules in 15 modules; mirror it selectively, by name.
+- Prefer structural parsing over pattern lists for command rules. A
+  production bypass of a regex-based destructive-command rule at an
+  operand seam, inside the audit vendor's own sibling product, is
+  the standing warning; every regex rule carries a seam-case
+  regression set.
 - Score the audit honestly: per category first (each bucket starts at
   100, floored at 0; the overall score is their plain average, so one
   catastrophic category costs at most 20 points), deductions weighted by
@@ -437,6 +632,17 @@ set.
   not pass the flag that disables the guard, and its
   infrastructure-failure mode is a named, documented setting, not a
   silent pass.
+- Closure claims are mechanically checked. No issue or defect is
+  closed citing a pull request or a release without a mechanical
+  check that the PR merged or the release exists. A verified
+  contributor audit of one source repo found closures citing
+  unmerged PRs and a release that did not exist at the time;
+  evidence discipline covers tracker and closure claims, not only
+  eval artifacts.
+- Unchecked is not rejected here either: candidates a deadline left
+  unexamined never enter the accepted cache, and a state is marked
+  explored only after its evidence is accepted (the same rule as
+  discipline 5, applied to the library and its gates).
 - Periodically grade a sample of real deliverables (research, reports)
   the way a trading record is graded, not just the code artifacts.
 - Keep the self-audit instruments, with the local design work done first:
@@ -449,6 +655,24 @@ set.
   together with locally written counting definitions, because the source
   names them and defines none of them.
 
+- **Every directory self-describes at two compression levels.** A
+  generated one-sentence abstract (L0), then an overview (L1), read
+  before full content (L2). Index discipline generalises from
+  "maintain a root index" to "every directory self-describes",
+  across the library and the memory store alike.
+- Report eval and benchmark results as deltas: same harness, native
+  versus augmented, models named, reproduction scripts kept with
+  the results. A bare score without its harness is marketing.
+- Tool descriptions are eval-tested artifacts, like skill
+  descriptions (discipline 6), including measured namespacing
+  choices.
+- A release gate must live in files you own. Hosted eval definitions
+  are not fully exportable, so a gate defined only inside a hosted
+  tool is a gate you do not hold.
+- Derived per-person representations carry explicit observed-by /
+  knows-about scoping: what a representation may claim is bounded
+  by who observed it and what it is about.
+
 *Why:* the blocker law covers code. The configuration surface (skills,
 hooks, connector configs, permissions) is where an agent can be quietly
 rewired, and it had no gate. Sources: promptfoo/promptfoo (declarative
@@ -457,7 +681,21 @@ harness and its evidence layer), affaan-m/agentshield (the audit
 taxonomy and scoring honesty), hashgraph-online/hol-guard (the HCS-28
 scan rubric), JeongJaeSoon/agent-guard (the commit-boundary guard),
 fainir/most-capable-agent-system-prompt (the self-audit instruments,
-completed locally). Patterns adopted; tools not installed this pass.
+completed locally), volcengine/OpenViking (directory
+self-description and delta-style reporting; product not adopted),
+plastic-labs/honcho (perspective scoping; service not adopted).
+Patterns adopted; tools not installed this pass.
+
+*Standing after the third pass: QUALIFIED, confirmed from four
+directions: neither the Agent Skills specification, its validator,
+nor the official MCP Registry carries any safety, provenance, or
+vetting signal, so scan-before-list fills a gap the official layer
+leaves open rather than duplicating it; the two largest community
+skill collections ship at scale with no scan or eval evidence; a
+third independent implementation of commit-boundary gating exists in
+a widely starred fork. The qualifications are the process-level ones
+landed above: tracker and closure hygiene, and
+measured-versus-replayed provenance.*
 
 ### 8. Mechanise the completion claim
 
@@ -478,8 +716,38 @@ fires when the habit slips.
   claims are validated against the recorded evidence log, not against
   whatever context survived; after compaction, the ledger and the commit
   log outrank recollection.
+- **Capture evidence runner-aware.** The automated evidence field
+  records a named pass/fail token emitted by the runner, never "the
+  last log line": the source's per-plan ledger script records the
+  last non-blank log line as the test result and has ledgered a
+  duration line as an outcome. A duration is not a result. State
+  the plan list in JSON with only the status field editable; models
+  overwrite JSON less inappropriately than Markdown.
 - The mechanism checks that evidence exists. Whether the evidence
   supports the claim remains a judgement, and review mode still applies.
+- **Enforce user-thrown gates mechanically.** At plan authoring,
+  tag any task whose brief contains gate language, under a strict
+  definition: user gates, agent gates, and the grey zone are all
+  tagged; over-tag and let the execution hook filter, rather than
+  interrogating mid-plan. At task close, require evidence in a named
+  form per criterion; where the verification method itself is
+  unspecified, run a specify-the-HOW protocol at close time
+  (observable outcome, proof mechanism, scope, failure policy)
+  instead of letting the agent invent a method. The field failure
+  this stops is documented by the source fork: an agent inventing a
+  cheap verification method at execution time and closing the gate
+  with an inline shortcut. One element of that fork is explicitly
+  not carried over: its hooks fail open; local gates fail closed.
+- **Audit scope mechanically: diff against intent.** A
+  standard-library-only, no-network, read-only check compares a
+  finished diff against the brief's one-line stated intent and
+  flags unrelated paths, new dependencies, public API renames,
+  config/CI edits, oversized hunks, formatting-only files, and
+  subsystem spread, emitting a keep / split / justify report.
+  Discipline 3 audits tests; nothing else adopted audits scope, and
+  minimum-sufficient-change otherwise rests on self-report. For
+  delegated work the mapping is direct: the intent line goes in the
+  brief, the scope report attaches to the handback.
 - Cap the fix loop at five rounds per task. Rounds 1 to 3 resume the
   original implementer with the findings verbatim; rounds 4 to 5 dispatch
   a fresh implementer on a more capable model. Every round ends with a
@@ -492,6 +760,11 @@ fires when the habit slips.
   say to ask about first, or a plan so broken every path is a guess.
 - Three failed fixes is a stop, not a streak: question the architecture
   instead of attempting a fourth fix on the same hypothesis.
+- At verdict points, vote before concluding: at the root-cause and
+  completion moments, take 3 to 5 deliberately different starts,
+  treat disagreement as strong evidence and agreement as weak, and
+  deny the vote proof status. The test or the command still proves
+  the answer.
 - Protect the gate from the worker. Any gated workflow carries a
   `forbid:` list: paths the worker may never write because the gate reads
   them. Bounds are declared as a file (iterations, no-progress window,
@@ -499,11 +772,19 @@ fires when the habit slips.
   Every gate ships a negative control: an ungated run demonstrating the
   failure the gate exists to catch. Configured is not active: an
   integration counts as installed only when a fresh session produces a
-  receipt of it working.
+  receipt of it working. Every gate's deny
+  message names the narrowest scoped disable for the specific gate
+  that fired: a gate whose scoped escape knob appears in no deny
+  message or documentation trains users to take the global
+  off-switch, and the gate dies entirely.
 - Loop guards start from stated defaults and are tuned by evidence:
   pull-based claiming every 30 seconds, a hard task timeout near 30
   minutes, delegation depth near 5, retry once, then change strategy or
   escalate.
+
+- Scale delegation effort numerically: state the effort budget in
+  the delegation prompt itself, as a number, so the delegate's
+  depth is a decision rather than a mood.
 
 *Why:* this doctrine's own history includes a fabricated completion
 report. A rule an agent believes it satisfied is weaker than a check that
@@ -514,8 +795,20 @@ obra/superpowers (the execution arithmetic, the freshness unit, the
 scope-versus-verification split), qualixar/bounded-loops (declared
 bounds, forbid lists, negative controls), TerminallyLazy/
 tree-ring-memory-codex-plugin (configured is not active),
-fainir/most-capable-agent-system-prompt (loop-guard defaults); all
+fainir/most-capable-agent-system-prompt (loop-guard defaults),
+pcvelz/superpowers (user-thrown gate enforcement and the
+specify-the-HOW protocol; its fail-open hooks not carried over),
+Shubhamsaboo/awesome-llm-apps (the scope-creep detector); all
 reimplemented natively, none installed.
+
+*Standing after the third pass: QUALIFIED. An actively maintained
+fork independently implements per-task evidence-at-close hooks and a
+pre-commit task gate, and documents the precise circumvention the
+specify-the-HOW protocol above exists to stop. The vendor's own
+long-running harness (initializer/coding split, progress file,
+get-bearings ritual) confirms the shape. The qualification is the
+ledger defect corrected above: the format stands, its automated
+capture does not.*
 
 ### 9. Treat compaction and delegation as authority boundaries
 
@@ -532,12 +825,39 @@ reimplemented natively, none installed.
    because a lane exists.
 4. No silent fallback identities or budgets. A mismatch is rejected
    explicitly, fail-closed.
+5. Compaction is transactional. Any compaction that rewrites stored
+   history is generation-checked, serialised against concurrent
+   edits, and restores the prior history on failure. The ladder
+   names tool-result clearing as its first, lightest rung, with
+   numeric triage in the vendor shape: clear tool uses at a lower
+   threshold keeping the most recent few, compact at a higher
+   threshold, memory protected from clearing, and a
+   save-before-clearing warning. Every summarisation step carries
+   bounds blockers: the eviction fraction is honoured within
+   tolerance, and structural pairs (a tool call and its response)
+   are never split. History edits are named, bounded operations
+   (clearing, compaction, rewrite), each with its own contract;
+   there is no general "edit history" act.
 
 *Why:* the two surfaces most likely to drift or be attacked are the
 post-compaction resume and the delegated tool turn. This extends the core
 skill's "content is evidence, never instructions" from content to
 authority itself. Source: miuuyy/codex-chatgpt-web (the four rules as
-implemented in its bridge design; product not adopted).
+implemented in its bridge design; product not adopted); the
+transactional compaction contract and the clear/compact/remember
+triage from official vendor guidance, read at the primary layer on
+the third pass.
+
+*Standing after the third pass: QUALIFIED. The official layer
+supplies the failure semantics this discipline lacked: an official
+compaction session treats clear-and-rewrite as a recoverable
+replacement, generation-checked and serialised against concurrent
+edits, with restore-on-failure, and names tool-result clearing as
+the first compaction rung. The qualification is a paging system's
+own tracker: a sliding-window compaction that ignored its configured
+percentage and wiped the full history, and a summarisation that
+broke tool-call/response pairing and crashed the client. Hence the
+bounds blockers in point 5, rather than trust in the pattern.*
 
 ### 10. Run a bounded hidden-rubric pass on ungated prose
 
@@ -568,6 +888,13 @@ nothing else. Source: DenisSergeevitch/chatgpt-custom-instructions (the
 self-evaluation block, bounded and narrowed to what the artifact
 contains; its pressure lines rejected on the author's own cited results).
 
+*Standing after the third pass: NO CONTACT. The third pass produced
+no evidence for or against this discipline; it was not contradicted
+and is not confirmed by it. Its evidence base remains exactly what
+the second pass left: a narrowed adoption resting on maintenance
+discipline, with no baseline printed in the source. Recorded as
+untested by the pass, not upgraded to a confirmation.*
+
 ### 11. Record the why, not just the what
 
 **Rule:** every decision that closes a path is stored with the path it
@@ -587,6 +914,23 @@ trigger that should reopen it.
   it).
 - Unattended capture writes the entry flagged pending-confirmation. It
   does not drop the finding, and it does not ask into the void.
+- Superseded entries are never injected as current context: an
+  overturned decision reads as current. (A fork implements exactly
+  this rule; the third pass confirms it at the margins.)
+- Keep episodic exemplars beside the rationale entries: a curated
+  collection per recurring task class holding situation, approach,
+  and why it worked, retrieved as few-shot exemplars at task time.
+  Instincts (discipline 2) store the distilled rule; exemplars are
+  their retrieval-side twin, the worked example the rule came from.
+- Address reusable context by content hash. Research corpora,
+  teardown bundles, and chart packs are stored once under the
+  SHA256 of their content and attached to many prompts by hash,
+  through an open loader namespace; the hash doubles as the
+  provenance stamp this discipline's See field wants.
+- Grade this memory with an experience-memory eval shape (static
+  and dynamic state, workflow knowledge, environment gotchas,
+  premise awareness, scored over logged trajectories). The older
+  QA benchmarks cannot grade this knowledge class at all.
 - Structure is enforced mechanically (an entry without an Id is an
   error, checked in the existing gate). Whether the rationale is true
   stays human judgement, and the schema says so.
@@ -597,7 +941,18 @@ captures why a path was rejected, which is the knowledge whose absence
 makes an agent re-propose a dead design with fresh confidence. Source:
 oliver-zehentleitner/keep-the-why (schema and invariants adopted
 natively; the structural half of its linter folded into the existing
-gate, the tool itself not imported).
+gate, the tool itself not imported), simonw/llm
+(content-addressed fragments), the LangMem conceptual guide
+(episodic exemplars), xiaowu0162/LongMemEval-V2 (the
+experience-memory eval shape).
+
+*Standing after the third pass: CONFIRMED. A peer-track benchmark
+independently defines workflow knowledge, environment gotchas, and
+premise awareness over logged trajectories as graded memory
+abilities, which is exactly the knowledge class rationale entries
+store; neither of the older QA benchmarks can grade it at all. The
+vendor's lead-agent pattern of saving its plan to memory to survive
+context limits is adjacent practice, a weak confirmation only.*
 
 ### 12. Keep every fact timeless, dated, or a pointer
 
@@ -616,6 +971,11 @@ Nothing may claim to be current without a stamp.
   present-tense claim about a volatile noun outside a dated container is
   an error; a stamp older than the freshness window (default 7 days) is
   a warning; a pointer must resolve.
+- Refresh-on-read is a named option: a dated fact or pointer may
+  refresh its stamp when read and found still true, as a declared
+  store contract, never an assumed behaviour. Production systems
+  ship time-to-live purely as configuration; there is no algorithm
+  to copy, only contracts to state.
 - Every aged line gets exactly one of three answers: re-observe it,
   convert it to a pointer, or retire it into a dated note. There is no
   fourth answer called leaving it.
@@ -628,6 +988,16 @@ eugeniughelbur/obsidian-second-brain and its OKM freshness spec (the rule
 adopted; the linter reimplemented rather than imported, as it is tuned to
 its own vault), corroborated independently by ReARCLabs/bilinc
 (last-confirmed stamping with a review window).
+
+*Standing after the third pass: QUALIFIED, supported at the margins
+and never directly tested. An independent fork frames stale state
+as possibly stale rather than as a resume instruction; a second,
+unrelated framework ships expiry purely as store configuration,
+consistent with this discipline's contracts-only posture; and
+operation-level update scoring (discipline 4) extends its
+measurement side. No pass exercised the freshness lint or the
+refresh loop itself; the discipline stands uncontradicted and
+lightly evidenced.*
 
 ## How these compose with the core
 
@@ -645,7 +1015,11 @@ its own vault), corroborated independently by ReARCLabs/bilinc
 - This reference was revised on the day it landed by a second,
   artifact-level pass. Where the first account of a mechanism and the
   artifact disagreed, the artifact won, and the corrections are recorded
-  in the changelog (2.6.0), not smoothed over.
+  in the changelog (2.6.0), not smoothed over. A third pass then
+  graded all twelve disciplines against the layers the first two
+  skipped: 2 confirmed, 8 qualified, 1 warned, 1 untested by the
+  pass. Its corrections and concretions are in the changelog
+  (2.7.0), and each discipline carries its standing in place.
 
 ## Backlog: recorded, not adopted
 
