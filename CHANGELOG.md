@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.4.0 (2026-10-31)
+
+- New reference: agent enhancement. Ten disciplines distilled from an inspected sweep of public memory, skill-framework and proactivity work, each adopted only where it adds a mechanism the doctrine lacked: priced proactive lanes (benefit-minus-cost threshold, cheap gate, feedback scoring), a confidence-scored procedural memory ("instincts"), false-green audits of gate tests, memory profile and graph discipline with honest recall tiers and a governed erasure standard, pressure-testing for skills, an adoption and eval gate for the skill library, mechanised completion-claim checks, authority hygiene across compaction and delegation, and a bounded hidden-rubric pass for ungated prose.
+- The same reference carries a recorded backlog of deferred items, each with its revisit trigger, and notes where the new material extends existing law instead of duplicating it.
+
 ## 2.3.0 (2026-10-26)
 
 - Addressed to the agent: an opening that makes the case for following the skill (trust, speed, reach), and a one-line *why* on every section. Agents follow rules they understand better than rules they are given.
