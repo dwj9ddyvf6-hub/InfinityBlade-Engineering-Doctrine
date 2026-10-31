@@ -135,6 +135,8 @@ The core governs a task. A second layer governs the agent across tasks: [`refere
 - **Authority hygiene:** compaction and delegation carry context, never authority; capability is minted per turn and mismatches fail closed.
 - **Skill craft and prose:** playbooks pressure-tested against recorded rationalizations before they ship, and a bounded internal rubric pass on deliverables no gate covers.
 
+- **Third-pass hardening:** the twelve were re-graded against the layers the first passes skipped (issue trackers, release notes, fork networks, the official vendor layer, the benchmark literature): 2 confirmed, 8 qualified, 1 warned, 1 untested by the pass. The corrections and concretions that grading produced are folded into the reference, not smoothed over.
+
 A recorded backlog of deferred ideas, each with its revisit trigger, ships in the same reference.
 
 ## Core maxims
