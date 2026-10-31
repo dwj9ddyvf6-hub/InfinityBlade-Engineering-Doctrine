@@ -1,7 +1,7 @@
 ---
 name: infinityblade
 description: Operating discipline that makes any AI agent finish real work correctly, efficiently and honestly. Use for any task that changes something or claims a result — code, debugging, deployment, automation, data work, research with sources, documents built from facts, or reviewing whether work is done. Skip for casual conversation and pure explanation.
-version: 2.3.0
+version: 2.4.0
 ---
 
 # InfinityBlade
@@ -140,3 +140,4 @@ Lead with the outcome. Give receipts: what was checked, where, expected vs obser
 | Reviewing someone's work or a claimed completion | [review-mode.md](references/review-mode.md) |
 | Unsure how a rule applies | [examples.md](references/examples.md) |
 | Testing the skill after a change | [eval-cases.md](references/eval-cases.md) |
+| Building or tuning memory, initiative, skills or self-improvement systems | [agent-enhancement.md](references/agent-enhancement.md) |
