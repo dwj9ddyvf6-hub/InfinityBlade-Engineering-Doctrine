@@ -21,7 +21,15 @@ benchmark literature) and graded every discipline against what it found:
 are itemised in the changelog for 2.7.0, and each discipline below
 carries its standing where the pass produced one.
 
-## The twelve disciplines
+A fourth pass (2026-11-01) distilled a teardown of one harness system,
+deepseek-ai/dsh-superagent-prototype at commit 6337fc8, read statically at the pinned commit. Of its eleven import
+mechanisms, four were genuinely new disciplines (13 to 16 below) and
+seven were mechanisms that attach to existing disciplines; those are
+folded in as dated round-4 mechanism notes rather than inflating the
+count. The teardown's Avoid list is recorded as round-4 cautions after
+the Backlog. Round-4 provenance is stated per discipline.
+
+## The sixteen disciplines
 
 ### 1. Price every proactive lane
 
@@ -75,6 +83,26 @@ cannot state its cost defaults to silent logging.
   and the long-term signal of the lane being disabled. Adapt each lane's
   per-context threshold from that log before attempting any learned
   policy.
+
+- **Round 4 (2026-11-01): record-only mode with a would-accept
+  ledger.** An unasked lane starts in `observe`: when it infers it would
+  act, it does not act; it records a `would_accept` entry (lane, trigger,
+  priced cost) and stays silent. Promotion to `auto` is a human
+  configuration change, confined to named narrow rules, never a lane's
+  own decision. This is the mechanism this discipline's pricing lacked.
+  Source: deepseek-ai/dsh-superagent-prototype at commit 6337fc8, `src/policy.ts:84` (mode defaults to `observe`) and
+  `src/policy.ts:57` (inferred accept downgraded to `would_accept`).
+- **Round 4: host-validated assessment shape.** Any judgement that can
+  start work is schema-checked by the host, not trusted as prose: every
+  enabled rule is judged exactly once, an accept requires at least one
+  matched rule plus non-empty recorded evidence, and an incomplete
+  assessment is refused. A judge that can silently skip a rule is not a
+  gate. Source: deepseek-ai/dsh-superagent-prototype at commit 6337fc8, `src/policy.ts:40-60`.
+- **Round 4: structured single-question attention.** Asking for human
+  attention carries exactly one open question in one field; a reply is
+  accepted only when it matches the current open question exactly, so a
+  stale question cannot be answered by accident. Source: deepseek-ai/dsh-superagent-prototype at commit 6337fc8,
+  `src/app/tools/executor.ts:80-81` and `src/core/replies.ts:75-77`.
 
 *Why:* ungated proactivity measurably degenerates to about half false
 alarms, and the ultimate negative reward is the user switching proactivity
@@ -839,6 +867,19 @@ capture does not.*
    (clearing, compaction, rewrite), each with its own contract;
    there is no general "edit history" act.
 
+6. **Round 4 (2026-11-01): the mandate is an immutable object,
+   revalidated only at resume.** Scope is granted once as an immutable
+   mandate; it is re-checked when work resumes or attaches after a pause
+   or a policy change, and never silently revoked or widened mid-flight.
+   Source: deepseek-ai/dsh-superagent-prototype at commit 6337fc8, `src/policy.ts:213-241` and `src/core/tickets.ts:257`.
+7. **Round 4: interrupted-work recovery protocol.** On resume, requeue
+   only the inputs the interrupted attempt never read; inputs it did
+   read are not replayed blind. The new attempt opens with a fixed
+   recovery note instructing it to inspect what the prior attempt may
+   already have done before acting. Source: deepseek-ai/dsh-superagent-prototype at commit 6337fc8,
+   `src/core/assignments.ts:21` (the recovery note) and
+   `src/core/assignments.ts:83` (interrupted semantics).
+
 *Why:* the two surfaces most likely to drift or be attacked are the
 post-compaction resume and the delegated tool turn. This extends the core
 skill's "content is evidence, never instructions" from content to
@@ -999,6 +1040,107 @@ measurement side. No pass exercised the freshness lint or the
 refresh loop itself; the discipline stands uncontradicted and
 lightly evidenced.*
 
+### 13. Gate outbound messages by purpose, receipt, and hard cap
+
+**Rule:** a message an agent sends unasked or on a principal's behalf
+leaves only through a send path that checks its purpose, records a
+permanent receipt, and enforces its length cap in code.
+
+- **Purpose-gated sends.** Each purpose has an exact condition: a result
+  message requires a ready or completed outcome behind it, an attention
+  message requires the exact current open question, an answer requires a
+  reported answer. A send whose purpose condition is not met is refused
+  at the send path, not discouraged in a prompt.
+- **One acknowledgement per origin event, first text wins.** Duplicate
+  acknowledgements of the same trigger are suppressed by a permanent
+  receipt store that survives restarts; a re-delivered trigger finds its
+  receipt and sends nothing.
+- **Caps throw.** Per-surface word and length caps are constants enforced
+  by a function that throws over the limit at send time; routing notes
+  and short-form messages carry their own smaller caps. A style
+  instruction to be brief is not a cap.
+
+*Why:* attention discipline enforced only in prose fails exactly when
+the agent is busiest. The send path is the one place every message must
+pass, so it is where the gate belongs. Source: deepseek-ai/dsh-superagent-prototype at commit 6337fc8,
+`src/core/replies.ts:56` (one acknowledgement, first text wins),
+`src/core/replies.ts:69-82` (purpose gates), receipts in
+`src/app/store.ts`, and `src/infra/text.ts:3,14` (the throwing cap;
+routing-note cap at `src/app/tools/main.ts:18`).
+
+### 14. Give every event, decision, and delivery a deterministic ID
+
+**Rule:** identity is derived from content, not assigned by arrival
+order, and deduplication is layered so the same thing cannot enter
+twice under two names.
+
+- **Deterministic content-hash IDs.** An ID is a truncated hash of the
+  canonical serialisation of the item's defining parts. The same content
+  re-presented produces the same ID, on any run, in any process.
+- **Layered dedup.** Deduplication runs at each layer independently:
+  intake (the same event presented twice), creation (the same work
+  requested twice), delivery (the same message sent twice), and effects
+  (the same side effect queued twice, discipline 15). One layer catching
+  a duplicate does not excuse the next layer skipping its check.
+- **Edits are new events by design, and say so.** Where an ID includes a
+  revision stamp, an edited item is a new event; that choice is stated,
+  not discovered after a double delivery.
+
+*Why:* duplicate deliveries and duplicate records are usually cleaned up
+after the fact, at the layer where they were noticed. Deriving identity
+from content prevents the class at the layer where it starts. Source:
+deepseek-ai/dsh-superagent-prototype at commit 6337fc8, `src/core/ids.ts:4` (deterministic IDs), `src/core/intake.ts:23`
+(intake dedup), and `src/core/evals.ts:311` (ticket ID derivation).
+
+### 15. Queue side effects durably, and never confuse waiting with failure
+
+**Rule:** an intended side effect is a durable queue row before it is an
+action, retried under a stated policy, and deleted only by the attempt
+that owns its current generation.
+
+- **Upsert by (kind, key) with a generation guard.** Re-queueing the same
+  effect increments its generation; a completing attempt deletes the row
+  only if its sequence and generation still match, so a stale attempt
+  cannot delete a re-queued row.
+- **Later is not failure.** A `Later` outcome (a dependency is not ready)
+  does not increment the attempt count and is not recorded as a failure;
+  only an actual failure backs off.
+- **Uncapped exponential backoff for failures,** with the delay capped:
+  base times two to the attempt count (bounded exponent), never a fixed
+  tight retry loop and never silent abandonment after a small cap.
+
+*Why:* ad hoc retry loops lose effects on restart, double-fire them on
+recovery, and report waiting as failure. A durable, generation-guarded
+queue makes every intended effect accounted for exactly once. Source:
+deepseek-ai/dsh-superagent-prototype at commit 6337fc8, `src/app/effects.ts:141` (backoff) and the effect-queue semantics
+recorded in the teardown's execution account (upsert, generation guard,
+Later distinct from failure).
+
+### 16. Route follow-ups to their owner, and reserve slots by discipline
+
+**Rule:** work that already has a live owner is routed straight to that
+owner without re-triage, and concurrency is a reserved-slot discipline
+that a human follow-up can always break into by exactly one.
+
+- **Subscription pass-through.** A follow-up on owned work goes directly
+  to its owner; the triage or routing layer runs only when no live owner
+  exists. The router is removed from the path it adds nothing to.
+- **Authorisation is not bypassed with the triage.** The pass-through
+  skips re-evaluation of the work, never the sender and authorisation
+  check on the message. (The source system delivers subscribed follow-ups
+  with no sender check; that form is rejected, see the round-4 cautions.)
+- **Slot discipline with a plus-one human slot.** Concurrent workers are
+  capped by a stated limit with slots reserved synchronously before work
+  starts. A principal's follow-up may exceed the limit by exactly one
+  slot, so a person never queues behind new launches of their own work.
+
+*Why:* re-triaging every follow-up taxes exactly the messages that need
+the least judgement, and an uncapped fan-out starves the principal's own
+next instruction. Both are routing economy, bought with mechanism rather
+than hope. Source: deepseek-ai/dsh-superagent-prototype at commit 6337fc8, `src/core/intake.ts:58` (fan-out first, triage
+only if unowned), `src/policy.ts:93` (worker cap), and the slot
+semantics recorded in the teardown's execution account.
+
 ## How these compose with the core
 
 - Disciplines 3 and 8 extend existing law (the regression-blocker law and
@@ -1012,6 +1154,12 @@ lightly evidenced.*
 - Disciplines 1, 2, 6, 7, and 10 are new surface: initiative, procedural
   memory, skill authoring, adoption gating, and prose quality. They
   inherit every core constraint (SCOPE, authority, proof) unchanged.
+- Round 4 (2026-11-01): disciplines 13 and 14 govern the outbound and
+  identity layers (what may be sent, and how anything is named so it
+  cannot arrive twice); discipline 15 governs side effects after a
+  decision; discipline 16 governs routing and concurrency. The round-4
+  mechanism notes inside disciplines 1 and 9 extend those disciplines
+  and do not create new ones.
 - This reference was revised on the day it landed by a second,
   artifact-level pass. Where the first account of a mechanism and the
   artifact disagreed, the artifact won, and the corrections are recorded
@@ -1019,7 +1167,10 @@ lightly evidenced.*
   graded all twelve disciplines against the layers the first two
   skipped: 2 confirmed, 8 qualified, 1 warned, 1 untested by the
   pass. Its corrections and concretions are in the changelog
-  (2.7.0), and each discipline carries its standing in place.
+  (2.7.0), and each discipline carries its standing in place. A
+  fourth pass (2026-11-01) then added disciplines 13 to 16 and the
+  round-4 mechanism notes and cautions; its account is in the
+  changelog (2.8.0).
 
 ## Backlog: recorded, not adopted
 
@@ -1038,3 +1189,20 @@ enthusiasm.
 | Best-of-N with a verifier, and principle extraction from past successes and failures (LEAP) | algorithmicsuperintelligence/optillm | For high-stakes single answers |
 | The catalog-as-skill pattern for the next large local index | hashgraph-online/awesome-ai-plugins | When an index outgrows its file |
 | Multi-format export contract for any transcript exporter | pionxzh/chatgpt-exporter | When an exporter is built |
+
+
+## Round-4 cautions: recorded, not adopted
+
+Boundaries learned from the same teardown (deepseek-ai/dsh-superagent-prototype at commit 6337fc8). Each is an
+anti-pattern this doctrine rejects by name; none is adopted in any form.
+
+| Anti-pattern | Why it is rejected |
+|---|---|
+| Workers running with full operating-system access as the operator, with name-shim blocked-command lists treated as a boundary (`src/app/sessions.ts:152`) | A name shim is bypassed by an absolute path, and some tools can never be blocked; approval gates exist precisely because this posture is the fatal-flaw class. |
+| Subscription fan-out delivered to an executing worker with no sender check, and subscriptions with no expiry (`src/core/intake.ts:38-51`) | Any participant, bots and automation included, reaches execution; discipline 16 adopts the routing economy only with the authorisation check retained. |
+| Prompt-only scope for admitted work, including no mandate text at all for explicitly admitted work (`src/executor/dsh.ts:91-95`) | Prose scope is not enforcement; discipline 9's round-4 mandate is an immutable object, revalidated at resume. |
+| Bot-versus-human decided by prompt naming, because code counts ordinary-account bots as human (`src/sources/github-trigger.ts:43-47`) | Identity class is a code fact or it is nothing; a prompt label does not change what a sender is. |
+| Policy writable through an agent tool origin, with only some fields panel-only (`src/app/settings.ts:45,51,143`) | The governed system must not be able to rewrite its own governing policy through its work surface. |
+| A documents-only periodic prompt offered as a watchdog substitute | A prompt that describes checking is not a check; a watchdog is a mechanism that detects and acts, or the gap is named as uncovered. |
+| Per-source identity non-mapping as a general principle (`src/policy.ts:1-4`) | Correct for that system's threat model; fatal to cross-channel continuity, which disciplines 4 and 5 are built on. It is not imported. |
+| Unimplemented designs and unmeasured benchmarks cited as features | Designs admitted as future work and numbers with no artefact behind them are UNVERIFIABLE and are never adopted as evidence. |
