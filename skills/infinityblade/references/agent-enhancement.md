@@ -21,6 +21,8 @@ benchmark literature) and graded every discipline against what it found:
 are itemised in the changelog for 2.7.0, and each discipline below
 carries its standing where the pass produced one.
 
+A fifth pass (2026-11-02) read the source code of every repo on the list at file and line level and added disciplines 17 and 18 plus the round-5 concretions recorded at the end of the discipline list. Its account is in the changelog (2.9.0).
+
 A fourth pass (2026-11-01) distilled a teardown of one harness system,
 deepseek-ai/dsh-superagent-prototype at commit 6337fc8, read statically at the pinned commit. Of its eleven import
 mechanisms, four were genuinely new disciplines (13 to 16 below) and
@@ -29,7 +31,7 @@ folded in as dated round-4 mechanism notes rather than inflating the
 count. The teardown's Avoid list is recorded as round-4 cautions after
 the Backlog. Round-4 provenance is stated per discipline.
 
-## The sixteen disciplines
+## The eighteen disciplines
 
 ### 1. Price every proactive lane
 
@@ -1141,6 +1143,198 @@ than hope. Source: deepseek-ai/dsh-superagent-prototype at commit 6337fc8, `src/
 only if unowned), `src/policy.ts:93` (worker cap), and the slot
 semantics recorded in the teardown's execution account.
 
+## Round 5 (2026-11-02): disciplines 17 and 18, and the mechanical concretions
+
+A fifth pass read the source code (not the docs) of every repo on the
+enhancement list, graded at file and line level against disciplines 1 to
+16. Two mechanisms were large enough to be new disciplines; the rest are
+mechanical concretions folded into the disciplines they deepen. The
+synthesis record for this round is truncated at its item 43 in the local
+archive; items after that point are an open row there, not silently
+absent here: only what the record states is adopted below.
+
+### 17. Keep a near-miss ledger
+
+Proposals that matched a gate but were not admitted are recorded in a
+bounded, diagnostics-only ledger: at most 4,096 laws, 512 reported, 4
+samples per law, 400 characters per text; the reason is classified into
+coarse gates and the failed premise is stored as a parameter-erased
+skeleton. Two-sided non-authority rule: a record does not establish that
+the class can never apply, an absent record establishes nothing, and the
+ledger never feeds ranking, selection, or rejection counts. First users:
+the false-green audit (discipline 3) and the memory junk audit
+(discipline 5). Source: siliconjungle/ink-planner `near_misses.py`.
+
+### 18. Approvals are content-bound, expiring, and generation-scoped
+
+An approval or authorisation binds a stated action once to its resolved
+target identity fields and to the hash of the content it was granted
+over; any post-trust edit invalidates the record; approvals carry an
+expiry (30 days by default) and can be revoked; a generation counter
+voids bindings made before a compaction. Evaluation before any outward
+or irreversible action returns one of five verdicts:
+authorized_unique / requires_selection / authorization_invalid /
+drifted / out_of_scope. No implication crosses actions: publish implies
+nothing toward unpublish. An approval bound to a name or a summary is
+not an approval. Sources: GreenLv/codex-context-guard `cg_authority.py`;
+qualixar/bounded-loops `trust_store.py`.
+
+### Round-5 concretions, by discipline
+
+- Discipline 1: the fire threshold is the closed form
+  tau(p_need) = C_FA / (C_FA + p_need * C_FN); fire iff estimated
+  p_accept >= tau; slow mode only within a declared margin of the
+  boundary, its cost charged to the same ledger entry; costs and margin
+  live in per-lane config read by the gate, never in the generator
+  prompt; deadline-driven lanes declare C_FN as a function of
+  time-to-deadline (PRISM). A lane is gated only if the gate executes
+  inside that lane's own send path; a gate living in an offline harness
+  is UNVERIFIED for that lane (correction: ProactiveAgent's shipped demo
+  contains no reward gate). Feedback is a structured logged event
+  (accept / reject / ignore-timeout, carrying the fire's deterministic
+  ID); the timeout event is written by the lane's own code, never
+  inferred from prose. Per-lane min_interval and max_fires_per_window
+  are enforced in code at validation time, fail-closed. Every would-fire
+  entry carries class: horizontal | vertical; a vertical fire names the
+  evidence it will fetch first; evidence already in current state
+  reclassifies it horizontal at the lower price. Each lane declares an
+  explicit ask outcome, distinct from staying silent and from error.
+- Discipline 2: the local instincts build starts from the ECC runtime
+  parameters now located in source (threshold 0.7, cap 6 injected
+  instincts, 220-char summary cap, 8,000-char total injection budget
+  with an explicit truncation marker; relevance is an additive ranking
+  boost only, +0.25 project-scoped and +0.20 stack-matching, not
+  configurable). A learned unit influences inference only above a
+  minimum success rate; near-duplicates merge on a maintenance interval;
+  hard per-type cap. A new extraction submission for a scope with a
+  pending extraction cancels and replaces the pending one.
+- Discipline 3: any local execution of model-generated code runs under a
+  deadline and memory cap, an allowlisted host surface and an
+  allowlisted environment (never the ambient environment wholesale), on
+  copy-on-write state, and commits only on success. Every local
+  mechanical gate carries a named mutation list that neuters its core
+  checks, run in its own test suite, with zero mutants survived;
+  stateful tools also get seeded-fuzz or model-differential tests whose
+  pass line prints cases= and seed=.
+- Discipline 4: future-assertion temporal normalisation is a
+  deterministic post-extraction rule, not an extractor promise: a
+  future-tense fact (plan, promise, schedule, intention) is true-from
+  the date it was stated; its deadline is never its true-until;
+  true-until is set only by an event that ends the fact. The nightly
+  pass lists which stored facts retrieval actually returned in the
+  trailing 14 days; a standing fact with zero retrievals is a demotion
+  candidate, named for review, never silently dropped.
+- Discipline 5: a gate-wired checker enforces the memory store's
+  write boundary at commit time (root index presence, per-file and
+  total character budgets, frontmatter validity, a read-only list for
+  ruled files); unattended memory workers run fail-closed in the
+  narrowest filesystem scope, and where no scoping mechanism exists the
+  pass is read-only. Nightly synthesis ranks candidate material by
+  surprisal against the existing corpus, consolidates highest first,
+  names what its budget did not reach, and is due-gated (no new dated
+  material means one log line, not a full pass). A store-to-index
+  reconciliation loop heals in bounded batches and names any item
+  failing three consecutive runs. Reflection is a triggered pass
+  (step-count, compaction-event, manual), never ambient; a compaction
+  event queues a pass over the compaction delta with a bounded snapshot.
+  A failed synthesis keeps the old synthesis live, records an error
+  state, and does not advance its watermark. Seeded defaults record
+  applied seed ids in a ledger separate from the items, so a user
+  deletion survives re-seeding. Use strengthens a memory only through
+  confirmed usefulness, never retrieval: delta capped, repeats inside a
+  cooldown do not stack, a contradiction freezes strengthening; any
+  decay table is stated per fact kind as configuration, and an unstated
+  decay is no decay. A status figure whose source could not be read is
+  reported UNMEASURED with the source named, never as 0, empty, or OK.
+  An extraction or summarisation step that fails returns an error state,
+  never an empty success.
+- Disciplines 6 and 7 (the skill gate suite): a SKILL.md at or over
+  20,000 bytes loses its tail silently after compaction, so size is a
+  gate, and oversized skills split body plus references. Trigger evals
+  use positive plus negative queries, 3 runs per query, a 0.5 threshold,
+  a stratified train/test split, winner selected on TEST score, the
+  improver fed only failures plus attempt history with a do-not-repeat
+  instruction; old-vs-new comparison is blind, and every change record
+  carries a benchmark delta line. Skill lint floor: six allowed
+  frontmatter properties, kebab-case name max 64 chars, description max
+  1,024 chars with no angle brackets, compatibility max 500 chars. Token
+  costs are banded separately (trigger 48/92/150, invoke 220/480/900,
+  deferred 180/520/1,200 tokens); explicit-only skills are excluded from
+  implicit cost and reported separately; a skill entering the heavy
+  implicit band fails review until made explicit-only or split.
+  Agent-behaviour skills carry at least one trajectory fixture (tool
+  sequence in order, forbidden tools by absence, partial arg checks);
+  assertions support weight 0 = record-only, so a new grader runs one
+  cycle record-only before it may gate; redteam generators are named
+  (memoryPoisoning, crossSessionLeak, excessiveAgency). Revision loop: a
+  failed fixture produces score plus one-paragraph textual feedback; the
+  revision edits only the section the feedback implicates, then re-runs
+  the set or reverts; few-shot examples enter a playbook only if the
+  teacher output passed the playbook's own eval metric, with metric and
+  threshold recorded beside the example. Any locally generated index
+  ships with a regeneration-diff check. A library entry must declare
+  read / write / external-send capabilities explicitly; no declaration
+  is a rejection, never an inference. A path confinement check counts
+  only if it resolves symlinks and compares on a separator boundary; a
+  prefix-only guard is a named scan defect. Shared prompt fragments are
+  referenced by name plus pinned hash, never copy-pasted, and a lint
+  flags drift; every eval result records the fixture-set version/hash
+  it ran against and is keyed by the deterministic ID of (run,
+  assertion name, occurrence). A verifier verdict carries the shape
+  {valid: bool, reason: string} and a false verdict's reason feeds the
+  worker's next attempt (discipline 8 note).
+- Discipline 8: a completion gate blocks only on machine-verifiable
+  facts (mtimes, counts, exit codes, disk); pattern heuristics warn,
+  never block; complexity is measured by tool-call counts; claim
+  detection is sentence-scoped, quote- and code-stripped, with a
+  not-claim filter and a fire plus no-fire fixture pair per phrase;
+  evidence is turn-scoped and failure traces count as evidence;
+  block-once is a sha256 fingerprint of (hook, session, text); config
+  errors fail closed, gate crashes fail open and log; interruptions are
+  budgeted, feedback is size-bounded (pending count, reason, next step),
+  and exhaustion degrades to a named UNVERIFIED. Completion additionally
+  requires a unique-candidate cover of obligations by evidence records.
+  A plan whose budget can be fully consumed by production, leaving
+  proof unfunded, is invalid at authoring time: verification budget is
+  reserved in the plan itself.
+- Discipline 9: a compaction handoff gets its own one-shot capability
+  store, structurally outside the tool registry (token plus separate
+  handoff id, TTL-bound, exactly one waiter, second submission rejected,
+  empty summary rejected, consumed on delivery); a handoff token can
+  deliver a summary and can never invoke a tool. Checkpoints follow a
+  declared schema with per-field and total bounds (objective / state /
+  evidence / decisions / pending); an over-budget checkpoint is rejected,
+  never silently truncated; checkpoints carry a content-hash key, a
+  stated cap, and a TTL. Fence tokens carry a per-run random suffix so
+  fenced content cannot forge the closing token, and streamed scanning
+  uses a holdback buffer sized to the token, never a naive per-chunk
+  split/replace; the blocker feeds the token split at every offset. A
+  peer track's standing to write a shared surface is a scored,
+  mechanical fact; writes carry writer identity; repeated defects lower
+  standing; below the floor is read-only until a human restores it; the
+  scoring table is stated before it is enforced.
+- Discipline 15 (effect queue, second form): rate-limit (429) pauses are
+  accounted separately from generic retries: unbounded pauses,
+  exponential to a cap, Retry-After honoured past the cap, attempts
+  never incremented; generic errors bounded, exhausted items land in a
+  named skipped list. No completion event from a queue that never ran.
+  Retry state is keyed by the durable operation id at queue level;
+  exhaustion returns a terminal non-retryable error carrying the last
+  failure verbatim. Each row carries an infra_errors counter distinct
+  from attempts. Stale is an outcome: offering a revision at or below
+  the stored revision changes nothing; replacement and retry preserve
+  the original queued_at and rank; settlement is by exact receipt, and
+  a receipt issued before a retry cannot complete the retried row;
+  admission is atomic. An action that raises lands in a visible failed
+  state and never strands later actions. Hook-produced effects use the
+  file-outbox form: append-only JSONL plus a .sent high-water mark;
+  SQLite is reserved for effects needing generation guards.
+- Disciplines 13 and 14: diagnostics and logs pass through a recursive
+  redactor at capture time (key-substring classes plus
+  prompt/question/query/selection key classes; markers REDACTED,
+  REDACTED_CIRCULAR_REFERENCE, REDACTED_TOO_DEEP), so redaction is a
+  property of what is stored, not of what is later displayed.
+
 ## How these compose with the core
 
 - Disciplines 3 and 8 extend existing law (the regression-blocker law and
@@ -1154,6 +1348,7 @@ semantics recorded in the teardown's execution account.
 - Disciplines 1, 2, 6, 7, and 10 are new surface: initiative, procedural
   memory, skill authoring, adoption gating, and prose quality. They
   inherit every core constraint (SCOPE, authority, proof) unchanged.
+- Round 5 (2026-11-02): discipline 17 governs learning from gate rejections without poisoning the rejected class; discipline 18 makes approvals content-bound, expiring, and generation-scoped. The round-5 concretions attach to existing disciplines and do not create new ones beyond 17 and 18.
 - Round 4 (2026-11-01): disciplines 13 and 14 govern the outbound and
   identity layers (what may be sent, and how anything is named so it
   cannot arrive twice); discipline 15 governs side effects after a
