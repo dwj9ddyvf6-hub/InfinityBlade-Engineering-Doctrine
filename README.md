@@ -124,7 +124,7 @@ The skill loads the references only when a task needs them, so everyday cost sta
 
 ## Agent enhancement
 
-The core governs a task. A second layer governs the agent across tasks: [`references/agent-enhancement.md`](skills/infinityblade/references/agent-enhancement.md) distils an inspected sweep of public memory, skill and proactivity systems into sixteen adopted disciplines:
+The core governs a task. A second layer governs the agent across tasks: [`references/agent-enhancement.md`](skills/infinityblade/references/agent-enhancement.md) distils an inspected sweep of public memory, skill and proactivity systems into eighteen adopted disciplines:
 
 - **Priced initiative:** every proactive lane carries a benefit-minus-cost threshold, a cheap surface-or-stay-silent gate, and feedback-scored tuning.
 - **Instincts:** corrections, error resolutions and repeated workflows become confidence-scored procedural memory, promoted to skills only through a human gate.
@@ -136,6 +136,8 @@ The core governs a task. A second layer governs the agent across tasks: [`refere
 - **Skill craft and prose:** playbooks pressure-tested against recorded rationalizations before they ship, and a bounded internal rubric pass on deliverables no gate covers.
 
 - **Round 4 (2026-11-01):** a teardown of deepseek-ai/dsh-superagent-prototype (pinned commit 6337fc8) contributed four new disciplines (outbound purpose gating with permanent receipts and code-enforced caps; deterministic content-hash IDs with layered dedup; a durable generation-guarded effect queue that distinguishes waiting from failure; and owner routing with slot discipline and a plus-one human slot), round-4 mechanism notes inside the priced-initiative and authority disciplines (a record-only would-accept ledger, host-validated assessment shape, single-question attention, an immutable mandate revalidated at resume, and an interrupted-work recovery protocol), and a named cautions list recording what was rejected and why.
+
+- **Round 5 (2026-11-02):** a source-level re-read of every repo on the list added two disciplines (a bounded near-miss ledger that learns from gate rejections without poisoning the class, and approvals bound to content hash, target identity, expiry, and generation, evaluated on a five-way ladder) and mechanical concretions across the existing disciplines: the PRISM closed-form fire threshold with gate-in-serving-path and coded rate caps, gate mutation lists with zero survived, memory write-boundary validation and store-to-index reconciliation, the skill gate suite (compaction-cut size gate, corrected lint floor, token cost bands, trigger eval with holdout selection), a completion-gate design spec with unique-candidate cover and reserved verification budget, handoff transactions and bounded checkpoints, effect-queue v2 semantics, and a capture-time redaction suite.
 
 - **Third-pass hardening:** the original twelve were re-graded against the layers the first passes skipped (issue trackers, release notes, fork networks, the official vendor layer, the benchmark literature): 2 confirmed, 8 qualified, 1 warned, 1 untested by the pass. The corrections and concretions that grading produced are folded into the reference, not smoothed over.
 
