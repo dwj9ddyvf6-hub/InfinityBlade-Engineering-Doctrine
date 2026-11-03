@@ -6,6 +6,12 @@ version: 1.0.0
 
 # Alpaca Paper Trading
 
+## Why this skill exists
+
+The default: Acting on an account before proving which account the keys open.
+The cost: Orders placed against the wrong account identity are not a paperwork error; they are trades nobody authorized, on a book nobody was watching.
+The replacement: Prove the account identity from the configured credentials before any account level action, and read every submitted order back before reporting it.
+
 ## Verify the account identity first
 
 - Call `bin/alpaca_get_account.py` with the configured paper account credentials before any reset, key replacement, pause or resume step and record the account number, equity, cash and buying power it returns.
