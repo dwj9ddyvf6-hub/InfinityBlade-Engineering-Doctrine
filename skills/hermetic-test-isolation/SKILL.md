@@ -6,6 +6,12 @@ version: 1.0.0
 
 # Hermetic Test Isolation
 
+## Why this skill exists
+
+The default: Trusting a test that passes only where it ran.
+The cost: A test that passes only because of the environment it ran in manufactures green: it certifies the room, not the code.
+The replacement: Every test builds its own inputs, restores what it patches, and proves the same verdict alone, in the suite, and in a clean export.
+
 ## Purpose
 A test that passes only because of the environment it ran in — live files present, another test's stub still installed, an import-time path pointing at real state — manufactures green. This skill makes every blocker test hermetic so a gate verdict means the same thing in any tree, in any order.
 
