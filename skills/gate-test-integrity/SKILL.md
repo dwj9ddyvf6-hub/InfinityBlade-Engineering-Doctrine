@@ -6,6 +6,12 @@ version: 1.0.0
 
 # Gate and Test Integrity
 
+## Why this skill exists
+
+The default: Trusting a gate because it printed green.
+The cost: A gate that passed on a tree that moved during the run, or on tests that leaked state into each other, certifying code it never actually judged.
+The replacement: Freeze the tree, make every blocker hermetic, and prove the verdict alone, in the full suite, and in a clean export.
+
 ## Freeze and stage only owned work
 
 - Freeze the tree before running a gate whose verdict will justify a commit and confirm no fix program, worker or edit pass is still writing it.
