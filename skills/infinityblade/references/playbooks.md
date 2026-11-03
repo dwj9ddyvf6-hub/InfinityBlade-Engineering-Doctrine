@@ -36,6 +36,8 @@ For multi-stage data and event pipelines, bound workers, batches, retries, and d
 
 ## Field safeguards
 
+Grouped by the failure they prevent, so a reader under pressure can find the group that matches the pressure. Each rule costs a sentence; the incident it prevents costs a day.
+
 Repeated operational failures teach a few safeguards that are easy to miss when focusing only on code:
 
 - Pin authoritative inputs by version, identity, and—when practical—content hash. A familiar filename, visual resemblance, or “latest” label is not provenance.
