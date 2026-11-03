@@ -6,6 +6,12 @@ version: 1.0.0
 
 # Backtest Cross-Check With the Standing Oracle
 
+## Why this skill exists
+
+The default: Reporting a backtest headline from the engine that produced it.
+The cost: The oracle earns its keep exactly when it disagrees: a headline that survived only its own engine's arithmetic was a bug with a chart.
+The replacement: Corroborate the headline against an independent oracle before reporting, with kill criteria stated in advance.
+
 Use when a backtest of a simple daily-bar mechanical sleeve or strategy produces a headline result that will be reported, graded, adopted, or used to kill a setup: before the result is stated, run the same rules through the standing oracle and report both numbers.
 
 ## The oracle
