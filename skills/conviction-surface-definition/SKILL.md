@@ -6,6 +6,12 @@ version: 1.0.0
 
 # Conviction Surface Definition
 
+## Why this skill exists
+
+The default: Building the board first and deciding what belongs on it later.
+The cost: A ranking of unjudged items is slop even if the numbers are real: the surface looked like conviction and carried none.
+The replacement: Define the formation point where conviction is created before building the surface, and ship the surface empty rather than filling it from raw fields.
+
 ## Purpose
 Never compose a ranking, board, or summary from whatever fields happen to be lying around. First define what the thing is on this desk, find where its judgment is actually formed, and source the surface from there.
 
