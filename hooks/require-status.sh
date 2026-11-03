@@ -21,5 +21,13 @@ for line in open(sys.argv[1], encoding="utf-8"):
 print(text)
 PY
 )
-if printf '%s' "$last" | grep -qE 'STATUS: *(GREEN|PARTIAL|BLOCKED|UNVERIFIED)'; then exit 0; fi
+# 3.1.0: a bare label is refused. A STATUS line for work done must carry an
+# evidence pointer after the verdict: a path, a URL, or an evidence: token.
+# The one-line scope marker for pure conversation replies stays allowed.
+if printf '%s' "$last" | grep -qE 'STATUS: *(GREEN|PARTIAL|BLOCKED|UNVERIFIED)'; then
+  if printf '%s' "$last" | grep -q 'STATUS: GREEN — no change made'; then exit 0; fi
+  if printf '%s' "$last" | grep -qE 'STATUS: *(GREEN|PARTIAL|BLOCKED|UNVERIFIED)[^[:cntrl:]]*(evidence:|https?://|[A-Za-z0-9_./-]+\.[A-Za-z0-9]+)'; then exit 0; fi
+  echo '{"decision":"block","reason":"InfinityBlade: the STATUS line carries no evidence pointer. Add the artifact, path, URL, or command output the verdict rests on (evidence: ...). A bare label is a rumor."}'
+  exit 0
+fi
 echo '{"decision":"block","reason":"InfinityBlade: end with a STATUS line (GREEN, PARTIAL, BLOCKED or UNVERIFIED) and its proof or what is missing. For a pure conversation reply, write STATUS: GREEN — no change made."}'
