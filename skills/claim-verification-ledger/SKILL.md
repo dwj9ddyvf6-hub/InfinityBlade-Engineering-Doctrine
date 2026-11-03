@@ -6,6 +6,12 @@ version: 1.0.0
 
 # Claim Verification and Coverage Ledger
 
+## Why this skill exists
+
+The default: Repeating a claim because a report, a pusher, or a worker said it.
+The cost: An invented completion passed as fact until someone opened the artifact: commits, tests, and evidence that never existed.
+The replacement: Every claim is unverified until it matches a fresh check of the source or the destination. See also absence-proof-coverage-ledger, which governs absence claims in full; this skill governs the wider claim set.
+
 ## Frame the claim before checking it
 
 - Write down the exact claim you might have to make, such as this file does not exist, this post was never published, this source is closed, this save is complete or this delegated result is true.
