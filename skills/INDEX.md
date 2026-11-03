@@ -2,7 +2,9 @@
 
 This folder carries installable craft beside the doctrine skill: complete skill folders, taken as they are used, not descriptions of them.
 
-**Install contract:** take any folder as-is. Each folder is complete: its full SKILL.md text and every supporting file the skill needs to run. Copy the folder into your host's skills directory and it works. Where a skill needs a credential, a path, or a document of yours, it names an environment variable or a placeholder, never a value.
+**Install contract, stated honestly:** take any folder as-is. Seventeen folders are complete: full SKILL.md text and every supporting file the skill needs to run. Two folders carry named external dependencies, stated in their rows and in their own text: chart-read invokes a render script and a synthesis document that live with the adopter, and stock-analysis runs its Pass A from the chart-read folder, so those two install together. A contract that claims completeness its own folders falsify would fail this library's own read-back test, so the exceptions are named here, at the promise, not buried in the folders. Where a skill needs a credential, a path, or a document of yours, it names an environment variable or a placeholder, never a value.
+
+**Start with these three.** proof-before-green (the verdict discipline every other skill reports under), gate-test-integrity (the gate honesty the verdict depends on), and claim-verification-ledger (the ledger that keeps delegated and saved claims honest). Install those first; add the rest when a task names their surface.
 
 The doctrine skill itself lives at [infinityblade/](infinityblade/) and is not part of this index; it is the rule source the library operates under.
 
@@ -32,14 +34,14 @@ The doctrine skill itself lives at [infinityblade/](infinityblade/) and is not p
 
 Every landed SKILL.md carries the same frontmatter shape: name (its folder name), a one-sentence description, and version 1.0.0, the library's first public version. Host metadata files from the source library do not land; their names and descriptions are folded into that frontmatter. Runtime artifacts (lock files, bytecode caches) never land.
 
-## Recorded overlaps
+## Recorded overlaps, with precedence (3.1.0)
 
-Both sides of each pair land whole. Overlap is recorded here, never resolved by silently merging or dropping a skill.
+Overlap is resolved by precedence, never by carrying the same law twice and hoping the copies agree.
 
-- conviction-surface-definition and judgment-provenance-check cover near-identical ground from two formation dates.
-- gate-test-integrity and proof-before-green share an opening discipline and diverge after it.
-- single-door-consumer-audit and persisted-field-consumption-audit share the consumer-audit core.
-- absence-proof-coverage-ledger and claim-verification-ledger share the framing and ledger method.
+- proof-before-green owns the verdict discipline only; gate mechanics live in gate-test-integrity and hermetic-test-isolation, live-path proof in live-execution-proof. proof-before-green routes to them and restates none of them.
+- judgment-provenance-check is the routing checklist for its cluster; conviction-surface-definition governs surface definition, doctrine-provenance-check governs veto audits. Precedence is stated inside judgment-provenance-check.
+- absence-proof-coverage-ledger is canonical for absence claims; claim-verification-ledger governs the wider claim set and routes absence claims to it. save-readback-verification is canonical for the save half of that ledger.
+- single-door-consumer-audit and persisted-field-consumption-audit share the consumer-audit core and both land whole: the first governs doors (canonical sources), the second governs fields (persisted producer output); a task touching both runs both.
 
 ## Excluded, with reasons
 
