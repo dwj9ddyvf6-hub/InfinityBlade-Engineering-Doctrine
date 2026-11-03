@@ -173,6 +173,93 @@ An identity audit also found that one global event key had been fingerprinted wi
 - **Keep scratch state from eating the machine.** Keep temporary output only for failures, and clean up artifacts you created once they are no longer needed.
 - **Measure before optimizing.** Time the complete path, find the dominant cost, and fix that. Don't tune what you haven't measured.
 
+### 23. A delegated completion report is a claim, not proof
+
+**Failure pattern:** A background worker, a subagent, or an earlier session reports a fix landed, a file written, a cure complete. The report is fluent and specific. The artifact was never opened. In the proven case, none of the claimed commits, evidence, or test files existed.
+
+**Countermeasure:** Verify every delegated handback against the repository or artifact itself before repeating it: read the final state, check the claimed identifiers exist, and compare against the outcome that was asked for. A handback starts a verification, it never ends one.
+
+### 24. Long work is supervised by its effects, not waited on
+
+**Failure pattern:** A single blocking call waits on a multi-hour computation and dies at a platform limit, losing the work and the thread. Or a supervisor greps for its own command line, matches itself, and reports the job alive.
+
+**Countermeasures:**
+- **Run long computations as detached, checkpointed processes.** A supervisor polls by effects: output files appearing, sequence numbers advancing, receipts written.
+- **Verify a process by something it produces,** never by a search pattern your own command line contains.
+- **Size phases so a stopped run can be relaunched** from its record and reuse completed work.
+
+### 25. Publish by writing to the side and swapping atomically
+
+**Failure pattern:** A writer is killed mid-write (memory pressure, restart, timeout) and the publisher ships the truncated or empty artifact to the live surface. The blank page is real, delivered, and timestamped.
+
+**Countermeasures:**
+- **Build to a temporary file and swap with an atomic rename** only when the write is complete.
+- **Refuse to ship an empty artifact or an unexplained shrink,** exiting before upload and naming the file.
+- **Prove the refusal bites** with a test that feeds the guard a zero-byte artifact and watches it stop the publish.
+
+### 26. A second engine is a cross-check oracle, never a second truth
+
+**Failure pattern:** A headline result from one implementation is reported as settled. When a second implementation disagrees, the team either averages the two or trusts whichever finished last.
+
+**Countermeasures:**
+- **Run the same rules through an independent implementation** before reporting, grading, or killing anything on the first number.
+- **Report both numbers and decompose the gap** into named causes: fill model, cost model, data, translation, sizing mechanics.
+- **The oracle never becomes the system of record.** Its job is to disagree usefully.
+
+### 27. Every data source carries its known traps beside its consumer
+
+**Failure pattern:** A feed revises its history, lags at exactly the window that matters, changes units, or reuses an identifier. The consumer treats the source as neutral truth and the defect surfaces weeks later as a strategy verdict.
+
+**Countermeasures:**
+- **Keep a written trap register per source:** revision, staleness, unit, and identity traps, stored beside the consumer that suffers from them.
+- **Scope verdicts to the proven defect.** A bounded data defect is not a permanently corrupt source, and a clean week is not a clean source.
+- **Cap requests inside the source's proven limits** rather than discovering the limit by refusal.
+
+### 28. Built is not wired, and a spec is not a capability
+
+**Failure pattern:** A check, a booking step, a lane, or a whole tooling package exists as code or as an adopted specification, and is never called from the live path. Reports count it as operational because it exists. In the proven cases, a cap check existed and was never called, and six adopted research packages existed only as specifications with no implementation anywhere.
+
+**Countermeasure:** A capability counts only when a live-path call and its effect are proven: trace the call from the real entry point, observe the effect on real state, and name any adopted spec with no implementation as a gap, not a capability.
+
+### 29. Silence is an open defect
+
+**Failure pattern:** The broken component and the idle component look identical: both are quiet. A feed dies, a lane stops, a sleeve family emits malformed output all session, and every dashboard reads calm because nothing errors loudly.
+
+**Countermeasures:**
+- **Every component owes a positive liveness signal** on a stated cadence; a missed signal is a finding, named in the inspection.
+- **Audit the registry for absent mechanisms,** not just noisy ones: a check that was disabled satisfies the no-noise rule while the checking half does not run at all.
+- **Name the silent ones.** An inspection that lists only failures it happened to hear about is a partial census.
+
+### 30. A check that asks only "did it emit" passes malformed output
+
+**Failure pattern:** An emission census counts outputs and reports health while every emitted record carries a zero price, an empty field, or a placeholder value. Each component reports working; the stream is garbage.
+
+**Countermeasure:** Censuses check field validity, not just counts: required fields present, values in sane ranges, identities resolvable. A downstream fence that catches malformed output is an open defect against the producer, never a resolution.
+
+### 31. Duplicate execution corrupts records quietly
+
+**Failure pattern:** A module executes its full job on import, appending duplicate rows with no dedupe guard in the store itself. Or two runner processes supervise the same work and each treats the other's effects as its own.
+
+**Countermeasures:**
+- **Never import a script that executes at module level;** guard entry points.
+- **Design dedupe keys in from the start** and check new identifiers against the full historical set before use.
+- **A second runner is a defect, not redundancy.** One owner per stream of work.
+
+### 32. A pass verdict is not a permanent pass
+
+**Failure pattern:** A gate verdict is earned in the morning and the artifact is released hours later with no re-check, while the facts the gate verified have changed. Entry paths re-run their gates; release paths quietly skip them.
+
+**Countermeasure:** Every release path re-runs the same gates as the entry path, at release time, on the final tree. A verdict is a statement about a state at a time, and it expires with both.
+
+### 33. Non-happy-path states are distinct cases, never defaults
+
+**Failure pattern:** Partial, terminal-with-partial, rejected, and uncertain outcomes are folded into the nearest success or failure bucket: a partial fill booked as a full fill, a parameter rejection treated as a system halt, an uncertain submit cleared as if it never happened.
+
+**Countermeasures:**
+- **Classify by the counterparty's actual response,** and treat each distinct state as its own case with its own handling.
+- **An uncertain outcome is reconciled against the authoritative record** before any retry, never cleared and never blindly repeated.
+- **A bounded rejection class does not halt unrelated work.** Classify it, name the affected items, cure the cause at its source, and let the rest proceed.
+
 ## The incident-to-doctrine loop
 
 Use this loop whenever the same class of failure returns, or whenever a workflow spans multiple tools or durable states:
