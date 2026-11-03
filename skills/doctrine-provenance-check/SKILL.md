@@ -6,6 +6,12 @@ version: 1.0.0
 
 # Doctrine Provenance Check
 
+## Why this skill exists
+
+The default: Letting a gate block on authority nobody can name.
+The cost: A veto inherited from a predecessor system blocked work for months; asked for its source, nobody could produce one. Inherited is not authority.
+The replacement: Every veto, filter, and gate carries its provenance, or it is a finding, not a fence.
+
 ## Purpose
 Stored doctrine that is never wired into code or speech is trivia, not knowledge. This skill forces every veto, filter, and gate to carry a provenance and a doctrine check before it blocks anything or is described as invalidating anything.
 
