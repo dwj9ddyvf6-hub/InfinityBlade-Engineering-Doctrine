@@ -6,6 +6,12 @@ version: 1.0.0
 
 # Chart Read — On-Demand Protocol
 
+## Why this skill exists
+
+The default: Reading a chart by impression and calling the impression analysis.
+The cost: Timeframes treated as independent witnesses double-counted one move as three confirmations, and the call inherited confidence it never earned.
+The replacement: Geometry first, perception second, abstention allowed: a read that cannot name its invalidation has not been made.
+
 Source of truth: your own synthesis document (set CHART_READ_SYNTHESIS to its path; the protocol below is the executable form of its geometry and epistemic-contract parts).
 
 ## When to use
@@ -177,3 +183,7 @@ Pass B read, on top of the Grand Synthesis protocol:
 
 Use `muse.connector_search` to find the current connector docs before following
 recovered instructions.
+
+## Dependencies, named
+
+This folder is not self-contained, and says so at its own door: step 1 defers to a synthesis document the adopter keeps, and step 2 invokes render_asof.py from the adopter's calibration directory. Neither ships here. Install stock-analysis together with this folder; stock-analysis runs its Pass A from this folder's bin/.
