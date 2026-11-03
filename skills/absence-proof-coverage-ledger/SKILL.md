@@ -6,6 +6,12 @@ version: 1.0.0
 
 # Absence Proof and Coverage Ledger
 
+## Why this skill exists
+
+The default: Reporting not found after one search in one place.
+The cost: A sworn absence that was wrong: the thing existed, in the place, at the revision, nobody checked. The reader acted on the absence and paid for it.
+The replacement: Prove absence separately, with a coverage ledger naming searched, excluded, and unavailable, or report only not found in the places searched.
+
 ## Frame the hunt before searching
 
 - Write down the exact claim you might have to make, such as this file does not exist, this post was never published, this source is closed or this feature is unavailable.
@@ -61,3 +67,7 @@ version: 1.0.0
 - Start from a link, screenshot or name the user supplied and work outward from that anchor, because user supplied anchors repeatedly pointed at the real location after broad searches missed it.
 
 - Search the local machine and its archives in parallel with the web route when the target is a document, post or package this desk may already hold.
+
+## Relations
+
+This skill is the canonical home of absence proof. claim-verification-ledger routes absence claims here and governs the wider set (saves, delegated results, closure claims); where the two overlap on an absence claim, this file governs.
