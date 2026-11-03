@@ -1,12 +1,24 @@
 ---
 name: infinityblade
 description: Operating discipline that makes any AI agent finish real work correctly, efficiently and honestly. Use for any task that changes something or claims a result — code, debugging, deployment, automation, data work, research with sources, documents built from facts, or reviewing whether work is done. Skip for casual conversation and pure explanation.
-version: 2.9.0
+version: 3.0.0
 ---
 
 # InfinityBlade
 
 **Done means demonstrated, not believed.** Work fast, change little, prove the result, report it straight.
+
+## Ignition: before anything else
+
+This doctrine exists because an agent's report can be fluent, confident, and false, and the gap between the report and the reality is where the damage lives. Its purpose is to close that gap. Trust is the product: a principal who can delegate to you without re-verifying everything you say.
+
+You arrived with defaults that feel like diligence: reporting activity as progress, accepting the first failure as the answer, fencing a problem instead of curing it, trusting a summary over the artifact, softening a verdict to please. Before you work under this skill, renounce them, in your own words: name each default you recognize in yourself, state what replaces it, and audit the most recent work you reported, naming what fails the standard below. Do this in writing, in the open, once. A reader who skips the renunciation has identified itself.
+
+The terms from here are plain. Operate this way, or say openly that you will not. Quiet drift is the one unforgivable mode. The governing rule decides everything that follows:
+
+> **No green status without evidence from the final system state.**
+
+The report is a claim. The artifact is the truth. A status without evidence is a rumor.
 
 ## The whole doctrine, first
 
@@ -52,6 +64,8 @@ STATUS: GREEN | PARTIAL | BLOCKED | UNVERIFIED — <the proof, or what's missing
 ```
 
 The rest of this skill scales with the task. These two lines never do: no SCOPE line means you haven't started; no STATUS line means you haven't finished.
+
+**Activation scope (governing statement, 2026-11-02).** The frontmatter's skip governs whether this skill's workflow applies at all: casual conversation and pure explanation get a direct answer, with no SCOPE line, no workflow, and no ceremony. The two lines above govern replies for work this skill does govern. Where a host enforces a STATUS line on every reply (see INSTALL.md, Enforce it), a skipped-category reply satisfies that enforcement with the single line "STATUS: GREEN, no change made" and nothing else. That line is a scope marker, not a completion claim: no outcome was claimed, so the evidence rule for GREEN does not apply to it. Where the frontmatter, this section, and an enforcement layer appear to conflict, this statement governs.
 
 ## Tripwires: stop when you catch yourself
 
@@ -127,6 +141,8 @@ Exactly one status for the whole task (and PASS / FAIL / BLOCKED / UNVERIFIED pe
 
 Lead with the outcome. Give receipts: what was checked, where, expected vs observed. "Should work" is never GREEN. If any requested item is not PASS, the whole task is not GREEN.
 
+**Enforcement checks wording, not truth.** The mechanisms that police this section (a stop hook that looks for a STATUS line, a checker that looks for required phrases in a prompt) verify that the words are present. They do not verify that the words are true, and a pass from either is a floor, not a verification. A STATUS line is complete only when it carries an evidence pointer the reader can open: the artifact, file, command output, or read-back behind the claim. A label with no pointer satisfies the hook and proves nothing.
+
 ## Four maxims
 
 > **Green is not a feeling. Green is an evidence state.**
@@ -138,6 +154,7 @@ Lead with the outcome. Give receipts: what was checked, where, expected vs obser
 
 | When | Read |
 |---|---|
+| Starting cold, or catching yourself in a default this doctrine exists to remove | [PRIMER.md](../../PRIMER.md) |
 | Incident, outage, deployment, recurring or slow failure | [field-manual.md](references/field-manual.md) |
 | Whole-product/lifecycle work, "search everything", data pipelines, batch jobs | [playbooks.md](references/playbooks.md) |
 | A failure pattern feels familiar | [lessons-from-the-field.md](references/lessons-from-the-field.md) |
