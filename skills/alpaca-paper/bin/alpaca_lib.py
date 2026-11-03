@@ -58,6 +58,15 @@ def fail(message: str, exit_code: int = 1) -> "NoReturn":
     sys.exit(exit_code)
 
 
+# Documented bases (references/api_details.md). Live is selectable only via
+# ALPACA_ENV=live; paper is the default. No keys here.
+_BASES = {
+    "paper": "https://paper-api.alpaca.markets",
+    "live": "https://api.alpaca.markets",
+}
+_DATA_BASE = "https://data.alpaca.markets"
+
+
 def env_mode() -> str:
     """Resolve paper|live from ALPACA_ENV (default: paper)."""
     mode = os.environ.get("ALPACA_ENV", "paper").strip().lower()

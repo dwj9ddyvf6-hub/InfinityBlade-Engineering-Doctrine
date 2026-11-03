@@ -1,5 +1,5 @@
-import os
 #!/usr/bin/env python3
+import os
 """lenses.py — strategy lenses for unified stock analysis.
 
 For each strategy sleeve, reports the strategy's OWN verdict on a symbol by

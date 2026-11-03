@@ -43,8 +43,9 @@ session VWAP, close vs VWAP in ATR). Indicator conventions are embedded in
 the JSON's `conventions` block. Save the JSON to
 `<your reads dir>/<SYM>_<date>_passa.json`.
 
-Parity tests: `python3 bin/test_pass_a.py` — 18 checks, all green as of
-2026-10-08. Re-run after any edit to pass_a.py.
+Parity tests: `python3 bin/test_pass_a.py` — 66 checks (corrected in 3.1.1; earlier
+text said 18). Requires `CHART_READ_TA_REPO` pointing at a checkout providing
+`core.ta_battery`. Re-run after any edit to pass_a.py.
 
 ### 2. Render the four charts
 ```bash
