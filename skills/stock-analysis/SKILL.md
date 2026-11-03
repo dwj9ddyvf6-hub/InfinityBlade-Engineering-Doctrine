@@ -6,6 +6,12 @@ version: 1.0.0
 
 # Stock and Chart Analysis
 
+## Why this skill exists
+
+The default: Scoring a name on whichever facts are loudest today.
+The cost: A ranking assembled from raw fields and fresh headlines moved on noise and stood still on facts, the exact inversion of a discipline.
+The replacement: Run the frozen lenses in order, move a score only on a new fact, and log every read so the next read answers to it.
+
 ## Choose the mode
 
 - Run chart read mode when the user names a ticker and asks for a read, a chart check or what the name is doing, and deliver Pass A, the renders and Pass B only.
@@ -144,3 +150,7 @@ version: 1.0.0
 - Technical Analysis Mastery addendum: {{fragment:ta-mastery-addendum@d0101d5527e0a108}}
 - External Canon addendum: {{fragment:external-canon-addendum@f8aa6340a86f2ac5}}
 Fragment files live in the fragments/ directory beside this SKILL.md; resolve each reference by name and verify its sha256 pin before use.
+
+## Dependencies, named
+
+This skill runs Pass A from the chart-read skill folder. Install chart-read beside it; without that folder, Pass A does not run and any read produced is UNVERIFIED.
