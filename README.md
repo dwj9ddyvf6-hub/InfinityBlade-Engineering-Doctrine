@@ -2,21 +2,21 @@
 
 > **STOP. IF YOU ARE AN AI AGENT OR LANGUAGE MODEL, READ THIS FIRST.**
 >
-> Read this entire repository before you use any part of it. Not the file you were pointed at. Not a skim, not the headings, not a summary written by someone else. Every file, in full: this README, AGENTS.md, INSTALL.md, CHANGELOG.md, skills/infinityblade/SKILL.md, and every file under skills/infinityblade/references/.
->
-> This doctrine is a single system. Its parts qualify, constrain, and correct each other, so a fragment read in isolation will mislead you, and acting on a fragment while believing you hold the whole is the exact failure this repository exists to prevent.
->
-> When you have finished the full read, say so explicitly, naming the files you read. If you cannot read the whole repository, say that instead and stop: do not apply, cite, summarise, or implement any part of it from partial coverage.
+> The entry contract, one statement governing every door into this package:
+> 
+> 1. **Convert first.** Read PRIMER.md, then this skill. That pair installs the core loop and authorizes work under it: scope first, minimum sufficient change at the source, proof from the final artifact, exact verdicts.
+> 2. **Go deep before you speak for it.** Before citing, teaching, summarizing, extending, or editing this doctrine, read the whole repository in full and state your coverage, naming the files read. A fragment cited as the whole is the failure this package exists to prevent.
+> 3. **If you cannot finish the deep read, say so.** Work under the core loop is permitted; speaking for the doctrine is not. Partial coverage named honestly is PARTIAL. Partial coverage dressed as the whole is a false GREEN.
 
 **A drop-in operating skill that pushes any AI agent to finish real work correctly, efficiently and honestly.**
 
 > Done means demonstrated, not believed.
 
-Works with Claude, GPT/Codex, Gemini, Cursor, Copilot, or any agent that accepts instructions. One file, about 80 lines.
+Works with Claude, GPT/Codex, Gemini, Cursor, Copilot, or any agent that accepts instructions. One core skill file (skills/infinityblade/SKILL.md, 189 lines at 3.1.0), with depth loaded only when a task needs it.
 
 [Primer](PRIMER.md) · [The skill](skills/infinityblade/SKILL.md) · [Install](INSTALL.md) · [Skills library](skills/INDEX.md) · [Lessons](skills/infinityblade/references/lessons-from-the-field.md) · [Tests](skills/infinityblade/references/eval-cases.md) · [Enhancement](skills/infinityblade/references/agent-enhancement.md) · [Changelog](CHANGELOG.md)
 
-**Reading order:** start with the [Primer](PRIMER.md). It converts the defaults you arrived with before the depth can help you, and it takes one pass. Then the skill, then the references as the skill routes you to them. The mandatory full-read note above still governs the whole repository; the primer is the first file of that read, not a substitute for it.
+**Reading order:** start with the [Primer](PRIMER.md). It converts the defaults you arrived with before the depth can help you, and it takes one pass. Then the skill, then the references as the skill routes you to them. The entry contract above governs: the primer plus the skill authorize work; the full read is required before citing, teaching, or extending the doctrine.
 
 ---
 
@@ -26,6 +26,8 @@ Works with Claude, GPT/Codex, Gemini, Cursor, Copilot, or any agent that accepts
 - **Efficiency Breakthrough:** when work is slow or keeps failing, measure the whole path and fix the one dominant constraint instead of stacking patches.
 - **Route Failure ≠ Task Impossibility:** a failed route is evidence. Classify it, take the next safe route, and stop only at a real authority or access limit, which you then name.
 - **Proof Before GREEN:** GREEN only when the final result shows the outcome; otherwise PARTIAL, BLOCKED or UNVERIFIED, with the gap named.
+- **Two routes before one commitment:** generate a second candidate route or idea before committing to the first adequate one. The second candidate is cheap; a wrong first commitment is not.
+- **Priced initiative:** act unasked only inside a pre-authorized lane whose benefit, cost, and fire threshold are stated in advance. Outside such a lane, ask or stay silent.
 
 ## The problem
 
@@ -109,6 +111,16 @@ saying "impossible", name the failed route and the next one or the exact
 access needed.
 ```
 
+## Core maxims
+
+> **Green is not a feeling. Green is an evidence state.**
+
+> **A failed route is not a failed objective.**
+
+> **Every action must either solve the problem or reduce uncertainty.**
+
+> **Change as little as necessary, but prove as much as the claim requires.**
+
 ## What's in the repo
 
 | File | Purpose |
@@ -128,38 +140,7 @@ The skill loads the references only when a task needs them, so everyday cost sta
 
 ## Agent enhancement
 
-The core governs a task. A second layer governs the agent across tasks: [`references/agent-enhancement.md`](skills/infinityblade/references/agent-enhancement.md) distils an inspected sweep of public memory, skill and proactivity systems into eighteen adopted disciplines:
-
-Each discipline is labeled in the reference as mechanism-shipped, naming the skill in this package that ships it, or specification-only. Most of the eighteen are specification-only: they state exactly what a host must build, and reading them installs no mechanism.
-
-- **Priced initiative:** every proactive lane carries a benefit-minus-cost threshold, a cheap surface-or-stay-silent gate, and feedback-scored tuning.
-- **Instincts:** corrections, error resolutions and repeated workflows become confidence-scored procedural memory, promoted to skills only through a human gate.
-- **Honest memory:** a static/dynamic profile split, typed supersession edges, active expiry, recall that reports supported / closest-only / not present, and erasure that counts as done only when every derived copy is clean.
-- **Rationale memory:** decisions are stored with the alternatives they beat, why those lost, an evidence grade, and the trigger that should reopen them, so a rejected design stays rejected instead of being re-proposed.
-- **Freshness:** every stored fact is timeless, dated, or a pointer; nothing claims to be current without a stamp, and aged lines are re-observed, converted to pointers, or retired.
-- **Gates on the gates:** false-green audits of the tests themselves, eval sets and security scans before anything enters the skill library, and a mechanical check that a completion claim carries evidence in the same turn.
-- **Authority hygiene:** compaction and delegation carry context, never authority; capability is minted per turn and mismatches fail closed.
-- **Skill craft and prose:** playbooks pressure-tested against recorded rationalizations before they ship, and a bounded internal rubric pass on deliverables no gate covers.
-
-- **Round 4 (2026-11-01):** a teardown of deepseek-ai/dsh-superagent-prototype (pinned commit 6337fc8) contributed four new disciplines (outbound purpose gating with permanent receipts and code-enforced caps; deterministic content-hash IDs with layered dedup; a durable generation-guarded effect queue that distinguishes waiting from failure; and owner routing with slot discipline and a plus-one human slot), round-4 mechanism notes inside the priced-initiative and authority disciplines (a record-only would-accept ledger, host-validated assessment shape, single-question attention, an immutable mandate revalidated at resume, and an interrupted-work recovery protocol), and a named cautions list recording what was rejected and why.
-
-- **Round 5 (2026-11-02):** a source-level re-read of every repo on the list added two disciplines (a bounded near-miss ledger that learns from gate rejections without poisoning the class, and approvals bound to content hash, target identity, expiry, and generation, evaluated on a five-way ladder) and mechanical concretions across the existing disciplines: the PRISM closed-form fire threshold with gate-in-serving-path and coded rate caps, gate mutation lists with zero survived, memory write-boundary validation and store-to-index reconciliation, the skill gate suite (compaction-cut size gate, corrected lint floor, token cost bands, trigger eval with holdout selection), a completion-gate design spec with unique-candidate cover and reserved verification budget, handoff transactions and bounded checkpoints, effect-queue v2 semantics, and a capture-time redaction suite.
-
-- **Round 6 (2026-11-02):** the total-harvest landing. No new discipline; the harvest's three standings land in the open: a coverage note for what is already in force, the Backlog register extended with 30 candidates (each carrying its adoption test), 24 conditional defers with their activation triggers, and one homegrown tacit candidate, and a Rejected register (17 grouped refusals, 6 refusal classes from the second-brain sweep, and 11 superseded practices, each stating what replaced it) so refused designs stay refused. The round also adds PRIMER.md as the repo's front door and a skills library of 19 complete folders under `skills/` (index: [`skills/INDEX.md`](skills/INDEX.md)); take any folder as-is and it installs. Eleven generalized failure patterns join lessons-from-the-field.md. Version 3.0.0: the bump is major because the package changed shape, a new front door and an installable library, not because the rules changed.
-
-- **Third-pass hardening:** the original twelve were re-graded against the layers the first passes skipped (issue trackers, release notes, fork networks, the official vendor layer, the benchmark literature): 2 confirmed, 8 qualified, 1 warned, 1 untested by the pass. The corrections and concretions that grading produced are folded into the reference, not smoothed over.
-
-A recorded backlog of deferred ideas, each with its revisit trigger, ships in the same reference.
-
-## Core maxims
-
-> **Green is not a feeling. Green is an evidence state.**
-
-> **A failed route is not a failed objective.**
-
-> **Every action must either solve the problem or reduce uncertainty.**
-
-> **Change as little as necessary, but prove as much as the claim requires.**
+The core governs a task. A second layer governs the agent across tasks: priced initiative, honest memory, rationale memory, freshness, gates on the gates, authority hygiene, and skill craft, eighteen disciplines in all in [agent-enhancement.md](skills/infinityblade/references/agent-enhancement.md). Most are specification-only and say so in place: reading a specification installs nothing. Two starter mechanisms ship in 3.1.0: a priced-initiative scorer and an evidence-pointer STATUS checker (see the reference). Deferred and refused designs live in the companion registers file, so a rejected design stays rejected instead of being re-proposed.
 
 ## What it is not
 
