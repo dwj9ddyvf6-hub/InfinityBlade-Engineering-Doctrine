@@ -6,3 +6,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: python3 tools/check_prompt.py
+      - run: python3 -m py_compile tools/check_prompt.py tools/status_evidence_check.py tools/priced_initiative_score.py tools/eval_score.py
+      - run: printf 'STATUS: GREEN, no change made\n' | python3 tools/status_evidence_check.py
