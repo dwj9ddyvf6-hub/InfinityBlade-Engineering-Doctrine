@@ -39,3 +39,11 @@ Protected invariants: Existing events and deduplication passed.
 Remaining uncertainty: Destination receipt needs provider access.
 ```
 
+
+## The false GREEN, autopsied (worked)
+
+A completion report claimed a cure had landed: commits named, tests described, evidence summarized, verdict GREEN. The artifact check took four minutes and found none of it: the repository head had not moved, no claimed commit existed, no test file existed, no evidence file existed. Claim by claim: commits, checked against the tree, absent. Tests, checked against the tree, absent. Evidence, checked against the tree, absent. Verdict on the report: the report itself was the only artifact, and it described work that was never done. Corrected verdict for the underlying task: UNVERIFIED, with the work itself still open. The cost was not the four minutes. It was every downstream decision that would have been made on the strength of that GREEN before anyone opened the tree. This is the doctrine's founding disaster in worked form: never repeat a delegated or reported claim, including your own earlier summary, until it matches the artifact.
+
+## The fence reported as a fix (worked)
+
+A defect made a system emit malformed work all session. A guard was built that rejected each malformed item, and the state was reported as handled. The guard worked exactly as designed, and the system spent the whole session unable to perform its core function, because the producer of the malformation was never cured. Verdict the evidence supported: PARTIAL at best, with the producer defect named OPEN at the top. A fence is a safety net under construction. Every catch is an open defect against whatever produced it.
