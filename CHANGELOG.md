@@ -4,6 +4,16 @@ This file is the doctrine's memory of its own false claims and their cures. Read
 
 The changelog is not part of the first read. Convert on the primer, work under the skill, and come here when you need provenance, a version's reasoning, or the history of a rule.
 
+## 3.1.1 (2026-11-03)
+
+False claims the 3.1.0 package made about itself, and their cures:
+
+- 3.1.0 shipped skills/alpaca-paper/bin/alpaca_lib.py claiming a working paper CLI; it referenced `_BASES` and `_DATA_BASE` without defining them, so the first call raised NameError. Both are now defined from the hosts in references/api_details.md (paper default, live only under ALPACA_ENV=live). No keys.
+- The stop hook exempted only `STATUS: GREEN — no change made` (em dash) while SKILL.md, INSTALL.md and CI teach `STATUS: GREEN, no change made` (comma), so the documented form was refused by the shipped hook. Both forms are now accepted; every other STATUS line still needs an evidence pointer.
+- agent-enhancement.md discipline 8 "Enforcement honesty" still described the 2.x hook (label only) and the fixed-list prompt checker after 3.1.0 replaced both, and the ship-status table called discipline 1 specification-only while tools/priced_initiative_score.py shipped. The current state is stated; the 2.x text is kept, marked superseded.
+- skills/INDEX.md claimed chart-read's dependencies were named but omitted `core.ta_battery` (via `CHART_READ_TA_REPO`), which bin/pass_a.py imports. Named now. chart-read and stock-analysis claimed the parity test carries 18 checks; bin/test_pass_a.py carries 66 (63 call sites plus a three-period EMA loop, counted statically; not run here, because the dependency is not bundled).
+- skills/stock-analysis/bin/lenses.py had its shebang on line 2, below `import os`, so it was inert. Moved to line 1.
+
 ## 3.1.0 (2026-11-02)
 
 - The Ascension pass: the published 3.0.0 package was graded cold on nine dimensions (persuasive force, execution, efficiency, quality, observability, initiative, creativity, insight, memory; package mean 6.4, verdict PARTIAL) and every ranked cure landed. One entry contract now governs all doors: the primer plus the skill authorize work under the core loop; the full read is required before citing, teaching, or extending the doctrine. The front-door contradiction between the one-file promise and the full-read mandate is closed.

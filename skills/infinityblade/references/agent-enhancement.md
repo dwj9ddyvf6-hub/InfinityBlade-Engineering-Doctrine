@@ -37,18 +37,18 @@ Read the eighteen disciplines in order. Each opens with what it buys you in two 
 
 ## The eighteen disciplines
 
-**Ship status (added 2026-11-02).** Each discipline below carries a ship status line directly under its heading, in one of two kinds. *Mechanism-shipped* means a skill folder in this package ships the mechanism, and the label names it. *Specification-only* means this reference states the mechanism precisely and the host must implement it; reading the specification installs nothing, and a discipline that needs code in the host (a queue, a gate inside a send path, a ledger, a cap enforced at validation time) is UNVERIFIED as a mechanism in any host that has not built it. Summary: disciplines 3 and 8 are mechanism-shipped as installable skills; the other sixteen are specification-only.
+**Ship status (added 2026-11-02).** Each discipline below carries a ship status line directly under its heading, in one of two kinds. *Mechanism-shipped* means a skill folder in this package ships the mechanism, and the label names it. *Specification-only* means this reference states the mechanism precisely and the host must implement it; reading the specification installs nothing, and a discipline that needs code in the host (a queue, a gate inside a send path, a ledger, a cap enforced at validation time) is UNVERIFIED as a mechanism in any host that has not built it. Summary (corrected 3.1.1): disciplines 3 and 8 are mechanism-shipped as installable skills, discipline 1 ships a starter mechanism (tools/priced_initiative_score.py); the other fifteen are specification-only.
 
 | Discipline | Ship status |
 |---|---|
-| 1. Price every proactive lane | Specification-only |
+| 1. Price every proactive lane | Starter mechanism shipped (3.1.0): tools/priced_initiative_score.py; host lanes remain specification-only |
 | 2. Keep instincts: a confidence-scored procedural memory | Specification-only |
 | 3. Audit the gates for false greens | Mechanism-shipped: skills/gate-test-integrity/, skills/hermetic-test-isolation/ |
 | 4. Run memory as a profile plus a graph | Specification-only |
 | 5. Make recall honest and maintenance governed | Specification-only |
 | 6. Test skills the way blockers test code | Specification-only |
 | 7. Gate what enters the library, and grade reliability | Specification-only |
-| 8. Mechanise the completion claim | Mechanism-shipped: skills/proof-before-green/, skills/claim-verification-ledger/ |
+| 8. Mechanise the completion claim | Mechanism-shipped: skills/proof-before-green/, skills/claim-verification-ledger/; starter checker tools/status_evidence_check.py and the evidence-pointer stop hook (3.1.0) |
 | 9. Treat compaction and delegation as authority boundaries | Specification-only |
 | 10. Run a bounded hidden-rubric pass on ungated prose | Specification-only |
 | 11. Record the why, not just the what | Specification-only |
@@ -829,7 +829,15 @@ fires when the habit slips.
   overwrite JSON less inappropriately than Markdown.
 - The mechanism checks that evidence exists. Whether the evidence
   supports the claim remains a judgement, and review mode still applies.
-- **Enforcement honesty (2026-11-02).** The enforcement mechanisms
+- **Enforcement honesty (corrected 3.1.1).** Current state: since
+  3.1.0 the stop hook refuses a bare STATUS label and requires an
+  evidence pointer (a path, URL, or `evidence:` token) after the
+  verdict, exempting only the no-change form; tools/status_evidence_check.py
+  applies the same rule; tools/check_prompt.py derives its required
+  phrases from SKILL.md at run time and prints its floor status. All
+  three still check wording, not truth: a pointer to nothing passes,
+  so no report may cite a hook or checker pass as evidence for a
+  claim. *Superseded (2.x text, kept for the record):* The enforcement mechanisms
   this repository actually ships check wording, not truth. The stop
   hook pattern-matches a STATUS label and nothing after it; a bare
   label with no evidence passes it. The README prompt checker tests a

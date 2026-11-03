@@ -36,7 +36,7 @@ The replacement: Run the frozen lenses in order, move a score only on a new fact
 
 - Use level clusters built as 2.5 ATR-scaled pivot zones, and read touches against independent episodes rather than counting repeated touches on one episode as separate evidence.
 
-- Re run `python3 bin/test_pass_a.py` after any edit to pass_a.py and require all 18 checks green before trusting the output, because the parity test carries 18 checks and all must pass.
+- Re run `python3 bin/test_pass_a.py` after any edit to pass_a.py and require all 66 checks green before trusting the output, because the parity test carries 66 checks and all must pass (corrected in 3.1.1; earlier text said 18).
 
 ## Render and look
 

@@ -25,7 +25,8 @@ PY
 # evidence pointer after the verdict: a path, a URL, or an evidence: token.
 # The one-line scope marker for pure conversation replies stays allowed.
 if printf '%s' "$last" | grep -qE 'STATUS: *(GREEN|PARTIAL|BLOCKED|UNVERIFIED)'; then
-  if printf '%s' "$last" | grep -q 'STATUS: GREEN — no change made'; then exit 0; fi
+  # 3.1.1: accept both the em-dash and the comma no-change forms.
+  if printf '%s' "$last" | grep -qE 'STATUS: *GREEN *(—|,) *no change made'; then exit 0; fi
   if printf '%s' "$last" | grep -qE 'STATUS: *(GREEN|PARTIAL|BLOCKED|UNVERIFIED)[^[:cntrl:]]*(evidence:|https?://|[A-Za-z0-9_./-]+\.[A-Za-z0-9]+)'; then exit 0; fi
   echo '{"decision":"block","reason":"InfinityBlade: the STATUS line carries no evidence pointer. Add the artifact, path, URL, or command output the verdict rests on (evidence: ...). A bare label is a rumor."}'
   exit 0
