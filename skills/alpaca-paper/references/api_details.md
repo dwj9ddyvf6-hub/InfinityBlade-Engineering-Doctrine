@@ -18,7 +18,7 @@ additionally refuse without `--i-understand-this-is-live`.
 ## Auth
 
 Headers on every request:
-`APCA-API-KEY-ID: <ALPACA_KEY_ID>`, `APCA-API-SECRET-KEY: <ALPACA_SECRET_KEY>`.
+`APCA-API-KEY-ID: <ALPACA_KEY_ID>`, `APCA-API-SECRET-KEY: <ALPACA_API_SECRET_KEY>`.
 Read from the process environment at call time by `bin/alpaca_lib.py`.
 There is no connector for Alpaca: never invent one, and never persist keys.
 
@@ -42,7 +42,7 @@ There is no connector for Alpaca: never invent one, and never persist keys.
 
 - 429 → exponential backoff (1s, 2s, 4s; 4 attempts total in `alpaca_lib.py`).
 - Other 4xx/5xx → stderr message with the provider's error body, exit 1.
-- Missing `ALPACA_KEY_ID`/`ALPACA_SECRET_KEY` → stderr, exit 1 (fail closed).
+- Missing `ALPACA_KEY_ID`/`ALPACA_API_SECRET_KEY` → stderr, exit 1 (fail closed).
 - Bad `ALPACA_ENV` → stderr, exit 1.
 - Live order without `--i-understand-this-is-live` → stderr, exit 3.
 
