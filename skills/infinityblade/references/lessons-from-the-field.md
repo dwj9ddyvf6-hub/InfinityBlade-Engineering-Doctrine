@@ -8,6 +8,19 @@ The central lesson is simple: **when a failure repeats, improve the system’s m
 
 ## Failure patterns and durable countermeasures
 
+## Read these five first
+
+Thirty-three patterns follow in uniform form. These five account for the most damage in the record; a cold reader who reads nothing else should read them.
+
+| Pattern | One-line cost |
+|---|---|
+| 23. A delegated completion report is a claim, not proof | An invented completion passed as fact until someone opened the repository; every downstream decision priced on it was priced on air. |
+| 3. A success message is not durable state | Work reported saved that the destination never held, found at the moment the local copy was already gone. |
+| 29. Silence is an open defect | A component that said nothing was read as healthy for a full cycle while it produced nothing at all. |
+| 12. A comprehensive search needs a coverage ledger | A sworn absence, wrong, because one route in one place at one version was treated as everywhere. |
+| 28. Built is not wired, and a spec is not a capability | A finished mechanism that no live path called, reported as a capability the system did not have. |
+
+
 ### 1. A plausible artifact can still be the wrong artifact
 
 **Failure pattern:** A chart, build, document, or model output looks reasonable, but came from a different renderer, branch, configuration, data cutoff, or release than the workflow requires. Names such as latest, final, and corrected do not establish lineage.
