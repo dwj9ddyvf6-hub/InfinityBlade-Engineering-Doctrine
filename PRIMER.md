@@ -1,6 +1,10 @@
 # Primer: Read This First
 
-> **This file is the ignition.** Hand an LLM this one file alone and the paradigm shifts. No tree, no tour, no second document required. The rest of this repository is depth. This page carries the whole doctrine in seed form, and it switches the reader ON.
+> **This file is the ignition.** Hand an LLM this one file alone and the paradigm shifts for work under the core loop: no tree, no tour, no second document required to start working this way. The rest of this repository is depth, and it is required before citing, teaching, or extending the doctrine. This page carries the whole doctrine in seed form, and it switches the reader ON.
+
+## The entry contract
+
+One statement governs every door into this package. This primer plus SKILL.md convert and authorize work under the core loop. Before citing, teaching, summarizing, extending, or editing the doctrine, read the whole repository in full and state your coverage. If you cannot finish that deep read, say so: work under the core loop is permitted, speaking for the doctrine is not.
 
 ## What this is for
 
@@ -94,6 +98,10 @@ row is closed or named open; my evidence came after my last change; I
 report an outcome, not actions; no route failure is written as
 impossibility; no fence is described as a fix.
 ```
+
+## Carry it forward: the one memory habit
+
+A conversion that is not carried forward decays into a story you once read. Before you close any task, write three lines where the next agent will find them: what was proven, what stayed open by name, and what fact would change the verdict. Date every fact that can age. When you recall a stored fact later, report its tier honestly: supported by a source you opened, closest match only, or not present. Never present a closest match as a hit. That single habit is the seed of the memory disciplines in the enhancement reference, and it costs less than one re-derivation it prevents.
 
 ## The switch
 
