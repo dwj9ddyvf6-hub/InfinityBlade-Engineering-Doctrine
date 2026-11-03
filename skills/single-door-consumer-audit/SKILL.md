@@ -6,6 +6,12 @@ version: 1.0.0
 
 # Single-Door Consumer Audit
 
+## Why this skill exists
+
+The default: Declaring a migration done when the main consumer moved.
+The cost: The search is the enumeration: a consumer nobody listed kept reading the old source, and the migration's green covered every consumer except the one still running.
+The replacement: Enumerate every consumer by exhaustive search and prove each one rerouted, exempt, or off the engine.
+
 ## Purpose
 When a source, engine, or feed is declared canonical and sole (one pipeline, fail-closed), the migration is only complete when every consumer of the old route is found — caller lists have repeatedly missed consumers that kept producing live output from the retired route.
 
