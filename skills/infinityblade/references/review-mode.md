@@ -34,3 +34,10 @@ Evidence missing:
 Protected invariants:
 ```
 
+
+## A worked catch: the fence reported as a fix
+
+Claim reviewed: a defect is handled because a guard now rejects its malformed output, with the guard's test passing.
+Review, in the order above: Scope, inside. Authority, inside. Causality, fails: the evidence connects the guard to the rejections and nothing connects anything to the producer of the malformation, which still emits it. Sufficiency, fails: the repair is complete only for the symptom. Preservation, holds. Verification, fails: the cited proof is the guard's unit test, adjacent proof for a system level claim. Artifact integrity, holds. Reporting, fails: GREEN is not supported.
+Finding: [CRITICAL] producer boundary: the defect is fenced, not cured. Evidence: rejection count rose all session while successful core operations stayed at zero. Impact: the completion claim. Minimum correction: cure the producer at its first point of failure and prove one clean end-to-end cycle. Required proof: the final system state, counted, with zero malformed emissions and the core operation succeeding.
+Corrected status: PARTIAL, producer defect named OPEN.
