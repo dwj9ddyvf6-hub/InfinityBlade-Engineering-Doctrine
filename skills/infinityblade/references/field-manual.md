@@ -2,6 +2,8 @@
 
 Use this manual for incidents, multi-stage integrations, automation pipelines, deployments, performance failures, and tasks whose first route failed.
 
+The cost this manual exists to prevent, in one incident shape: a pipeline failed somewhere in nine stages, the team patched the stage that was loudest, the loud stage went quiet, and the failure moved one stage downstream and kept eating the day. Three patches, zero located causes. Every form below exists to force the first question that incident never asked: where did expected and observed first diverge? Fill the forms in. A manual read as prose informs; a manual filled in as forms convicts.
+
 ## Build the evidence map
 
 ```text
