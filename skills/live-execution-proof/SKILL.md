@@ -6,6 +6,12 @@ version: 1.0.0
 
 # Live Execution Proof
 
+## Why this skill exists
+
+The default: Calling a system working because its components pass.
+The cost: A pipeline green in every unit test that never once moved a real item from input to effect on its live path.
+The replacement: Define the live path, trace one real item end to end, and count outcomes at the final state, including the zero counts. The examples here speak of a broker and a ledger; read broker as the external system of record in your domain, and ledger as your own.
+
 ## Define the live path first
 
 - Name the full path from real input to real effect before auditing any part of it, including who creates the state the later steps consume.
