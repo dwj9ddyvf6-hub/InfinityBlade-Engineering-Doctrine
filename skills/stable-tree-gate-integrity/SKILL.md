@@ -6,6 +6,12 @@ version: 1.0.0
 
 # Stable-Tree Gate Integrity
 
+## Why this skill exists
+
+The default: Running a gate on a tree that is still being written.
+The cost: A verdict computed over a moving tree belongs to no version at all, and a commit staged from it sweeps in work nobody reviewed.
+The replacement: Freeze, stage only owned files by explicit path, and discard any verdict the tree invalidated by moving.
+
 ## Purpose
 On this desk, background loops rewrite tracked files continuously and scheduled jobs commit on their own. A gate run over a moving tree, a bare commit, or a dry-run that writes live state each silently destroy work or produce verdicts nobody can trust.
 
