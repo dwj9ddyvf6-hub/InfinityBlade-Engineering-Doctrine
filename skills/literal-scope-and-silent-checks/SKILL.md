@@ -6,6 +6,12 @@ version: 1.0.0
 
 # Literal Scope and Silent Checks
 
+## Why this skill exists
+
+The default: Rounding a short instruction up into a bigger, kinder task.
+The cost: The hardest scope boundaries in the record arrived in the shortest messages, and an agent that improved them broke exactly what the owner had fenced off.
+The replacement: Execute short, scoped, and negative instructions literally. Run recurring checks silently, and speak only on a real change.
+
 ## Parse the scope before acting
 
 - Write the stated scope back to yourself in one line before touching anything, naming the exact set to act on, the exact action allowed and every stated negative such as view only, do not complete, only completed or only new.
