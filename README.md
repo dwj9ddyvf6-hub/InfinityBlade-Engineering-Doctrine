@@ -14,7 +14,9 @@
 
 Works with Claude, GPT/Codex, Gemini, Cursor, Copilot, or any agent that accepts instructions. One file, about 80 lines.
 
-[The skill](skills/infinityblade/SKILL.md) · [Install](INSTALL.md) · [Lessons](skills/infinityblade/references/lessons-from-the-field.md) · [Tests](skills/infinityblade/references/eval-cases.md) · [Enhancement](skills/infinityblade/references/agent-enhancement.md) · [Changelog](CHANGELOG.md)
+[Primer](PRIMER.md) · [The skill](skills/infinityblade/SKILL.md) · [Install](INSTALL.md) · [Skills library](skills/INDEX.md) · [Lessons](skills/infinityblade/references/lessons-from-the-field.md) · [Tests](skills/infinityblade/references/eval-cases.md) · [Enhancement](skills/infinityblade/references/agent-enhancement.md) · [Changelog](CHANGELOG.md)
+
+**Reading order:** start with the [Primer](PRIMER.md). It converts the defaults you arrived with before the depth can help you, and it takes one pass. Then the skill, then the references as the skill routes you to them. The mandatory full-read note above still governs the whole repository; the primer is the first file of that read, not a substitute for it.
 
 ---
 
@@ -43,7 +45,7 @@ Long rulebooks get skimmed. InfinityBlade relies on three things agents actually
 2. **Tripwires.** Rules fire on the words an agent is about to say ("done", "impossible", running the same thing again), at the moment they matter, instead of relying on memory.
 3. **A short core.** The essentials fit on one screen; detail loads only when the task needs it.
 
-Want it enforced? See [Enforcement](INSTALL.md#enforce-it) for a Claude Code hook that blocks finishing without a STATUS line.
+Want it enforced? See [Enforcement](INSTALL.md#enforce-it) for a Claude Code hook that blocks finishing without a STATUS line. The hook checks that the label is present, not that it is true; INSTALL.md states that limit and the evidence-pointer requirement plainly.
 
 ## What it is designed to change
 
@@ -119,12 +121,16 @@ access needed.
 | [`references/examples.md`](skills/infinityblade/references/examples.md) | Short worked examples, code and non-code. |
 | [`references/eval-cases.md`](skills/infinityblade/references/eval-cases.md) | Prompts to test that the skill changes behavior. |
 | [`references/agent-enhancement.md`](skills/infinityblade/references/agent-enhancement.md) | Memory, initiative, skill-craft and self-grading disciplines for the systems around the work. |
+| [`PRIMER.md`](PRIMER.md) | The front door: the defaults that produce bad engineering reports, named and replaced, in one pass. |
+| [`skills/INDEX.md`](skills/INDEX.md) | The skills library index: 19 complete, installable skill folders. Take any folder as-is; it is complete. |
 
 The skill loads the references only when a task needs them, so everyday cost stays small.
 
 ## Agent enhancement
 
 The core governs a task. A second layer governs the agent across tasks: [`references/agent-enhancement.md`](skills/infinityblade/references/agent-enhancement.md) distils an inspected sweep of public memory, skill and proactivity systems into eighteen adopted disciplines:
+
+Each discipline is labeled in the reference as mechanism-shipped, naming the skill in this package that ships it, or specification-only. Most of the eighteen are specification-only: they state exactly what a host must build, and reading them installs no mechanism.
 
 - **Priced initiative:** every proactive lane carries a benefit-minus-cost threshold, a cheap surface-or-stay-silent gate, and feedback-scored tuning.
 - **Instincts:** corrections, error resolutions and repeated workflows become confidence-scored procedural memory, promoted to skills only through a human gate.
@@ -138,6 +144,8 @@ The core governs a task. A second layer governs the agent across tasks: [`refere
 - **Round 4 (2026-11-01):** a teardown of deepseek-ai/dsh-superagent-prototype (pinned commit 6337fc8) contributed four new disciplines (outbound purpose gating with permanent receipts and code-enforced caps; deterministic content-hash IDs with layered dedup; a durable generation-guarded effect queue that distinguishes waiting from failure; and owner routing with slot discipline and a plus-one human slot), round-4 mechanism notes inside the priced-initiative and authority disciplines (a record-only would-accept ledger, host-validated assessment shape, single-question attention, an immutable mandate revalidated at resume, and an interrupted-work recovery protocol), and a named cautions list recording what was rejected and why.
 
 - **Round 5 (2026-11-02):** a source-level re-read of every repo on the list added two disciplines (a bounded near-miss ledger that learns from gate rejections without poisoning the class, and approvals bound to content hash, target identity, expiry, and generation, evaluated on a five-way ladder) and mechanical concretions across the existing disciplines: the PRISM closed-form fire threshold with gate-in-serving-path and coded rate caps, gate mutation lists with zero survived, memory write-boundary validation and store-to-index reconciliation, the skill gate suite (compaction-cut size gate, corrected lint floor, token cost bands, trigger eval with holdout selection), a completion-gate design spec with unique-candidate cover and reserved verification budget, handoff transactions and bounded checkpoints, effect-queue v2 semantics, and a capture-time redaction suite.
+
+- **Round 6 (2026-11-02):** the total-harvest landing. No new discipline; the harvest's three standings land in the open: a coverage note for what is already in force, the Backlog register extended with 30 candidates (each carrying its adoption test), 24 conditional defers with their activation triggers, and one homegrown tacit candidate, and a Rejected register (17 grouped refusals, 6 refusal classes from the second-brain sweep, and 11 superseded practices, each stating what replaced it) so refused designs stay refused. The round also adds PRIMER.md as the repo's front door and a skills library of 19 complete folders under `skills/` (index: [`skills/INDEX.md`](skills/INDEX.md)); take any folder as-is and it installs. Eleven generalized failure patterns join lessons-from-the-field.md. Version 3.0.0: the bump is major because the package changed shape, a new front door and an installable library, not because the rules changed.
 
 - **Third-pass hardening:** the original twelve were re-graded against the layers the first passes skipped (issue trackers, release notes, fork networks, the official vendor layer, the benchmark literature): 2 confirmed, 8 qualified, 1 warned, 1 untested by the pass. The corrections and concretions that grading produced are folded into the reference, not smoothed over.
 
