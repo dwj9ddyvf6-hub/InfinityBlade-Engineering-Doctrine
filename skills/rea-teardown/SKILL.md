@@ -6,6 +6,12 @@ version: 1.0.0
 
 # REA Teardown
 
+## Why this skill exists
+
+The default: Reading a tool's marketing and calling it understood.
+The cost: A bundle too large to handle broke the very backup meant to preserve it, and the teardown's claims rested on a README the code contradicted.
+The replacement: Split, hash, read back, and scan before any public save: evidence handling is the teardown, not its paperwork.
+
 ## Identify and capture the target
 
 - Identify the target type first and pick the matching REA route for a JavaScript app, a native binary, a dotnet assembly, an Android package, a website or EVM bytecode.
