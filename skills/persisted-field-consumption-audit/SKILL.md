@@ -6,6 +6,12 @@ version: 1.0.0
 
 # Consumer and Field Consumption Audit
 
+## Why this skill exists
+
+The default: Migrating a producer and trusting the fields to follow.
+The cost: A field renamed at the producer kept its old meaning at one consumer, which read a stop as a backstop and acted on the confusion.
+The replacement: Audit every consumer of every persisted field before calling the migration complete, role by role.
+
 ## Define the door and inventory the fields
 
 - Name the canonical source, engine or feed, the retired routes it replaces, and the exact identifiers that betray an old route, covering module names, function names, data path fragments, provider hostnames, cache directories, timeframe strings and output labels.
