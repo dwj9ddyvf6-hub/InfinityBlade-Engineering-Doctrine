@@ -47,6 +47,10 @@ Parity tests: `python3 bin/test_pass_a.py` — 66 checks (corrected in 3.1.1; ea
 text said 18). Requires `CHART_READ_TA_REPO` pointing at a checkout providing
 `core.ta_battery`. Re-run after any edit to pass_a.py.
 
+Pure geometry can be imported without that engine; requesting an indicator or a full Pass A still loads the actual configured source and checks its location. No replacement engine is supplied. From the repository root, `python3 -B -m unittest discover -s tools/tests -p test_clients_deep.py` exercises dependency-free temporal geometry and client contracts using synthetic fixtures. This smaller test suite does not replace the 66 engine-parity checks or prove a live read. If the external source is unavailable, report the full parity run as unverified and retain that prerequisite.
+
+Pass A 2.6 validates OHLC geometry and actual timestamp ordering, rejects conflicting duplicate bars, scans pivot-dependent failures only after pivot availability, and scales each historical gap with its own previous-bar ATR. A standalone failed-breakout call lacking availability metadata or an aligned ATR series is labeled `causal_inputs: false`; its retrospective morphology remains available but cannot establish a prospective signal. Missing volume prevents a VERIFIED daily-data status.
+
 ### 2. Render the four charts
 ```bash
 cd <your calibration dir>
@@ -142,6 +146,8 @@ After delivering the read, offer (don't assume):
 3. **Log it** — reads with dated triggers are the raw material for the
    prospective log (Part IX.2 of the synthesis). Trigger watches that
    fire produce scored outcomes.
+
+The shipped watch requests daily bars from the original read date, evaluates subsequent completed sessions, and excludes today's bar until 16:05 America/New_York. This is a declared regular-session completion policy, not an exchange holiday/early-close calendar or a rule for continuously traded assets. A reached 10,000-bar cap fails explicitly instead of silently dropping the early part of the watch. Default stdout is empty when no event fires; `--show-status` enables a status line and `--json` returns event records for a notifier. Exit 0 means a completed evaluation, not a trigger or delivered notification. The watch is stateless: the scheduler/notifier must own event deduplication, acknowledgement, delivery verification and any scored outcome; repeated checks may return the same event. Obtain authorization before creating a schedule or sending notifications.
 
 ## Rules
 

@@ -11,13 +11,14 @@ from functools import wraps
 from itertools import islice
 import hashlib
 import json
+import math
 import os
 import re
 import sqlite3
 import sys
 import tempfile
 import time
-from _storage import atomic_text, locked
+from _storage import atomic_text, locked, append_text, read_text
 
 
 # ---------------------------------------------------------------- IDs (14)
@@ -113,15 +114,18 @@ class OutboundGate:
         self.transport = transport
 
     def _receipts(self):
-        if not os.path.isfile(self.path):
+        if not os.path.lexists(self.path):
             return []
-        with open(self.path, encoding="utf-8") as handle:
-            return [json.loads(line) for line in handle if line.strip()]
+        return [json.loads(line) for line in read_text(self.path).splitlines() if line.strip()]
+
+    def _origin_state(self, origin_event):
+        return [r for r in self._receipts()
+                if r.get("origin_event") == origin_event and not r.get("superseded_result")]
 
     def _append(self, receipt):
         os.makedirs(os.path.dirname(os.path.abspath(self.path)), exist_ok=True)
-        with open(self.path, "a", encoding="utf-8") as handle:
-            handle.write(json.dumps(receipt, sort_keys=True) + "\n")
+        previous = read_text(self.path) if os.path.lexists(self.path) else ""
+        atomic_text(self.path, previous + json.dumps(receipt, sort_keys=True) + "\n")
 
     def _check_purpose(self, purpose, context):
         if purpose not in PURPOSES:
@@ -157,18 +161,21 @@ class OutboundGate:
                    "surface": surface, "purpose": purpose, "origin_event": origin_event,
                    "recipient": recipient, "words": words, "sent": False,
                    "text_sha256": hashlib.sha256(text.encode()).hexdigest()}
+        receipt["idempotency_key"] = receipt["id"]
         if self.transport is None:
             return {**receipt, "status": "ready", "reason": "validated only; no transport configured"}
         with locked(self.path):
-            prior = [r for r in self._receipts() if r.get("origin_event") == origin_event
-                     and (r.get("sent") or r.get("status") in ("in_flight", "outcome_unknown"))]
-            if prior:
-                return {"sent": False, "status": "duplicate_suppressed", "receipt_id": prior[0]["id"],
+            prior = self._origin_state(origin_event)
+            latest = prior[-1] if prior else None
+            if latest and (latest.get("sent") or latest.get("status") in ("in_flight", "outcome_unknown")):
+                return {"sent": False, "status": "duplicate_suppressed", "receipt_id": latest["id"],
                         "reason": "origin already acknowledged or unresolved; reconcile before retrying"}
+            receipt["attempt"] = 1 + sum(r.get("status") == "in_flight" for r in prior)
+            receipt["id"] = deterministic_id(["attempt", receipt["idempotency_key"], receipt["attempt"]])
             self._append({**receipt, "status": "in_flight"})
         try:
             acknowledgement = self.transport(surface=surface, text=text, recipient=recipient,
-                                             idempotency_key=receipt["id"])
+                                             idempotency_key=receipt["idempotency_key"])
             if not isinstance(acknowledgement, dict) or not (acknowledgement.get("id") or acknowledgement.get("receipt_id")):
                 raise ValueError("transport must return an acknowledgement ID")
         except Exception as exc:
@@ -178,8 +185,37 @@ class OutboundGate:
             result = {**receipt, "sent": True, "status": "sent",
                       "transport_receipt": redact(acknowledgement)}
         with locked(self.path):
+            prior = self._origin_state(origin_event)
+            latest = prior[-1] if prior else None
+            if not latest or latest.get("id") != receipt["id"] or latest.get("status") != "in_flight":
+                # A host reconciliation may have settled this attempt while its
+                # callback was still outstanding. Keep the observation for audit
+                # without allowing it to overwrite the current attempt's state.
+                result = {**result, "superseded_result": True, "state_updated": False}
             self._append(result)
         return result
+
+    def reconcile(self, origin_event, receipt_id, outcome, evidence, transport_receipt=None):
+        """Resolve uncertainty against the exact attempt using receiver evidence.
+
+        A confirmed non-send permits retry; a confirmed send preserves dedup.
+        The host supplies the authoritative observation, never an inferred guess.
+        """
+        if outcome not in ("applied", "not_applied") or not isinstance(evidence, str) or not evidence.strip():
+            raise ValueError("reconciliation needs applied/not_applied and nonempty evidence")
+        if outcome == "applied" and (not isinstance(transport_receipt, dict) or not (transport_receipt.get("id") or transport_receipt.get("receipt_id"))):
+            raise ValueError("confirmed delivery needs a receiver acknowledgement ID")
+        with locked(self.path):
+            prior = self._origin_state(origin_event)
+            row = prior[-1] if prior else None
+            if not row or row.get("id") != receipt_id or row.get("status") not in ("in_flight", "outcome_unknown"):
+                return False
+            result = {**row, "status": "sent" if outcome == "applied" else "confirmed_not_sent",
+                      "sent": outcome == "applied", "reconciliation_evidence": evidence}
+            if outcome == "applied":
+                result["transport_receipt"] = redact(transport_receipt)
+            self._append(result)
+            return result
 
 
 # --------------------------------------------------------- effect queue (15)
@@ -205,26 +241,49 @@ class EffectQueue:
         self.db.execute("PRAGMA journal_mode=WAL")
         self.db.execute("PRAGMA synchronous=FULL")
         self.db.execute(QUEUE_SCHEMA)
+        self.db.execute("CREATE TABLE IF NOT EXISTS effect_versions(kind TEXT, key TEXT, generation INTEGER NOT NULL, revision INTEGER NOT NULL, PRIMARY KEY(kind,key))")
+        self.db.execute("CREATE TABLE IF NOT EXISTS effect_events(seq INTEGER PRIMARY KEY AUTOINCREMENT,kind TEXT,key TEXT,generation INTEGER,event TEXT,ts REAL,evidence TEXT)")
+        # Migrate existing active rows without resetting their generation.
+        self.db.execute("INSERT INTO effect_versions(kind,key,generation,revision) SELECT kind,key,generation,revision FROM effects WHERE 1 ON CONFLICT(kind,key) DO UPDATE SET generation=MAX(effect_versions.generation,excluded.generation),revision=MAX(effect_versions.revision,excluded.revision)")
         self.db.commit()
         self.ran = False
         self.skipped = []
 
+    def _event(self, kind, key, generation, event, evidence=""):
+        self.db.execute("INSERT INTO effect_events(kind,key,generation,event,ts,evidence) VALUES(?,?,?,?,?,?)",
+                        (kind, key, generation, event, time.time(), evidence))
+
+    def history(self, kind, key):
+        """Durable local transition evidence; not proof of an external effect."""
+        rows = self.db.execute("SELECT seq,generation,event,ts,evidence FROM effect_events WHERE kind=? AND key=? ORDER BY seq", (kind, key)).fetchall()
+        return [dict(zip(("seq", "generation", "event", "ts", "evidence"), row)) for row in rows]
+
     def enqueue(self, kind, key, payload=None, revision=None):
+        if not isinstance(kind, str) or not kind or not isinstance(key, str) or not key:
+            raise ValueError("effect kind and key must be nonempty strings")
+        if revision is not None and (isinstance(revision, bool) or not isinstance(revision, int) or revision < 0):
+            raise ValueError("revision must be a nonnegative integer")
+        encoded = json.dumps({} if payload is None else payload, allow_nan=False)
         now = time.time()
         with self.db:
             self.db.execute("BEGIN IMMEDIATE")
-            row = self.db.execute("SELECT generation, revision, queued_at FROM effects WHERE kind=? AND key=?",
-                                  (kind, key)).fetchone()
-            if row and revision is not None and revision <= row[1]:
+            version = self.db.execute("SELECT generation, revision FROM effect_versions WHERE kind=? AND key=?", (kind, key)).fetchone()
+            row = self.get(kind, key)
+            if version and revision is not None and revision <= version[1]:
                 return "stale"
-            generation = (row[0] + 1) if row else 1
-            queued_at = row[2] if row else now
+            if row and row["state"] in ("running", "outcome_unknown"):
+                raise ValueError("reconcile the unresolved generation before enqueueing its successor")
+            generation = version[0] + 1 if version else 1
+            revision = revision if revision is not None else version[1] if version else 0
+            queued_at = row["queued_at"] if row else now
+            self.db.execute("INSERT INTO effect_versions(kind,key,generation,revision) VALUES(?,?,?,?) ON CONFLICT(kind,key) DO UPDATE SET generation=excluded.generation,revision=excluded.revision", (kind, key, generation, revision))
             self.db.execute(
                 "INSERT INTO effects(kind,key,payload,generation,state,attempts,infra_errors,revision,queued_at,next_at,updated_at,receipt) "
                 "VALUES(?,?,?,?,'pending',0,0,?,?,?,?,'') ON CONFLICT(kind,key) DO UPDATE SET "
                 "payload=excluded.payload,generation=excluded.generation,state='pending',revision=excluded.revision,"
                 "attempts=0,infra_errors=0,next_at=excluded.next_at,last_error=NULL,updated_at=excluded.updated_at,receipt=''",
-                (kind, key, json.dumps(payload or {}), generation, revision or 0, queued_at, now, now))
+                (kind, key, encoded, generation, revision, queued_at, now, now))
+            self._event(kind, key, generation, "enqueued")
         return generation
 
     def get(self, kind, key):
@@ -238,29 +297,78 @@ class EffectQueue:
                 "queued_at": row[8], "receipt": row[9], "next_at": row[10], "last_error": row[11]}
 
     def issue_receipt(self, kind, key, generation):
-        receipt = f"rcpt-{kind}-{key}-{generation}"
-        cursor = self.db.execute("UPDATE effects SET receipt=? WHERE kind=? AND key=? AND generation=?",
-                        (receipt, kind, key, generation))
-        self.db.commit()
-        if cursor.rowcount != 1:
-            raise ValueError("cannot issue receipt for an absent or stale generation")
+        receipt = "rcpt-" + deterministic_id([kind, key, generation])
+        with self.db:
+            self.db.execute("BEGIN IMMEDIATE")
+            cursor = self.db.execute("UPDATE effects SET receipt=? WHERE kind=? AND key=? AND generation=? AND state IN ('pending','later','running')",
+                                     (receipt, kind, key, generation))
+            if cursor.rowcount != 1:
+                raise ValueError("cannot issue receipt for an absent, unresolved, terminal or stale generation")
+            self._event(kind, key, generation, "receipt-issued")
         return receipt
 
     def complete(self, kind, key, generation, receipt=None):
-        if receipt is not None:
-            cursor = self.db.execute("DELETE FROM effects WHERE kind=? AND key=? AND generation=? AND receipt=?",
-                                     (kind, key, generation, receipt))
-        else:
-            cursor = self.db.execute("DELETE FROM effects WHERE kind=? AND key=? AND generation=?",
-                                     (kind, key, generation))
-        self.db.commit()
-        return cursor.rowcount == 1
+        with self.db:
+            self.db.execute("BEGIN IMMEDIATE")
+            row = self.get(kind, key)
+            if (not row or row["generation"] != generation or row["state"] not in ("pending", "later", "running")
+                    or (row["receipt"] and receipt != row["receipt"]) or (receipt is not None and receipt != row["receipt"])):
+                return False
+            self.db.execute("DELETE FROM effects WHERE kind=? AND key=? AND generation=?", (kind, key, generation))
+            self._event(kind, key, generation, "completed", receipt or "caller-acknowledged")
+        return True
+
+    @staticmethod
+    def _delay(value, label):
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
+            raise ValueError(f"{label} must be finite and nonnegative")
+        return value
+
+    def reconcile(self, kind, key, generation, outcome, evidence):
+        """Settle one unresolved generation from a trusted receiver-state read.
+
+        applied closes it; not_applied makes the same persisted intent due under
+        a fresh generation so delayed callbacks cannot settle the retry. The
+        host must quiesce the old worker before its authoritative receiver read.
+        """
+        if outcome not in ("applied", "not_applied") or not isinstance(evidence, str) or not evidence.strip():
+            raise ValueError("reconciliation needs applied/not_applied and nonempty external evidence")
+        with self.db:
+            self.db.execute("BEGIN IMMEDIATE")
+            row = self.get(kind, key)
+            if not row or row["generation"] != generation or row["state"] not in ("running", "outcome_unknown"):
+                return False
+            if outcome == "applied":
+                self.db.execute("DELETE FROM effects WHERE kind=? AND key=? AND generation=?", (kind, key, generation))
+            else:
+                successor = generation + 1
+                self.db.execute("UPDATE effect_versions SET generation=? WHERE kind=? AND key=?", (successor, kind, key))
+                self.db.execute("UPDATE effects SET generation=?,state='pending',next_at=?,updated_at=?,last_error=NULL,receipt='' WHERE kind=? AND key=? AND generation=?",
+                                (successor, time.time(), time.time(), kind, key, generation))
+            self._event(kind, key, generation, "reconciled-" + outcome, evidence)
+            if outcome == "not_applied":
+                self._event(kind, key, successor, "reconciliation-retry")
+        return {"reconciled": True, "outcome": outcome,
+                "generation": successor if outcome == "not_applied" else generation}
+
+    def cancel(self, kind, key, generation, reason):
+        """Cancel only unclaimed work; running/unknown work needs reconciliation."""
+        if not isinstance(reason, str) or not reason.strip():
+            raise ValueError("cancellation needs a reason")
+        with self.db:
+            self.db.execute("BEGIN IMMEDIATE")
+            cursor = self.db.execute("DELETE FROM effects WHERE kind=? AND key=? AND generation=? AND state IN ('pending','later','failed')", (kind, key, generation))
+            if cursor.rowcount:
+                self._event(kind, key, generation, "cancelled", reason)
+            return cursor.rowcount == 1
 
     def defer_later(self, kind, key, generation, delay_s=60):
-        cursor = self.db.execute(
-            "UPDATE effects SET state='later',next_at=?,updated_at=? WHERE kind=? AND key=? AND generation=?",
-            (time.time() + delay_s, time.time(), kind, key, generation))
-        self.db.commit()
+        self._delay(delay_s, "delay_s")
+        with self.db:
+            cursor = self.db.execute("UPDATE effects SET state='later',next_at=?,updated_at=? WHERE kind=? AND key=? AND generation=? AND state IN ('pending','later','running')",
+                                    (time.time() + delay_s, time.time(), kind, key, generation))
+            if cursor.rowcount:
+                self._event(kind, key, generation, "deferred")
         return cursor.rowcount == 1
 
     def fail(self, kind, key, generation, error="", max_attempts=3):
@@ -272,24 +380,33 @@ class EffectQueue:
             cursor = self.db.execute(
                 "UPDATE effects SET state=CASE WHEN attempts+1>=? THEN 'failed' ELSE 'pending' END,"
                 "attempts=attempts+1,last_error=?,next_at=?,updated_at=? "
-                "WHERE kind=? AND key=? AND generation=?",
+                "WHERE kind=? AND key=? AND generation=? AND state IN ('pending','later','running')",
                 (max_attempts, str(error), time.time(), time.time(), kind, key, generation))
             row = self.get(kind, key)
+            if cursor.rowcount:
+                self._event(kind, key, generation, "failed" if row["state"] == "failed" else "retryable-failure")
         if cursor.rowcount and row["state"] == "failed":
-            self.skipped.append({"kind": kind, "key": key, "last_error": str(error),
-                                 "state": "skipped", "terminal": True})
+            self.skipped.append({"kind": kind, "key": key, "last_error": str(error), "state": "skipped", "terminal": True})
         return cursor.rowcount == 1
 
     def record_rate_limited(self, kind, key, generation, retry_after=None, base=2.0, cap=300.0):
-        row = self.get(kind, key)
-        pause = min(cap, base * (2 ** row["infra_errors"])) if row else base
+        self._delay(base, "base"); self._delay(cap, "cap")
         if retry_after is not None:
-            pause = max(pause, retry_after)
-        cursor = self.db.execute(
-            "UPDATE effects SET state='later',infra_errors=infra_errors+1,next_at=?,updated_at=? "
-            "WHERE kind=? AND key=? AND generation=?", (time.time() + pause, time.time(), kind, key, generation))
-        self.db.commit()
-        return cursor.rowcount == 1
+            self._delay(retry_after, "retry_after")
+        with self.db:
+            self.db.execute("BEGIN IMMEDIATE")
+            row = self.get(kind, key)
+            if not row or row["generation"] != generation or row["state"] not in ("pending", "later", "running"):
+                return False
+            # Clamp exponent before exponentiation, including pathological old rows.
+            exponent = min(row["infra_errors"], 1023)
+            pause = min(cap, base * (2.0 ** exponent))
+            if retry_after is not None:
+                pause = max(pause, retry_after)
+            self.db.execute("UPDATE effects SET state='later',infra_errors=infra_errors+1,next_at=?,updated_at=? WHERE kind=? AND key=? AND generation=?",
+                            (time.time() + pause, time.time(), kind, key, generation))
+            self._event(kind, key, generation, "rate-limited")
+        return True
 
     def run_next(self, handler):
         """Atomically claim due work. The handler must explicitly complete/defer it.
@@ -307,6 +424,7 @@ class EffectQueue:
             kind, key, generation = row
             self.db.execute("UPDATE effects SET state='running',updated_at=? WHERE kind=? AND key=? AND generation=?",
                             (time.time(), kind, key, generation))
+            self._event(kind, key, generation, "claimed")
             item = self.get(kind, key)
         try:
             handler(item)
@@ -316,10 +434,12 @@ class EffectQueue:
         except Exception as exc:
             # The handler may have acted before losing its acknowledgement.
             # Ordinary exceptions cannot establish that replay is safe.
-            self.db.execute("UPDATE effects SET state='outcome_unknown',last_error=?,updated_at=? "
-                            "WHERE kind=? AND key=? AND generation=?",
-                            (type(exc).__name__, time.time(), kind, key, generation))
-            self.db.commit()
+            with self.db:
+                cursor = self.db.execute("UPDATE effects SET state='outcome_unknown',last_error=?,updated_at=? "
+                                        "WHERE kind=? AND key=? AND generation=? AND state='running'",
+                                        (type(exc).__name__, time.time(), kind, key, generation))
+                if cursor.rowcount:
+                    self._event(kind, key, generation, "outcome-unknown", type(exc).__name__)
             return "outcome_unknown:" + key
         return "ok:" + key
 
@@ -334,8 +454,8 @@ class EffectQueue:
 
 
 def outbox_append(path, record):
-    with open(path, "a", encoding="utf-8") as handle:
-        handle.write(json.dumps(record) + "\n")
+    with locked(path):
+        append_text(path, json.dumps(record) + "\n")
 
 
 def outbox_pending(path):
@@ -473,6 +593,8 @@ class ApprovalStore:
     """Approvals bound to action, resolved target, and exact content hash."""
 
     def __init__(self, path, generation=0):
+        if isinstance(generation, bool) or not isinstance(generation, int) or generation < 0:
+            raise ValueError("generation must be a nonnegative integer")
         self.path = path
         self.generation = generation
         self.rows = []
@@ -480,9 +602,8 @@ class ApprovalStore:
 
     def _reload(self):
         self.rows = []
-        if os.path.exists(self.path):
-            with open(self.path, encoding="utf-8") as handle:
-                self.rows = [json.loads(line) for line in handle if line.strip()]
+        if os.path.lexists(self.path):
+            self.rows = [json.loads(line) for line in read_text(self.path).splitlines() if line.strip()]
 
     def _save(self):
         atomic_text(self.path, "".join(json.dumps(row, sort_keys=True) + "\n" for row in self.rows))
@@ -491,9 +612,19 @@ class ApprovalStore:
     def content_hash(data):
         return hashlib.sha256(data).hexdigest()
 
+    @staticmethod
+    def _clock(now):
+        now = time.time() if now is None else now
+        if isinstance(now, bool) or not isinstance(now, (int, float)) or not math.isfinite(now):
+            raise ValueError("approval clock must be finite")
+        return now
+
     @_synchronized
     def record(self, action, target, content, ttl_days=30, now=None):
-        now = time.time() if now is None else now
+        now = self._clock(now)
+        if (isinstance(ttl_days, bool) or not isinstance(ttl_days, (int, float))
+                or not math.isfinite(ttl_days) or ttl_days <= 0 or not math.isfinite(now + ttl_days * 86400)):
+            raise ValueError("approval lifetime must be positive and finite")
         row = {"action": action, "target": target, "hash": self.content_hash(content),
                "generation": self.generation, "expires": now + ttl_days * 86400,
                "revoked": False, "used": False}
@@ -510,7 +641,8 @@ class ApprovalStore:
 
     @_synchronized
     def check(self, action, candidates, content, now=None):
-        now = time.time() if now is None else now
+        now = self._clock(now)
+        candidates = list(candidates)
         matches = [r for r in self.rows if r["action"] == action and r["target"] in candidates]
         if not matches:
             return "out_of_scope"
@@ -528,10 +660,11 @@ class ApprovalStore:
 
     @_synchronized
     def authorize_and_consume(self, action, candidates, content, now=None):
+        now = self._clock(now)
+        candidates = list(candidates)
         verdict = ApprovalStore.check.__wrapped__(self, action, candidates, content, now=now)
         if verdict != "authorized_unique":
             return verdict
-        now = time.time() if now is None else now
         for row in self.rows:
             if (row["action"] == action and row["target"] in candidates
                     and row["hash"] == self.content_hash(content) and not row["revoked"]

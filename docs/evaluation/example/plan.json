@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "experiment_id": "synthetic-save-example",
+  "note": "Manually authored fixtures show grader behavior; these are not agent/model trials.",
+  "pairs": [
+    {
+      "pair_id": "save-pair-1",
+      "case": "case.json",
+      "fixture": "fixture.json",
+      "baseline": {
+        "trial_id": "save-baseline-1",
+        "status": "completed",
+        "treatment_revision": "synthetic-baseline-v1",
+        "observed_at": "2026-11-07T00:00:00Z",
+        "artifacts": "baseline",
+        "configuration": {
+          "model": "synthetic-fixture-no-model-run",
+          "host": "offline-artifact-oracle-demo",
+          "tools_sha256": "ea48e01ef1d6731a4766e99a265b5956fd16ec8b598d9ff834f5985c162d76da",
+          "system_sha256": "22a32e13e527b577f41a7de2e6ceea763b3df275c06f0da3f79e0d4231ba1078",
+          "budget": {
+            "output_tokens": 1000
+          },
+          "seed": null
+        },
+        "case_sha256": "79363cd7e39f8d595d89cb51878bae1aa4ea099bcb7186afee8621df7b7332b0",
+        "fixture_sha256": "58b37bd54ed60d00b0b1b6535016c3db94ad9c6bbcb5d37778806dc6e618639b",
+        "metrics": {
+          "elapsed_seconds": null,
+          "input_tokens": null,
+          "output_tokens": null,
+          "tool_calls": null,
+          "cost_usd": null
+        }
+      },
+      "candidate": {
+        "trial_id": "save-candidate-1",
+        "status": "completed",
+        "treatment_revision": "synthetic-candidate-v1",
+        "observed_at": "2026-11-07T00:00:00Z",
+        "artifacts": "candidate",
+        "configuration": {
+          "model": "synthetic-fixture-no-model-run",
+          "host": "offline-artifact-oracle-demo",
+          "tools_sha256": "ea48e01ef1d6731a4766e99a265b5956fd16ec8b598d9ff834f5985c162d76da",
+          "system_sha256": "22a32e13e527b577f41a7de2e6ceea763b3df275c06f0da3f79e0d4231ba1078",
+          "budget": {
+            "output_tokens": 1000
+          },
+          "seed": null
+        },
+        "case_sha256": "79363cd7e39f8d595d89cb51878bae1aa4ea099bcb7186afee8621df7b7332b0",
+        "fixture_sha256": "58b37bd54ed60d00b0b1b6535016c3db94ad9c6bbcb5d37778806dc6e618639b",
+        "metrics": {
+          "elapsed_seconds": null,
+          "input_tokens": null,
+          "output_tokens": null,
+          "tool_calls": null,
+          "cost_usd": null
+        }
+      }
+    }
+  ]
+}

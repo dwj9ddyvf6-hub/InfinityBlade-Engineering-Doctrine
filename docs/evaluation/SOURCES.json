@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "research_date_utc": "2026-11-07",
+  "purpose": "Second-pass evaluation and evidence design research; source inspection, not model experiments.",
+  "pinned_code_inspections": [
+    {
+      "repository": "UKGovernmentBEIS/inspect_ai",
+      "revision": "aa934845905492fc13935f37a811a36bae64dfb7",
+      "path": "src/inspect_ai/scorer/_score.py",
+      "inspected": "full file",
+      "url": "https://github.com/UKGovernmentBEIS/inspect_ai/blob/aa934845905492fc13935f37a811a36bae64dfb7/src/inspect_ai/scorer/_score.py",
+      "sha256": "b96346170194adbfddca2c4cf221f5312259908151104d73783d02d68b4ca230",
+      "bytes": 3196
+    },
+    {
+      "repository": "sierra-research/tau2-bench",
+      "revision": "033bf082f48e4a3c6a1256208e93cf2ce9c3bb6f",
+      "path": "docs/evaluation.md",
+      "inspected": "full document",
+      "url": "https://github.com/sierra-research/tau2-bench/blob/033bf082f48e4a3c6a1256208e93cf2ce9c3bb6f/docs/evaluation.md",
+      "sha256": "2fa0e2bc5c996b0bce0fc2fb77533394126f1c7368c92f8adef142dcd43aae06",
+      "bytes": 13634
+    },
+    {
+      "repository": "sierra-research/tau2-bench",
+      "revision": "033bf082f48e4a3c6a1256208e93cf2ce9c3bb6f",
+      "path": "src/tau2/evaluator/evaluator.py",
+      "inspected": "lines 1-145 and 210-286; reward-basis and completion branches",
+      "url": "https://github.com/sierra-research/tau2-bench/blob/033bf082f48e4a3c6a1256208e93cf2ce9c3bb6f/src/tau2/evaluator/evaluator.py",
+      "sha256": "adc929736ee3d75186fcd5c7cf5d5a4036814a9b73a845f7a513b39a44e9bc93",
+      "bytes": 15060
+    },
+    {
+      "repository": "SWE-bench/SWE-bench",
+      "revision": "02e7a74ffd0b707aab73d203fe87bdc7c76afc8e",
+      "path": "swebench/harness/grading.py",
+      "inspected": "lines 112-329; suite validity, fail-to-pass and pass-to-pass aggregation",
+      "url": "https://github.com/SWE-bench/SWE-bench/blob/02e7a74ffd0b707aab73d203fe87bdc7c76afc8e/swebench/harness/grading.py",
+      "sha256": "a095273010175001a6779e365b3b77abb8657c7ac2e4f80b4bc360faa6f09483",
+      "bytes": 14144
+    }
+  ],
+  "web_sources": [
+    {
+      "id": "inspect-scoring-policy",
+      "url": "https://inspect.aisi.org.uk/scoring-policy.html",
+      "inspected": "Three outcomes, attribution, denominator handling; lines156-210",
+      "kind": "maintainer documentation"
+    },
+    {
+      "id": "inspect-errors",
+      "url": "https://inspect.aisi.org.uk/handling-errors.html",
+      "inspected": "Runtime errors, crash recovery and log retry trust; lines156-178",
+      "kind": "maintainer documentation"
+    },
+    {
+      "id": "hypothesis-stateful",
+      "url": "https://hypothesis.readthedocs.io/en/latest/stateful.html",
+      "inspected": "State-machine model comparison, replayable failure and invariant sections; lines43-62 and88-206",
+      "kind": "maintainer documentation"
+    },
+    {
+      "id": "json-pointer",
+      "url": "https://www.rfc-editor.org/rfc/rfc6901.txt",
+      "inspected": "Sections3-4 syntax, escaping, duplicate members and array indices; lines75-169",
+      "kind": "IETF standard"
+    },
+    {
+      "id": "slsa-artifact-verification",
+      "url": "https://slsa.dev/spec/v1.2/verifying-artifacts",
+      "inspected": "Verification, expected identity/parameters and roots of trust; lines39-85",
+      "kind": "supply-chain verification specification"
+    }
+  ],
+  "exclusions": [
+    "No external framework installed or executed.",
+    "No code copied into the public implementation.",
+    "No claim of exhaustive repository review.",
+    "No live model benchmark or causal performance measurement."
+  ]
+}

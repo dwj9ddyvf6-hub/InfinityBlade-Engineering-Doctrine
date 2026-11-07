@@ -12,7 +12,9 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from alpaca_lib import api_request, emit, trading_base
+from alpaca_lib import AlpacaError, api_request, emit, fail, trading_base
+from datetime import date
+from decimal import Decimal, InvalidOperation
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -29,80 +31,102 @@ def build_parser() -> argparse.ArgumentParser:
                    help="Max contracts per page (default: 200)")
     p.add_argument("--max-pages", type=int, default=10,
                    help="Cap on pages followed via next_page_token (default: 10)")
+    p.add_argument("--with-coverage", action="store_true",
+                   help="Return contracts plus explicit completion, continuation and unknown-tradability metadata")
     return p
+
+
+def fetch_contracts(params, max_pages=10, request=None):
+    """Follow the complete token chain; never turn a corrupt page into absence.
+
+    The returned envelope retains unknown-tradability contracts separately.
+    A consumer that needs only the legacy tradable array must require complete.
+    """
+    if isinstance(max_pages, bool) or not isinstance(max_pages, int) or max_pages < 1:
+        raise ValueError("max_pages must be a positive integer")
+    request = request or api_request
+    query = dict(params)
+    contracts, unknown, seen_symbols, seen_tokens = [], [], {}, set()
+    token, excluded, pages = None, 0, 0
+    for pages in range(1, max_pages + 1):
+        if token:
+            query["page_token"] = token
+        else:
+            query.pop("page_token", None)
+        result = request("GET", f"{trading_base()}/v2/options/contracts", params=dict(query))
+        if not isinstance(result, dict) or not isinstance(result.get("option_contracts"), list):
+            raise AlpacaError("Invalid option-contract page: option_contracts must be an array")
+        for contract in result["option_contracts"]:
+            if not isinstance(contract, dict):
+                raise AlpacaError("Invalid option-contract entry: expected an object")
+            try:
+                symbol = contract["symbol"]
+                if not isinstance(symbol, str) or not symbol.strip():
+                    raise ValueError("symbol")
+                date.fromisoformat(contract["expiration_date"])
+                if contract["type"] not in ("call", "put"):
+                    raise ValueError("type")
+                for field in ("strike_price", "multiplier"):
+                    value = Decimal(str(contract[field]))
+                    if not value.is_finite() or value <= 0:
+                        raise ValueError(field)
+                if "tradable" in contract and not isinstance(contract["tradable"], bool):
+                    raise ValueError("tradable")
+            except (KeyError, ValueError, TypeError, InvalidOperation) as error:
+                raise AlpacaError("Invalid option-contract identity, date, numeric field or tradability") from error
+            if symbol in seen_symbols:
+                if seen_symbols[symbol] != contract:
+                    raise AlpacaError("Conflicting duplicate option contract across pages")
+                continue
+            seen_symbols[symbol] = dict(contract)
+            normalized = {"symbol": symbol, "expiration": contract["expiration_date"],
+                          "strike": contract["strike_price"], "type": contract["type"],
+                          "multiplier": contract["multiplier"]}
+            if contract.get("tradable") is True:
+                contracts.append(normalized)
+            elif contract.get("tradable") is False:
+                excluded += 1
+            else:
+                unknown.append(normalized)
+        token = result.get("next_page_token")
+        if token is not None and (not isinstance(token, str) or not token):
+            raise AlpacaError("Invalid option-contract continuation token")
+        if token in seen_tokens:
+            raise AlpacaError("Option-contract pagination repeated a continuation token")
+        if token is None:
+            break
+        seen_tokens.add(token)
+    return {"contracts": contracts, "unverified_contracts": unknown,
+            "coverage": {"complete": token is None and not unknown,
+                         "source_pages_complete": token is None,
+                         "pages": pages, "unique_contracts_seen": len(seen_symbols),
+                         "excluded_nontradable": excluded,
+                         "unknown_tradability": len(unknown), "next_page_token": token}}
 
 
 def main() -> None:
     args = build_parser().parse_args()
-    params = {
-        "underlying_symbols": args.underlying.upper(),
-        "status": "active",
-        "type": args.ctype,
-        "limit": args.limit,
-    }
+    if not args.underlying.strip() or not 1 <= args.limit <= 10000 or args.max_pages < 1:
+        fail("Nonempty underlying, limit1..10000 and positive max-pages are required")
+    try:
+        dates = [date.fromisoformat(x) for x in (args.expiry_gte, args.expiry_lte) if x]
+        if len(dates) == 2 and dates[0] > dates[1]:
+            raise ValueError("inverted expiration window")
+    except ValueError:
+        fail("Expiration bounds must be YYYY-MM-DD in ascending order")
+    params = {"underlying_symbols": args.underlying.strip().upper(), "status": "active",
+              "type": args.ctype, "limit": args.limit}
     if args.expiry_gte:
         params["expiration_date_gte"] = args.expiry_gte
     if args.expiry_lte:
         params["expiration_date_lte"] = args.expiry_lte
-    # Follow next_page_token: a target strike may live on a later page.
-    contracts = []
-    page_token = None
-    pages = 0
-    while True:
-        if page_token:
-            params["page_token"] = page_token
-        result = api_request("GET", f"{trading_base()}/v2/options/contracts",
-                             params=params)
-        # 3x-daily bugcheck 2026-10-11 night (MINOR): api_request returns
-        # {"raw": text} on non-JSON 2xx bodies; the old code treated that
-        # as "no contracts" and silently emitted []. A non-dict body also
-        # crashed .get() below. Fail loud (same class as the
-        # alpaca_get_account.py 2026-10-08 fix).
-        if isinstance(result, dict) and "raw" in result:
-            print("Unexpected contracts response shape (non-JSON body)",
-                  file=sys.stderr)
-            sys.exit(2)
-        if not isinstance(result, dict):
-            print("Unexpected contracts response shape (non-object body)",
-                  file=sys.stderr)
-            sys.exit(2)
-        batch = (result or {}).get("option_contracts") or []
-        # 3x-daily bugcheck 2026-10-08 (LOW): a malformed page (non-list
-        # option_contracts, or non-dict entries) crashed .extend / the
-        # filter below. Skip the malformed page instead.
-        if not isinstance(batch, list):
-            batch = []
-        contracts.extend(batch)
-        page_token = (result or {}).get("next_page_token")
-        pages += 1
-        if not page_token or pages >= args.max_pages:
-            # 3x-daily bugcheck 2026-10-14 (LOW, BC14M-2): a live
-            # page_token at the page cap means the chain is silently
-            # truncated (the tradable filter below shrinks it further,
-            # so a caller's strike can be missing with no signal).
-            # Current callers pass --limit 500 with <=1-week /
-            # <=~45-DTE windows and stay under the cap, so this is
-            # latent -- warn on stderr (stdout stays a pure JSON
-            # array) instead of truncating in silence.
-            if page_token:
-                print("WARNING: option chain truncated at --max-pages "
-                      "%d (%d contracts before tradable filter); "
-                      "raise --max-pages for a wider window"
-                      % (args.max_pages, len(contracts)),
-                      file=sys.stderr)
-            break
-    # client-side tradable filter (no server-side tradable param)
-    # 3x-daily bugcheck 2026-10-08 (LOW): isinstance guard added with the
-    # page-shape guard above -- a non-dict entry crashed .get().
-    contracts = [c for c in contracts
-                 if isinstance(c, dict) and c.get("tradable", True)]
-    emit([{
-        "symbol": c.get("symbol"),
-        "expiration": c.get("expiration_date"),
-        "strike": c.get("strike_price"),
-        "type": c.get("type"),
-        "multiplier": c.get("multiplier"),
-    } for c in contracts])
+    try:
+        result = fetch_contracts(params, args.max_pages)
+        if not args.with_coverage and not result["coverage"]["complete"]:
+            raise AlpacaError("Option chain incomplete or tradability unknown; increase --max-pages or use --with-coverage to retain explicit partial evidence")
+    except AlpacaError as error:
+        fail(str(error), exit_code=2)
+    emit(result if args.with_coverage else result["contracts"])
 
 
 if __name__ == "__main__":

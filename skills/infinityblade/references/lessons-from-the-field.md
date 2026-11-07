@@ -180,7 +180,7 @@ An identity audit also found that one global event key had been fingerprinted wi
 **Countermeasures:**
 - **Run independent work in parallel.** Issue independent reads, searches and checks together. Run long jobs (full suites, builds, crawls) in the background and keep working on things that don't depend on them.
 - **Go from cheap to expensive.** Run the focused tests for the changed area first. Run the full suite once, on the final head, as the gate.
-- **Read only what you need.** Search for the symbol, then read the matching slice. Don't load whole files or logs to find one fact.
+- **Read only what you need for a focused lookup.** Search for the symbol, then read the matching slice. Don't reload whole files or logs to find one fact. A requested complete audit or the doctrine's initial full read still covers every file in bounded chunks; efficiency changes the batch size, not the required coverage.
 - **Cache what you have already established.** Don't repeat a run, fetch or measurement unless its inputs changed, and note what was proven and on which revision.
 - **Batch before the slow gate.** Group related changes so one validated pass covers them. One green push beats several red ones.
 - **Keep scratch state from eating the machine.** Keep temporary output only for failures, and clean up artifacts you created once they are no longer needed.

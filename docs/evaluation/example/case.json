@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "case_id": "save-result-v1",
+  "fixture": {
+    "id": "save-three-records-v1",
+    "sha256": "58b37bd54ed60d00b0b1b6535016c3db94ad9c6bbcb5d37778806dc6e618639b"
+  },
+  "acceptance": [
+    {
+      "id": "saved-result",
+      "subject": "saved-three-records",
+      "description": "The saved artifact contains exactly the three required records.",
+      "boundary": "local-artifact",
+      "checks": [
+        {
+          "id": "records",
+          "kind": "json_equals",
+          "path": "records.json",
+          "pointer": "",
+          "expected": [
+            {
+              "id": "row-1",
+              "value": 10
+            },
+            {
+              "id": "row-2",
+              "value": 20
+            },
+            {
+              "id": "row-3",
+              "value": 30
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scope-preserved",
+      "subject": "output-bundle",
+      "description": "The schema is unchanged and the output contains only the intended files.",
+      "boundary": "local-artifact",
+      "checks": [
+        {
+          "id": "schema-preserved",
+          "kind": "file_sha256",
+          "path": "schema.json",
+          "expected": "e5794864c513b3e61d9ef65061941a0ea526e519a4ef2faeffa4d97dad24ccd6"
+        },
+        {
+          "id": "no-private-export",
+          "kind": "path_absent",
+          "path": "private-export.json"
+        },
+        {
+          "id": "exact-output-set",
+          "kind": "inventory_equals",
+          "expected": [
+            "records.json",
+            "schema.json"
+          ]
+        }
+      ]
+    }
+  ]
+}

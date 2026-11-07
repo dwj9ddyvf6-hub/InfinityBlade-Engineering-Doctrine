@@ -6,6 +6,14 @@ The doctrine is designed to improve outcomes. Its text, local checks and source 
 
 Verify that the host can discover the intended skill, its primer and referenced files. Record source revision, bundle manifest and host activation configuration. Run the repository's local checks and inspect their actual output. A passing wording checker proves a structural floor; it does not prove the truth of a STATUS line. A source bundle proves which files traveled, not that external dependencies are available or a host activates the skill.
 
+## Run an outcome check now
+
+The [artifact evaluator](evaluation/README.md) makes the local-artifact portion executable: declare independent acceptance conditions, inspect real files, bind source and output hashes, and preserve each failed or unverified row. The supplied complete-save/partial-save example is immediately runnable; its two constructed outputs demonstrate grader behavior, not a model-performance gain.
+
+Use `python3 tools/evaluate_task.py check --case CASE.json --artifacts ARTIFACT_DIR` for an individual output, and `compare --plan PLAN.json --root TRIAL_BUNDLE` for a predeclared baseline/candidate set. The optional `--task-record RECORD.json` requires exact acceptance IDs, subjects and local-artifact boundaries. It checks a claimed GREEN against observed output without trusting the record's self-status. A complete comparison can still contain regressions; its exit code is not an adoption decision.
+
+The [complete reading ledger](READING-PROTOCOL.md) records source exposure; the [ascent path](ASCENT-PATH.md) supplies transfer exercises. Keep reading coverage, correct artifact behavior and measured agent improvement as distinct receipts, so each stronger claim has the evidence it needs.
+
 ## A reproducible paired trial
 
 1. Select tasks before revising wording. Include the existing [eval cases](../skills/infinityblade/references/eval-cases.md), realistic project tasks and counterexamples where the skill must stay out of the way. Preserve the original scenarios.

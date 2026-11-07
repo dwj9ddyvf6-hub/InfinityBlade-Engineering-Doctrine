@@ -122,9 +122,9 @@ def validate_eval_set(data):
     errors = []
     if not data.get("reference_solution"):
         errors.append("reference solution missing: the task is not proven solvable")
-    if not data.get("isolated_trials"):
+    if data.get("isolated_trials") is not True:
         errors.append("isolated trials must be true")
-    if not data.get("judge_unknown_exit"):
+    if data.get("judge_unknown_exit") is not True:
         errors.append("model judge needs an explicit Unknown exit")
     kinds = {case.get("kind") for case in data.get("cases", [])}
     cases = data.get("cases", [])

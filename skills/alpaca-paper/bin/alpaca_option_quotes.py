@@ -22,59 +22,55 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
+def normalize_quotes(result, requested_symbols, feed):
+    """Keep missing/invalid/crossed quotes distinct from executable prices."""
+    if not isinstance(result, dict) or not isinstance(result.get("quotes"), dict):
+        raise ValueError("Quotes response must contain a quotes object")
+    out = {}
+    for symbol in dict.fromkeys(requested_symbols):
+        quote = result["quotes"].get(symbol)
+        row = {"bid": None, "ask": None, "mid": None, "spread_frac": None,
+               "quote_status": "missing", "timestamp": None, "feed": feed}
+        if quote is None:
+            out[symbol] = row
+            continue
+        if not isinstance(quote, dict):
+            row["quote_status"] = "invalid"
+            out[symbol] = row
+            continue
+        row["timestamp"] = quote.get("t")
+        try:
+            if any(isinstance(quote.get(k), bool) for k in ("bp", "ap")):
+                raise ValueError("boolean price")
+            bid, ask = float(quote["bp"]), float(quote["ap"])
+            if not all(math.isfinite(x) and x >= 0 for x in (bid, ask)):
+                raise ValueError("nonfinite or negative price")
+        except (KeyError, TypeError, ValueError, OverflowError):
+            row["quote_status"] = "invalid"
+        else:
+            row.update(bid=bid, ask=ask)
+            if bid == 0 or ask == 0:
+                row["quote_status"] = "one_sided"
+            elif bid > ask:
+                row["quote_status"] = "crossed"
+            else:
+                mid = bid / 2.0 + ask / 2.0
+                row.update(mid=round(mid, 4), spread_frac=(ask - bid) / mid, quote_status="valid")
+        out[symbol] = row
+    return out
+
+
 def main() -> None:
     args = build_parser().parse_args()
-    result = api_request(
-        "GET", f"{data_base()}/v1beta1/options/quotes/latest",
-        params={"symbols": args.symbols, "feed": args.feed})
-    # 3x-daily bugcheck 2026-10-11 night (MINOR): api_request returns
-    # {"raw": text} on non-JSON 2xx bodies; the old code emitted an empty
-    # quotes object that callers read as "no quotes available". A non-dict
-    # body also crashed .get() below. Fail loud (same class as the
-    # alpaca_get_account.py 2026-10-08 fix).
-    if isinstance(result, dict) and "raw" in result:
-        print("Unexpected quotes response shape (non-JSON body)",
-              file=sys.stderr)
-        sys.exit(2)
-    if not isinstance(result, dict):
-        print("Unexpected quotes response shape (non-object body)",
-              file=sys.stderr)
-        sys.exit(2)
-    # 3x-daily bugcheck 2026-10-08 (LOW): "quotes": null (key present,
-    # value null) crashed .items() below. Treat as empty.
-    quotes = (result or {}).get("quotes") or {}
-    # 3x-daily bugcheck 2026-10-14 evening (LOW, BC14E-16): a non-dict non-null quotes
-    # value (list/str) raised uncaught AttributeError on .items() --
-    # fail loud like every other shape break in the bin set.
-    if not isinstance(quotes, dict):
-        print("Unexpected quotes response shape (quotes is not an object)",
-              file=sys.stderr)
-        sys.exit(2)
-    out = {}
-    for sym, q in quotes.items():
-        # 3x-daily bugcheck 2026-10-08 (LOW): a malformed quote entry
-        # must not nuke every symbol's quotes -- skip it.
-        if not isinstance(q, dict):
-            continue
-        try:
-            bid = float(q.get("bp") or 0)
-            ask = float(q.get("ap") or 0)
-        except (TypeError, ValueError):
-            bid, ask = 0.0, 0.0
-        # 3x-daily bugcheck 2026-10-13: float() succeeds on "inf"/"NaN"
-        # strings, so non-finite quotes passed validation and emit()
-        # produced Infinity/NaN tokens -- invalid strict JSON that
-        # callers reject (or silently ingest as inf/NaN mids). Same
-        # class alpaca_list_positions was fixed for on 2026-10-12.
-        if not math.isfinite(bid):
-            bid = 0.0
-        if not math.isfinite(ask):
-            ask = 0.0
-        mid = (bid + ask) / 2.0 if bid > 0 and ask > 0 else 0.0
-        spread_frac = (ask - bid) / mid if mid > 0 else None
-        out[sym] = {"bid": bid, "ask": ask, "mid": round(mid, 4),
-                    "spread_frac": spread_frac}
-    emit(out)
+    symbols = list(dict.fromkeys(s.strip().upper() for s in args.symbols.split(",") if s.strip()))
+    if not symbols:
+        raise SystemExit("--symbols needs at least one nonempty symbol")
+    result = api_request("GET", f"{data_base()}/v1beta1/options/quotes/latest",
+                         params={"symbols": ",".join(symbols), "feed": args.feed})
+    try:
+        emit(normalize_quotes(result, symbols, args.feed))
+    except ValueError as error:
+        raise SystemExit(str(error)) from error
 
 
 if __name__ == "__main__":

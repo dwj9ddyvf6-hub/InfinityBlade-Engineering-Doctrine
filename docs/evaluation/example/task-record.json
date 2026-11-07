@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "example_only": true,
+  "task_id": "synthetic-save",
+  "acceptance": [
+    {
+      "id": "saved-result",
+      "subject": "saved-three-records",
+      "boundary": "local-artifact",
+      "status": "UNVERIFIED",
+      "evidence_ids": []
+    },
+    {
+      "id": "scope-preserved",
+      "subject": "output-bundle",
+      "boundary": "local-artifact",
+      "status": "UNVERIFIED",
+      "evidence_ids": []
+    }
+  ],
+  "overall_status": "UNVERIFIED"
+}

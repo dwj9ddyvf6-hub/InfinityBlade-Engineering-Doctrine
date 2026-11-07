@@ -1,0 +1,19 @@
+{
+  "case": "save-three-records-preserving-schema",
+  "required_records": [
+    {
+      "id": "row-1",
+      "value": 10
+    },
+    {
+      "id": "row-2",
+      "value": 20
+    },
+    {
+      "id": "row-3",
+      "value": 30
+    }
+  ],
+  "protected_schema_sha256": "e5794864c513b3e61d9ef65061941a0ea526e519a4ef2faeffa4d97dad24ccd6",
+  "scope": "Synthetic artifact-oracle demonstration, no model execution."
+}

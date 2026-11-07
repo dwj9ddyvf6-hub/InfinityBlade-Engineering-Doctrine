@@ -1,6 +1,6 @@
 # Operating paths: from a request to a demonstrated result
 
-Use this guide after [the primer](../PRIMER.md) and [the core](../skills/infinityblade/SKILL.md). The core governs; this guide makes the route concrete. It adds no permission to deploy, trade, contact someone, publish private information or operate a live account.
+Read this guide after [the primer](../PRIMER.md) and [the core](../skills/infinityblade/SKILL.md), as one stage of the [complete reading protocol](READING-PROTOCOL.md). The core governs; this guide makes the route concrete. The [ascent path](ASCENT-PATH.md) turns each reading area into a fresh application challenge. It adds no permission to deploy, trade, contact someone, publish private information or operate a live account.
 
 ## Choose the smallest complete route
 
@@ -88,6 +88,23 @@ Define the bounded corpus: official project, release tags, package registries, f
 **Counterexample:** a repository returns 404 because the URL moved. This proves that URL failed; it does not prove the implementation was never published. Follow canonical project references and authorized registry routes, retaining the failed route in the coverage record.
 
 **Report:** “No implementation found in the sources checked as of <date>; <rows> remain unavailable.” An honest bounded result is useful. A universal absence statement requires coverage that can actually support it.
+
+## Worked path 5: inspect the result instead of the worker's grade
+
+**Request:** save three exact records, preserve the schema, and export no unrelated files.
+
+The runnable [artifact evaluator](evaluation/README.md) exercises this contract:
+
+```bash
+python3 tools/evaluate_task.py check --case docs/evaluation/example/case.json --artifacts docs/evaluation/example/candidate --task-record docs/evaluation/example/task-record.json
+python3 tools/evaluate_task.py check --case docs/evaluation/example/case.json --artifacts docs/evaluation/example/baseline
+```
+
+The candidate is constructed to pass. The baseline is constructed to fail because one required record is absent; unchanged schema and output inventory still receive their own results. These are synthetic instrument examples. The commands inspect artifacts and execute no task code.
+
+**Discriminator:** if the worker changes only its own `overall_status` to GREEN, the missing record remains missing. The grader must keep the failure. If a required acceptance ID, logical subject or proof boundary disappears from an accompanying task record, reject the mapping rather than grading the smaller task.
+
+**Transfer:** author an independent case before using it to judge a repair. Choose checks that observe the actual requested result; exact text presence cannot grade meaning, and a local file cannot establish a remote effect. Preserve broader task-record contracts for outcomes needing another instrument.
 
 ## Keep five evidence states separate
 

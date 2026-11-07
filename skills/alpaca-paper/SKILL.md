@@ -16,6 +16,8 @@ The replacement: Prove the account identity from the configured credentials befo
 
 - Call `bin/alpaca_get_account.py` with the configured paper account credentials before any reset, key replacement, pause or resume step and record the account number, equity, cash and buying power it returns.
 
+- For a known account, add `--expect-environment paper --expect-account-id <expected-id>` and, if available, `--expect-account-number <expected-number>`. A mismatch fails without emitting a misleading summary. Keep this identity evidence private. These checks establish the account reached by that request; repeat them when credentials or the account context change.
+
 - Compare that API result with any dashboard view before acting on the dashboard and treat a mismatch as two different accounts until the numbers reconcile.
 
 - Stop an account level action when the dashboard account and the key reached account differ in equity, positions or open orders and name the mismatch as the blocker.
@@ -37,6 +39,8 @@ ALPACA_ENV=paper          # paper is the default; live requires the explicit con
 - List positions with `bin/alpaca_list_positions.py` and open orders before submitting, cancelling or closing anything so the action targets the current book.
 
 - Submit orders with `bin/alpaca_submit_order.py` and keep the client order id stable across retries of the same intent so a retry cannot duplicate the order.
+
+- Preserve `client_order_id` from every submit result or error. For an unknown outcome, reconcile with `bin/alpaca_get_order.py --client-order-id <same-id>` and the correctly identified account before deciding whether another request is warranted. A stable ID helps recover the original intent; it does not turn a timeout, redirect, malformed acknowledgement or 404 into a verified rejection or fill.
 
 - Cancel with `bin/alpaca_cancel_order.py` and close with `bin/alpaca_close_position.py` only on the user word for that symbol.
 
@@ -61,6 +65,10 @@ ALPACA_ENV=paper          # paper is the default; live requires the explicit con
 - Prefer an explicitly entitled SIP feed for historical hourly or finer consolidated-volume work. Check the current subscription and endpoint entitlement; do not assume the origin account’s historical restriction applies to every adopter. Stamp the actual feed and delay, and keep IEX-only volume distinct from consolidated volume.
 
 - Use options contracts under the v2 contracts path with tradable filtered on the client side and options quotes and snapshots under the v1beta1 market data paths.
+
+- `alpaca_option_chain.py` follows all continuation pages within `--max-pages` and returns the established array only when coverage and tradability are resolved. Increase the page budget to finish a larger chain, or use `--with-coverage` to retain partial contracts, unknown-tradability rows and the continuation token explicitly. `alpaca_list_orders.py --with-coverage` identifies when its requested limit may truncate a changing order list. Neither page traversal nor a limit implies an atomic broker snapshot.
+
+- Read each option quote's `quote_status`, `timestamp` and `feed`. Missing, invalid, one-sided or crossed quotes have no actionable synthetic midpoint. A valid bid/ask calculation alone does not establish quote freshness, consolidated coverage or executable size.
 
 - Treat delayed sip as invalid on historical bars calls and never send sort, direction or tradable parameters to the options contracts endpoint.
 

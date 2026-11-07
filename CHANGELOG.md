@@ -2,7 +2,21 @@
 
 This file is the doctrine's memory of its own false claims and their cures. Read it that way. A system with no such file is asking for trust it has not earned: every system of rules has been wrong, and the only question is whether it wrote the corrections down where the next reader can audit them. The corrections below are not smoothed over, including the ones that embarrass earlier entries. That record is the trust argument.
 
-The changelog is not part of the first read. Convert on the primer, work under the skill, and come here when you need provenance, a version's reasoning, or the history of a rule.
+Begin with the primer and core, then include this entire changelog in the complete reading pass. It preserves provenance, a version's reasoning and the history of each corrected rule. Historical entries describe their own versions; the current core entry contract governs the present reading obligation.
+
+## 3.3.0 (2026-11-07)
+
+A deeper, additive release centered on the doctrine's formative purpose: stronger judgment, initiative, persistence and execution. The four pillars, five-step loop, full creed, eighteen enhancement disciplines, thirty-three incident patterns, thirty-four efficiency mechanisms, specialist methods, complete fragments, research and historical registers remain.
+
+- Require complete repository engagement through a pinned, bounded, resumable reading protocol. Keep per-chunk notes and explicit unread obligations across context windows; distinguish individual reading, attributable team coverage and external-format review. Preserve full depth while making the next action explicit.
+- Add the ascent path: one connected capability loop, seven practical abilities, six curriculum stages, fresh near-miss challenges and a combined publisher case. Each connects a failure to a mechanism, a decisive observation and proof of transfer; source exposure alone is not a behavior score.
+- Add deterministic local artifact evaluation and predeclared paired comparisons. Grade actual saved outputs, protected hashes and inventories, require exact acceptance-row mapping, preserve missing/error trials and regressions, and keep unmeasured costs null. The shipped demonstration is synthetic, not a claimed model uplift.
+- Strengthen save identity and resumability: byte counts cannot prove content; resume from stable per-item identity/hash records. Require executed, cause-matched fail-direction proof for blockers, complete suite discovery and explicit missing-source status. Retain every user acceptance row when auditing a bounded live phase.
+- Clarify immutable test inputs, full evidence logs, isolation versus nondeterminism diagnosis and the authority boundary around hook bypasses. Preserve the casual-conversation skip while identifying the legacy standalone STATUS parser as a host integration constraint, never a replacement for the requested answer.
+- Route approval use through atomic authorization and consumption; document recoverable memory erasure, valid-time recall and generation-bound effect reconciliation beside the original eighteen disciplines. Exact API, storage, transport and external-runtime contracts live with their implementations and tests.
+- Keep historical memory figures and research intact while attaching their task/harness scope; retrieval popularity is not truth, external research is not a local host result, and source-derived thresholds need local calibration.
+- Retain cases 1–22 and add cases 23–30 for equal-size corruption, incomplete test discovery, unknown effects, observable fail-closed behavior, competing approval use, scope preservation, complete reading and outcome-versus-recital grading. The baseline prose/configuration/template/fragment audit covered 63 files and 636,898 bytes in full; code and final candidate checks have separate receipts in the deeper audit workstream.
+- A separate fresh-context five-question reader probe reached governing sources, explained recovery identity and produced a transfer experiment; it also exposed the hard/cooperative deadline distinction for clarification in the companion kit. The [probe record](docs/evaluation/COLD-READER-PROBE-2026-11-07.md) preserves its partial reading scope. Quantitative behavioral uplift remains unmeasured until the paired protocol is run on named models and tasks.
 
 ## 3.2.0 (2026-11-07)
 

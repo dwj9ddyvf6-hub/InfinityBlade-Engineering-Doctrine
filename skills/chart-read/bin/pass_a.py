@@ -24,6 +24,7 @@ Usage: python3 pass_a.py --symbol PLTR
 Output: JSON on stdout.
 """
 import argparse, json, os, subprocess, sys
+import math
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -41,11 +42,41 @@ _kraken_bars_tried = False
 import sys as _sys
 from pathlib import Path as _Path
 _REPO = _Path(os.environ.get("CHART_READ_TA_REPO", ""))
-_sys.path.insert(0, str(_REPO))
-from core.ta_battery import (  # noqa: E402,F401
-    sma, ema, rma, sma_skip, wilder_atr, rsi_wilder, macd,
-    stoch_rsi, cci, adx_dmi, obv, session_vwap, cmf, mfi,
-    frame_stance, pivots, ema_stack, pivot_sequence)
+_BATTERY_NAMES = {"sma", "ema", "rma", "sma_skip", "wilder_atr", "rsi_wilder", "macd",
+                  "stoch_rsi", "cci", "adx_dmi", "obv", "session_vwap", "cmf", "mfi",
+                  "frame_stance", "pivots", "ema_stack", "pivot_sequence"}
+
+
+def _load_battery():
+    """Load the real external engine only when indicator work is requested.
+
+    Dependency-free geometry remains importable and testable on its own. This
+    function never substitutes a fake indicator implementation.
+    """
+    if _BATTERY_NAMES <= globals().keys():
+        return
+    import importlib
+    configured = os.environ.get("CHART_READ_TA_REPO")
+    if not configured or not (Path(configured) / "core/ta_battery.py").is_file():
+        raise RuntimeError("Indicator engine unavailable: set CHART_READ_TA_REPO to the actual source containing core/ta_battery.py")
+    _sys.path.insert(0, str(Path(configured).resolve()))
+    try:
+        battery = importlib.import_module("core.ta_battery")
+        if Path(battery.__file__).resolve() != (Path(configured) / "core/ta_battery.py").resolve():
+            raise RuntimeError("Loaded indicator engine differs from CHART_READ_TA_REPO")
+        functions = {name: getattr(battery, name) for name in _BATTERY_NAMES}
+        if not all(callable(value) for value in functions.values()):
+            raise RuntimeError("Indicator engine exports a non-callable required function")
+        globals().update(functions)
+    finally:
+        _sys.path.pop(0)
+
+
+def __getattr__(name):
+    if name in _BATTERY_NAMES:
+        _load_battery()
+        return globals()[name]
+    raise AttributeError(name)
 
 def _load_kraken_bars():
     """Load the optional Kraken bar source (fix-all 2026-10-13, F3).
@@ -182,7 +213,7 @@ def bar_payload_hash(*bar_lists):
     payload = json.dumps(bar_lists, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
 
-PASS_A_VERSION = "2.5.0"
+PASS_A_VERSION = "2.6.0"
 
 def last_bar_provisional(last_t):
     """Thesis 2.8: label open-bar observations provisional, separate from
@@ -315,7 +346,7 @@ def candle_anatomy(bar, atr):
             "direction": "up" if c >= o else "down",
             "degenerate": rng == 0}
 
-def failed_breakouts(bars, pivots, atr):
+def failed_breakouts(bars, pivots, atr, atr_series=None):
     """Failed-breakout scan (thesis 4.4 ontology).
 
     For each recent confirmed pivot: scan forward causally. The first bar
@@ -323,29 +354,57 @@ def failed_breakouts(bars, pivots, atr):
     failure). A bar that pokes <=0.50 ATR beyond but closes back inside =
     failed breakout. Observable geometry, not a signal.
     """
+    if atr_series is not None and len(atr_series) != len(bars):
+        raise ValueError("ATR series must align with every bar")
     out = []
     for p in pivots[-8:]:
         px = p["px"]
-        for b in bars[p["i"]+1:]:
-            if not atr: break
+        # A confirmed pivot is not available at its extreme. If availability
+        # metadata is absent this remains a retrospective morphology scan,
+        # explicitly labeled below; it is not evidence of a causal signal.
+        available = p.get("avail_t")
+        for index in range(p["i"] + 1, len(bars)):
+            b = bars[index]
+            if available is not None and _bar_instant(b["t"]) <= _bar_instant(available):
+                continue
+            scale = atr_series[index - 1] if atr_series is not None else atr
+            if not scale:
+                continue
             if p["kind"] == "H":
-                over = (b["h"]-px)/atr
-                cx = (b["c"]-px)/atr
+                over = (b["h"]-px)/scale
+                cx = (b["c"]-px)/scale
                 if cx >= 0.20: break            # held: not a failure
                 if 0 < over <= 0.50 and cx < 0:
                     out.append({"level": round(px, 2), "kind": "H",
                                 "t": b["t"][:10],
-                                "poke_atr": round(over, 2)})
+                                "poke_atr": round(over, 2), "available_from": available,
+                                "causal_inputs": available is not None and atr_series is not None})
                     break
             else:
-                under = (px-b["l"])/atr
-                cx = (b["c"]-px)/atr
+                under = (px-b["l"])/scale
+                cx = (b["c"]-px)/scale
                 if cx <= -0.20: break
                 if 0 < under <= 0.50 and cx > 0:
                     out.append({"level": round(px, 2), "kind": "L",
                                 "t": b["t"][:10],
-                                "poke_atr": round(under, 2)})
+                                "poke_atr": round(under, 2), "available_from": available,
+                                "causal_inputs": available is not None and atr_series is not None})
                     break
+    return out
+
+
+def gap_events(bars, atr_series, n=10):
+    """Historical gaps use the ATR known immediately before each gap."""
+    if len(atr_series) != len(bars):
+        raise ValueError("ATR series must align with every bar")
+    out = []
+    for i in range(max(1, len(bars) - n), len(bars)):
+        scale = atr_series[i - 1]
+        if scale is None or scale <= 0:
+            continue
+        gap = (bars[i]["o"] - bars[i - 1]["c"]) / scale
+        if abs(gap) >= 0.50:
+            out.append({"t": bars[i]["t"][:10], "gap_atr": round(gap, 2)})
     return out
 
 def contraction(bars, atr_series):
@@ -414,20 +473,55 @@ def rnd(x, n=2):
 
 # ---------- main ----------
 
+def _bar_instant(value):
+    """Compare instants, including date-only historical geometry fixtures."""
+    if not isinstance(value, str):
+        raise ValueError("Bar timestamp must be text")
+    stamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if stamp.tzinfo is None:
+        if len(value) != 10:
+            raise ValueError("Intraday bar timestamp must carry an offset")
+        stamp = stamp.replace(tzinfo=timezone.utc)
+    return stamp.astimezone(timezone.utc)
+
+
 def _as_bar_list(raw):
-    """Coerce a fetch payload to a bar list (dict payloads carry the
-    series under "bars", which may be null). Anything else -> []."""
-    if isinstance(raw, list):
-        return raw
+    """Validate and order geometry input; absent data remains NO_VIEW.
+
+    Volume may be missing so callers can expose PARTIAL; contradictory
+    prices, corrupt shapes and conflicting duplicate bars cannot be analyzed.
+    """
     if isinstance(raw, dict):
-        bars = raw.get("bars")
-        return bars if isinstance(bars, list) else []
-    return []
+        if "bars" not in raw:
+            raise ValueError("Bar response is missing its bars field")
+        raw = raw["bars"]
+    if raw is None:
+        return []
+    if not isinstance(raw, list):
+        raise ValueError("Bar payload must be an array or explicit null")
+    seen = {}
+    for bar in raw:
+        if not isinstance(bar, dict):
+            raise ValueError("Each bar must be an object")
+        instant = _bar_instant(bar.get("t"))
+        for name in ("o", "h", "l", "c"):
+            value = bar.get(name)
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+                raise ValueError("OHLC prices must be finite positive numbers")
+        if not bar["l"] <= min(bar["o"], bar["c"]) <= max(bar["o"], bar["c"]) <= bar["h"]:
+            raise ValueError("Contradictory OHLC geometry")
+        if instant in seen:
+            if any(seen[instant].get(key) != bar.get(key) for key in ("o", "h", "l", "c", "v")):
+                raise ValueError("Conflicting bars for the same timestamp")
+        else:
+            seen[instant] = bar
+    return [seen[instant] for instant in sorted(seen)]
 
 
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--symbol", required=True)
     sym = ap.parse_args().symbol.upper()
+    _load_battery()
 
     w = _as_bar_list(fetch(sym, "1W", 60)); d = _as_bar_list(fetch(sym, "1D", 260))
     h1 = _as_bar_list(fetch(sym, "1H", 120)); m10 = _as_bar_list(fetch(sym, "10Min", 150))
@@ -504,12 +598,7 @@ def main():
               for p in dpiv[-6:]]
 
     # gaps on daily (previous-ATR scale)
-    gaps = []
-    for i in range(max(1, len(d)-10), len(d)):
-        pc, o = d[i-1]["c"], d[i]["o"]
-        g = (o-pc)/atr_prev if atr_prev else 0
-        if abs(g) >= 0.50:
-            gaps.append({"t": d[i]["t"][:10], "gap_atr": round(g, 2)})
+    gaps = gap_events(d, atr)
 
     prim = primitives(d)
 
@@ -524,7 +613,9 @@ def main():
     vw_days = sorted(vw)[-3:]
 
     prov = last_bar_provisional(last["t"])
-    status = data_status(len(d), any(dv), prov, ema200 is not None, last["t"])
+    volume_complete = all(isinstance(b.get("v"), (int, float)) and not isinstance(b.get("v"), bool)
+                          and math.isfinite(b["v"]) and b["v"] >= 0 for b in d)
+    status = data_status(len(d), volume_complete and any(dv), prov, ema200 is not None, last["t"])
     stances = {
         "1W": frame_stance(wc[-1], wma10, wma40),
         "1D": frame_stance(last["c"], ema20, ema50, ema200),
@@ -593,7 +684,7 @@ def main():
                   "fib_zones": fib_zones(dpiv),
                   "rsi_divergence": rsi_divergence(dpiv, rsi),
                   "candle_anatomy": candle_anatomy(last, last_atr),
-                  "failed_breakouts": failed_breakouts(d, dpiv, last_atr),
+                  "failed_breakouts": failed_breakouts(d, dpiv, last_atr, atr_series=atr),
                   "contraction": contraction(d, atr),
                   "displacement_20b": displacement(d, last_atr),
                   "primitives": prim,

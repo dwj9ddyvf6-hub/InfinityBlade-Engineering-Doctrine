@@ -8,10 +8,13 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from alpaca_lib import (AlpacaError, api_request, emit, fail, quote_path,
-                        require_live_confirmation, trading_base, operation_acknowledgement)
+                        require_live_confirmation, trading_base, operation_acknowledgement, require_order_response,
+                        decimal_argument, decimal_text)
 
 
 def validate(args: argparse.Namespace) -> None:
+    if not args.symbol.strip():
+        fail("--symbol must be nonempty")
     # 3x-daily bugcheck 2026-10-11 night (MINOR): --qty nan/inf slipped
     # past the positivity check (NaN comparisons are False) and was sent
     # to the API as "nan"/"inf" -> 422. Same class as the 2026-10-10
@@ -27,7 +30,7 @@ def validate(args: argparse.Namespace) -> None:
 def main() -> None:
     p = argparse.ArgumentParser(description="Close an Alpaca position.")
     p.add_argument("--symbol", required=True, help="Ticker symbol, e.g. AAPL")
-    p.add_argument("--qty", type=float, default=None,
+    p.add_argument("--qty", type=decimal_argument, default=None,
                    help="Partial close quantity (omit to close the full position)")
     # 3x-daily bugcheck 2026-10-12 AM (HIGH-2): live-confirmation guard —
     # closing a position mutates live broker state, so it needs the same
@@ -42,9 +45,7 @@ def main() -> None:
     # ints ("70"), not floats ("70.0") -- Alpaca may reject non-integer qty
     # strings on whole-share positions (same fix as alpaca_submit_order).
     if args.qty is not None:
-        q = args.qty
-        qstr = str(int(q)) if float(q).is_integer() else str(q)
-        params = {"qty": qstr}
+        params = {"qty": decimal_text(args.qty)}
     else:
         params = None
     try:
@@ -53,6 +54,7 @@ def main() -> None:
             f"{trading_base()}/v2/positions/{quote_path(args.symbol.upper())}",
             params=params,
         )
+        require_order_response(result, mutation=True)
     except AlpacaError as e:
         # 3x-daily bugcheck 2026-10-08 (LOW): structured JSON on stderr
         # instead of a traceback with empty stdout (same pattern as the

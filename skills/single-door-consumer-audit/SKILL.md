@@ -1,7 +1,7 @@
 ---
 name: single-door-consumer-audit
 description: Enumerate every consumer of a canonical source, engine, or feed by exhaustive search, never by caller list, and prove each one rerouted, exempt, or off-engine before declaring a single-door migration complete.
-version: 1.0.1
+version: 1.0.2
 ---
 
 # Single-Door Consumer Audit
@@ -19,9 +19,9 @@ When a source, engine, or feed is declared canonical and sole (one pipeline, fai
 1. Define the door: name the canonical source/engine/feed, the retired route(s) it replaces, and the exact identifiers that betray the old route — module names, function names (`detect_signals`, bar-fetch helpers), data-path fragments (provider hostnames, cache directories, timeframe strings), and output labels.
 2. Search exhaustively, not from a list: grep the whole tree for every identifier from step 1, including indirect consumers — analyzers, watchers, label printers, daily/weekly legs, research scripts, and cron-invoked entry points. Keep a coverage ledger: searched / excluded (with reason) / unavailable.
 3. Classify every hit with line-level proof: ENGINE (feeds the canonical system's outputs — must reroute), OFF-ENGINE (proven not to feed those outputs, with the proof recorded), or COSMETIC (label/display only — still fixed, since a wrong label teaches a wrong doctrine).
-4. Reroute every ENGINE hit to the canonical route, fail-closed: when the canonical source is unavailable the consumer produces nothing, never a fallback to the retired route or a stale cache.
+4. Reroute every ENGINE hit to the canonical route, fail-closed: when the canonical source is unavailable the consumer produces no decision or action from the missing canonical input, never a fallback to the retired route or a stale cache. Emit an explicit unavailable/stale status so fail-closed behavior cannot masquerade as healthy silence. Independently authorized protective actions retain their own validated inputs and owner; do not disable them merely because an entry signal is absent.
 5. Check caches and state files as consumers too: a watcher or report reading a stale cache written by the retired route is still printing the retired route's outputs.
-6. Ship a gate-wired regression blocker that re-runs the step-2 search and fails if any unclassified hit on the retired route appears; verify the fail direction by reasoning or temporary revert.
+6. Ship a gate-wired regression blocker that re-runs the step-2 search and fails if any unclassified hit on the retired route appears; verify the fail direction by executing a temporary revert or targeted mutant in an isolated copy. The failure must identify the planted defect; an import error or broken test harness does not count. Reasoning selects the probe but does not replace its observed result.
 7. Only then report the migration complete, naming the ledger counts.
 
 ## Output Contract

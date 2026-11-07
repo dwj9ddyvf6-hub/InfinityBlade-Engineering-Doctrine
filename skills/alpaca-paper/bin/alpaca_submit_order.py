@@ -18,6 +18,9 @@ from alpaca_lib import (
     emit,
     fail,
     require_live_confirmation,
+    require_order_response,
+    decimal_argument,
+    decimal_text,
     trading_base,
 )
 
@@ -31,15 +34,15 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--symbol", required=True, help="Ticker symbol, e.g. AAPL")
     p.add_argument("--side", required=True, choices=sorted(VALID_SIDES))
     size = p.add_mutually_exclusive_group(required=True)
-    size.add_argument("--qty", type=float, help="Fractional or whole share quantity")
-    size.add_argument("--notional", type=float, help="Dollar notional (market orders only)")
+    size.add_argument("--qty", type=decimal_argument, help="Fractional or whole share quantity")
+    size.add_argument("--notional", type=decimal_argument, help="Dollar notional (market orders only)")
     p.add_argument("--type", default="market", choices=sorted(VALID_TYPES),
                    dest="order_type", help="Order type (default: market)")
     p.add_argument("--time-in-force", default="day", choices=sorted(VALID_TIF),
                    dest="time_in_force", help="Time in force (default: day)")
-    p.add_argument("--limit-price", type=float, default=None,
+    p.add_argument("--limit-price", type=decimal_argument, default=None,
                    help="Limit price (required for limit/stop_limit; entry leg of brackets)")
-    p.add_argument("--stop-price", type=float, default=None,
+    p.add_argument("--stop-price", type=decimal_argument, default=None,
                    help="Stop trigger price (required for stop/stop_limit)")
     p.add_argument("--client-order-id", default=None,
                    help="Idempotency key; a UUID4 is generated when omitted")
@@ -50,9 +53,9 @@ def build_parser() -> argparse.ArgumentParser:
                         "as one-cancels-other legs (requires --take-profit and "
                         "--stop-loss). Top-level type is forced to limit; the "
                         "legs carry the prices.")
-    p.add_argument("--take-profit", type=float, default=None,
+    p.add_argument("--take-profit", type=decimal_argument, default=None,
                    help="Bracket/OCO take-profit limit price")
-    p.add_argument("--stop-loss", type=float, default=None,
+    p.add_argument("--stop-loss", type=decimal_argument, default=None,
                    help="Bracket/OCO stop-loss stop price")
     p.add_argument("--i-understand-this-is-live", action="store_true",
                    dest="i_understand_this_is_live",
@@ -61,6 +64,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def validate(args: argparse.Namespace) -> None:
+    if not args.symbol.strip():
+        fail("--symbol must be nonempty")
+    if args.client_order_id is not None and not args.client_order_id.strip():
+        fail("--client-order-id must be nonempty when supplied")
     # 3x-daily bugcheck 2026-10-09 (LOW): --oco forces the container leg to
     # type=limit with prices on the OCO legs (main() pops the top-level
     # prices), so a top-level --limit-price must not be required for OCO --
@@ -75,13 +82,23 @@ def validate(args: argparse.Namespace) -> None:
     if args.bracket and args.oco:
         fail("--bracket and --oco are mutually exclusive")
     if args.bracket:
-        if args.order_type != "limit" or args.limit_price is None:
-            fail("--bracket requires --type limit with --limit-price (the entry leg)")
+        if args.order_type not in ("market", "limit"):
+            fail("--bracket supports --type market or limit for the entry leg")
         if args.take_profit is None or args.stop_loss is None:
             fail("--bracket requires both --take-profit and --stop-loss")
     if args.oco:
         if args.take_profit is None or args.stop_loss is None:
             fail("--oco requires both --take-profit and --stop-loss")
+    if args.bracket or args.oco:
+        if args.time_in_force not in ("day", "gtc"):
+            fail("--bracket and --oco require --time-in-force day or gtc")
+        if args.qty is None:
+            fail("--bracket and --oco require --qty")
+        # A bracket side is its entry; an OCO side is its pair of exits.
+        profit_above_stop = (args.side == "buy") if args.bracket else (args.side == "sell")
+        if ((profit_above_stop and args.take_profit <= args.stop_loss)
+                or (not profit_above_stop and args.take_profit >= args.stop_loss)):
+            fail("--take-profit and --stop-loss prices are reversed for the order side")
     if args.qty is not None and args.qty <= 0:
         fail("--qty must be positive")
     # 3x-daily bugcheck 2026-10-10 (LOW): reject non-finite qty/notional
@@ -124,7 +141,7 @@ def main() -> None:
 
     client_order_id = args.client_order_id or str(uuid.uuid4())
     order: dict = {
-        "symbol": args.symbol.upper(),
+        "symbol": args.symbol.strip().upper(),
         "side": args.side,
         "type": args.order_type,
         "time_in_force": args.time_in_force,
@@ -134,8 +151,7 @@ def main() -> None:
         # Audit 2026-10-06: whole-number quantities must serialize as ints
         # ("70", not "70.0"). Alpaca rejects non-integer qty strings for
         # whole-share orders; fractional shares still pass through.
-        _q = float(args.qty)
-        order["qty"] = str(int(_q)) if _q == int(_q) else str(_q)
+        order["qty"] = decimal_text(args.qty)
     else:
         order["notional"] = str(args.notional)
     if args.limit_price is not None:
@@ -156,6 +172,7 @@ def main() -> None:
 
     try:
         result = api_request("POST", f"{trading_base()}/v2/orders", payload=order)
+        require_order_response(result, mutation=True, client_order_id=order["client_order_id"])
     except AlpacaError as e:
         # 3x-daily audit 2026-10-07: emit structured JSON instead of a
         # traceback so callers get machine-readable
@@ -166,6 +183,8 @@ def main() -> None:
         import json as _json
         print(_json.dumps({
             "error": True,
+            "client_order_id": order["client_order_id"],
+            "reconciliation_required": bool(getattr(e, "outcome_unknown", False)),
             "status_code": getattr(e, "status_code", None),
             # 3x-daily bugcheck 2026-10-14 PM (MEDIUM, BC14P-9): alpaca_lib marks non-idempotent
             # network failures outcome_unknown=True (the order may

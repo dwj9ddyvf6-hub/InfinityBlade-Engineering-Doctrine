@@ -1,7 +1,7 @@
 ---
 name: save-readback-verification
 description: Use whenever a save, backup, push, export, or deletion is about to be reported done, and whenever a delegated, background, or subagent result is about to be repeated as fact, even when the save looks small; skip for live execution proof or absence proof.
-version: 1.0.1
+version: 1.0.2
 ---
 
 # Verified Saves and Claim Checks
@@ -24,7 +24,7 @@ The replacement: A save is proven at the destination, by read-back against the s
 
 ## Save with read back proof
 
-- Save each enumerated item and then read it back from the destination and compare its hash or byte count against the source record.
+- Save each enumerated item and then read it back from the destination and compare its content hash or exact bytes against the source record. A matching byte count is an inventory check, never content-identity proof: equal-size corruption must fail. If the destination intentionally transforms the representation, declare the semantic invariants first and verify those with source/destination identities and a transformation receipt.
 
 - Report progress as the verified count over the enumerated total, counted at the destination, never as the count a pusher claims to have sent.
 
@@ -32,7 +32,7 @@ The replacement: A save is proven at the destination, by read-back against the s
 
 - Retry a failed save by re-reading the destination state first so two writers racing the same repo rebase on the landed state instead of bouncing each other.
 
-- Restart a killed save from its verified count and its enumeration rather than from the start and say which items remain unverified.
+- Restart a killed save from the per-item verified identity/hash ledger and its enumeration rather than from the start; derive the count from those rows and name the remaining items. A count alone cannot identify which sparse or reordered items arrived.
 
 ## Verify a delegated or reported claim
 

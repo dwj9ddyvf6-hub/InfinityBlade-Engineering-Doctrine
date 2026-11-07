@@ -3,7 +3,7 @@
 
 This is a source distribution, not a drop-in standalone skill folder or
 runtime installation. No imports from external source, package installation,
-credential reads, network calls, or host changes are performed. Runtime
+credential-file reads, network calls, or host installation are performed. Runtime
 checks prove only declared local prerequisites, never external behavior.
 """
 from __future__ import annotations
@@ -15,6 +15,7 @@ import json
 import os
 from pathlib import Path
 import stat
+import subprocess
 import tempfile
 import zipfile
 from urllib.parse import unquote, urlsplit
@@ -23,6 +24,7 @@ from validate_repo import source_files, validate, runtime_dependencies, markdown
 
 MANIFEST = "BUNDLE-MANIFEST.json"
 SKIP_SUFFIXES = {".pyc", ".pyo", ".sqlite", ".sqlite3", ".db", ".zip"}
+REQUIRED_SOURCES = {"LICENSE", "PRIMER.md", "skills/infinityblade/SKILL.md", "skills/runtime-dependencies.json"}
 
 
 def read_dependencies(root):
@@ -56,7 +58,7 @@ def runtime_report(root, selected, declaration):
                     except metadata.PackageNotFoundError:
                         row["available"] = False
                 elif kind == "environment":
-                    row["available"] = dependency["environment"] in os.environ
+                    row["available"] = bool(os.environ.get(dependency["environment"], "").strip())
                 elif kind in ("external-source", "external-directory"):
                     configured = os.environ.get(dependency["environment"])
                     path = Path(configured) if configured else None
@@ -76,24 +78,67 @@ def runtime_report(root, selected, declaration):
     return rows
 
 
-def collect_sources(root):
+def collect_sources(root, *, include_modes=False):
+    """Read the exact Git inventory, or the declared clean-directory policy.
+
+    Git mode bits are authoritative in a checkout, including on filesystems
+    that do not expose executable bits. An extracted bundle retains its manifest
+    inventory/modes, so re-export cannot drop archived binary source assets.
+    Untracked state is never traversed in either inventory-backed route. A clean
+    directory with neither inventory excludes known runtime/cache suffixes;
+    linked excluded assets are rejected by the builder.
+    """
     root = Path(root).resolve()
-    sources = {}
-    for path in source_files(root):
+    tracked = None
+    inherited = None
+    if (root / ".git").exists():
+        # Ambient GIT_DIR/INDEX_FILE overrides must not redirect this root's inventory.
+        git_env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+        result = subprocess.run(["git", "-C", str(root), "ls-files", "--stage", "-z"], capture_output=True, env=git_env)
+        if result.returncode:
+            raise ValueError("cannot enumerate the Git source inventory")
+        tracked = {}
+        for row in result.stdout.split(b"\0"):
+            if not row:
+                continue
+            metadata, name = row.split(b"\t", 1)
+            mode, _, stage = metadata.decode().split()
+            if stage != "0" or mode not in {"100644", "100755"}:
+                raise ValueError("source export requires resolved regular Git entries")
+            tracked[name.decode("utf-8")] = 0o755 if mode == "100755" else 0o644
+    elif (root / MANIFEST).exists() or (root / MANIFEST).is_symlink():
+        path = root / MANIFEST
+        if path.is_symlink() or not stat.S_ISREG(path.stat().st_mode) or path.stat().st_size > 20_000_000:
+            raise ValueError("invalid extracted-bundle manifest")
+        manifest = json.loads(path.read_bytes(), object_pairs_hook=_unique_json_object)
+        records = _manifest_source_records(manifest)
+        inherited = {row["path"]: row.get("mode") for row in records}
+    sources, modes = {}, {}
+    inventory = tracked if tracked is not None else inherited
+    paths = (root / relative for relative in sorted(inventory)) if inventory is not None else source_files(root)
+    for path in paths:
         relative = path.relative_to(root).as_posix()
         if path.name == ".env" or path.name.startswith(".env.") and path.name not in (".env.example", ".env.sample", ".env.template") or path.suffix in (".key", ".pem", ".p12", ".pfx"):
             raise ValueError(f"potential credential artifact requires exclusion/review before source export: {relative}")
-        if relative == MANIFEST or path.suffix in SKIP_SUFFIXES:
+        if relative == MANIFEST or inventory is None and path.suffix in SKIP_SUFFIXES:
             continue
-        if path.is_symlink() or not path.resolve().is_relative_to(root):
+        parents = path.relative_to(root).parts[:-1]
+        redirected_parent = any(root.joinpath(*parents[:i]).is_symlink() for i in range(1, len(parents) + 1))
+        if path.is_symlink() or redirected_parent or not path.resolve().is_relative_to(root):
             raise ValueError(f"refusing redirected source: {relative}")
+        if not path.exists():
+            raise ValueError(f"inventoried source is missing; source export is incomplete: {relative}")
         if not stat.S_ISREG(path.stat().st_mode):
             raise ValueError(f"source is not a regular file: {relative}")
         sources[relative] = path.read_bytes()
-    for required in ("LICENSE", "PRIMER.md", "skills/infinityblade/SKILL.md", "skills/runtime-dependencies.json"):
+        modes[relative] = (inventory.get(relative) if inventory is not None else None) or (0o755 if path.stat().st_mode & 0o111 else 0o644)
+    if inventory is not None and set(sources) != set(inventory):
+        raise ValueError("inventoried source files are missing or excluded; source export is incomplete")
+    for required in sorted(REQUIRED_SOURCES):
         if required not in sources:
             raise ValueError(f"source bundle missing required artifact: {required}")
-    return dict(sorted(sources.items()))
+    sources = dict(sorted(sources.items()))
+    return (sources, modes) if include_modes else sources
 
 
 def build_bundle(root, selected, output, require_runtime=False):
@@ -108,11 +153,7 @@ def build_bundle(root, selected, output, require_runtime=False):
             raise ValueError("skill names must be simple kebab-case identifiers")
         if not (root / "skills" / skill / "SKILL.md").is_file():
             raise ValueError(f"unknown skill: {skill}")
-    sources = collect_sources(root)
-    result = validate(root, check_registry=True)
-    if not result["passed"]:
-        raise ValueError("source validation failed: " + json.dumps(result["errors"], sort_keys=True))
-    declaration = read_dependencies(root)
+    sources, modes = collect_sources(root, include_modes=True)
     # A valid on-disk target is still missing if export policy omitted it.
     # Never advertise dependency closure merely because the source checkout has it.
     for relative in sources:
@@ -122,6 +163,20 @@ def build_bundle(root, selected, output, require_runtime=False):
                 target = ((root / relative).parent / unquote(urlsplit(link["target"]).path)).resolve()
                 if target.is_file() and target.relative_to(root).as_posix() not in sources:
                     raise ValueError("referenced local asset excluded from bundle: " + target.relative_to(root).as_posix())
+    # Validate the bytes actually being shipped. Untracked notebooks, runtime
+    # state or symlinks cannot veto a valid tracked source export, nor can they
+    # make an omitted registry resource appear present in the delivered tree.
+    with tempfile.TemporaryDirectory(prefix="infinityblade-source-check-") as directory:
+        snapshot = Path(directory)
+        for relative, data in sources.items():
+            destination = snapshot / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_bytes(data)
+            destination.chmod(modes[relative])
+        result = validate(snapshot, check_registry=True)
+        if not result["passed"]:
+            raise ValueError("source validation failed: " + json.dumps(result["errors"], sort_keys=True))
+        declaration = read_dependencies(snapshot)
     for spec in declaration["skills"].values():
         for dependency in spec["required"] + spec["optional"]:
             if dependency["kind"] == "local-file" and dependency["path"] not in sources:
@@ -130,9 +185,9 @@ def build_bundle(root, selected, output, require_runtime=False):
     unresolved = [row for row in runtime if row["required"] and not row["available"]]
     if require_runtime and unresolved:
         raise ValueError("unresolved runtime prerequisites: " + ", ".join(row["id"] for row in unresolved))
-    manifest = {"schema_version": 1, "distribution": "complete-repository-source",
+    manifest = {"schema_version": 2, "distribution": "complete-repository-source",
                 "selected_entrypoints": [f"skills/{skill}/SKILL.md" for skill in selected],
-                "files": [{"path": path, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+                "files": [{"path": path, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest(), "mode": modes[path]}
                           for path, data in sources.items()],
                 "runtime_dependency_declaration": "skills/runtime-dependencies.json",
                 "runtime_boundary": "Source-only archive. External runtime prerequisites are declared, not included or proven. Run --require-runtime locally for metadata/presence checks; external behavior remains unverified."}
@@ -146,10 +201,10 @@ def build_bundle(root, selected, output, require_runtime=False):
             for name, data in sorted({**sources, MANIFEST: payload}.items()):
                 info = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
                 info.create_system = 3
-                info.external_attr = (stat.S_IFREG | 0o644) << 16
+                info.external_attr = (stat.S_IFREG | modes.get(name, 0o644)) << 16
                 archive.writestr(info, data)
         # Refuse a mixed snapshot when a source writer moved during validation/export.
-        if collect_sources(root) != sources:
+        if collect_sources(root, include_modes=True) != (sources, modes):
             raise ValueError("source changed during export; rebuild from a stable tree")
         verify_bundle(temporary)
         os.replace(temporary, output)
@@ -161,28 +216,89 @@ def build_bundle(root, selected, output, require_runtime=False):
             "unresolved_required": len(unresolved), "external_behavior_verified": False}
 
 
+def _unique_json_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("duplicate JSON key in bundle manifest")
+        result[key] = value
+    return result
+
+
+def _safe_member_name(name):
+    return (isinstance(name, str) and bool(name) and not Path(name).is_absolute()
+            and not any(part in {"", ".", ".."} for part in name.split("/"))
+            and not any(character in name for character in ("\\", ":", "\x00")))
+
+
+def _manifest_source_records(manifest):
+    """Validate claims before using an archive or extracted inventory."""
+    if not isinstance(manifest, dict) or type(manifest.get("schema_version")) is not int or manifest["schema_version"] not in (1, 2):
+        raise ValueError("unsupported bundle manifest")
+    records = manifest.get("files", [])
+    if not isinstance(records, list) or not records or len(records) > 100000:
+        raise ValueError("bundle needs a nonempty bounded source inventory")
+    for row in records:
+        if (not isinstance(row, dict) or not _safe_member_name(row.get("path"))
+                or type(row.get("bytes")) is not int or row["bytes"] < 0
+                or not isinstance(row.get("sha256"), str) or len(row["sha256"]) != 64
+                or any(c not in "0123456789abcdef" for c in row["sha256"])):
+            raise ValueError("malformed bundle source record")
+        if manifest["schema_version"] == 2 and (type(row.get("mode")) is not int or row["mode"] not in (0o644, 0o755)):
+            raise ValueError("malformed bundle source mode")
+        if manifest["schema_version"] == 1 and "mode" in row and (type(row["mode"]) is not int or row["mode"] not in (0o644, 0o755)):
+            raise ValueError("malformed bundle source mode")
+    paths = [row["path"] for row in records]
+    if MANIFEST in paths or len(paths) != len({name.casefold() for name in paths}):
+        raise ValueError("duplicate or reserved source inventory member")
+    if not REQUIRED_SOURCES <= set(paths) or manifest.get("distribution") != "complete-repository-source":
+        raise ValueError("bundle does not contain its mandatory source-layout resources")
+    selected = manifest.get("selected_entrypoints")
+    if (not isinstance(selected, list) or not selected
+            or not all(isinstance(p, str) and p in paths and len(p.split("/")) == 3
+                       and p.startswith("skills/") and p.endswith("/SKILL.md")
+                       and p.split("/")[1] and all(c in "abcdefghijklmnopqrstuvwxyz0123456789-" for c in p.split("/")[1]) for p in selected)
+            or len(selected) != len(set(selected))):
+        raise ValueError("bundle selected entrypoints are missing from its source inventory")
+    if manifest.get("runtime_dependency_declaration") != "skills/runtime-dependencies.json":
+        raise ValueError("bundle runtime declaration is missing")
+    return records
+
+
 def verify_bundle(path):
     """Read back every source byte and reject duplicate/unsafe/undeclared members."""
     with zipfile.ZipFile(path) as archive:
         names = archive.namelist()
         if len(names) != len({name.casefold() for name in names}):
             raise ValueError("duplicate archive members")
+        if len(names) > 100000 or sum(x.file_size for x in archive.infolist()) > 2_000_000_000:
+            raise ValueError("bundle exceeds the declared verification resource bounds")
         for item in archive.infolist():
-            member = Path(item.filename)
-            if member.is_absolute() or ".." in member.parts or "\\" in item.filename or ":" in item.filename or stat.S_ISLNK(item.external_attr >> 16):
+            mode = item.external_attr >> 16
+            if (not _safe_member_name(item.filename) or item.is_dir() or stat.S_IFMT(mode) not in (0, stat.S_IFREG)):
                 raise ValueError("unsafe archive member")
-        manifest = json.loads(archive.read(MANIFEST))
-        if manifest.get("schema_version") != 1:
-            raise ValueError("unsupported bundle manifest")
-        records = manifest.get("files", [])
+        if MANIFEST not in names or archive.getinfo(MANIFEST).file_size > 20_000_000:
+            raise ValueError("missing or oversized bundle manifest")
+        manifest = json.loads(archive.read(MANIFEST), object_pairs_hook=_unique_json_object)
+        records = _manifest_source_records(manifest)
         paths = [row["path"] for row in records]
-        if len(paths) != len(set(paths)) or set(names) != set(paths) | {MANIFEST}:
+        if set(names) != set(paths) | {MANIFEST}:
             raise ValueError("archive inventory does not match manifest")
         for row in records:
-            data = archive.read(row["path"])
-            if len(data) != row["bytes"] or hashlib.sha256(data).hexdigest() != row["sha256"]:
+            hashed, count = hashlib.sha256(), 0
+            with archive.open(row["path"]) as handle:
+                while block := handle.read(65536):
+                    count += len(block)
+                    hashed.update(block)
+            if count != row["bytes"] or hashed.hexdigest() != row["sha256"]:
                 raise ValueError("bundle hash mismatch: " + row["path"])
-    return {"verified": True, "source_files": len(records)}
+        if manifest["schema_version"] == 2:
+            for row in records:
+                if stat.S_IMODE(archive.getinfo(row["path"]).external_attr >> 16) != row["mode"]:
+                    raise ValueError("bundle mode mismatch: " + row["path"])
+    return {"verified": True, "source_files": len(records),
+            "file_modes_verified": manifest["schema_version"] == 2,
+            "source_authenticity_verified": False}
 
 
 def main(argv=None):

@@ -353,7 +353,7 @@ age, and leave.
   ADD/UPDATE/DELETE/NONE prompt, and copying "the prompt" unnamed copies
   the wrong generation half the time.
 - Derived facts wait for review. An inferred fact carries its inference
-  flag until a human approves it (flag cleared), declines it (fact
+  flag until a human approves it (review becomes approved; inferred provenance remains), declines it (fact
   forgotten), or undoes it. The review queue is ranked by support count,
   so the most-relied-on inferences are judged first.
 - **Audit the stored corpus for junk, on a schedule.** Extraction at
@@ -1530,6 +1530,27 @@ qualixar/bounded-loops `trust_store.py`.
   prompt/question/query/selection key classes; markers REDACTED,
   REDACTED_CIRCULAR_REFERENCE, REDACTED_TOO_DEEP), so redaction is a
   property of what is stored, not of what is later displayed.
+
+## Current implementation contracts (3.3.0)
+
+The eighteen disciplines above remain the full design. These clarifications connect their strongest claims to the failure boundaries found by the deeper audit; they do not promote a design into a host capability by assertion.
+
+| Boundary | Governing implementation contract | Discriminating proof |
+|---|---|---|
+| Approval use | Call `ApprovalStore.authorize_and_consume` at the action boundary. A preview `check` does not reserve an approval across workers. | Competing processes obtain at most one executable binding; edited bytes and revoked/expired bindings fail. |
+| Memory erasure | Use the store's serialized, recoverable transaction, including controlled facts, graph links, retrieval records, linked profile rows and any explicitly supplied derived index. | Inject interruption between replacement writes, reopen, and verify recovery plus non-sensitive tombstone; a migration cannot resurrect an erased ID. |
+| Uncertain side effect | Keep its generation and attempt identity until authoritative reconciliation settles applied versus not applied. | Receiver acceptance followed by lost settlement never becomes an automatic blind retry. |
+| Current versus historical recall | Carry validity time and supersession; use the declared query time. A retrieval tier does not itself prove the semantic truth of a claim. | Current and historical queries disagree correctly on a superseded fact; a lexical near match remains insufficient evidence for an answer. |
+| Local outcome | Run the independent [artifact evaluator](../../../tools/evaluate_task.py) against the output, retaining every requested condition. | Missing output fails even if the worker supplied a passing status field. |
+| Whole-repository engagement | Read every pinned source chunk and complete transfer exercises; retain unread obligations across windows. | An inventory without acknowledgements or an acknowledged chunk without actual reading cannot support the corresponding full-read claim. |
+
+**Authority is checked where an effect occurs.** Discipline 9's historical immutable-mandate design preserves granted scope; its "revalidated only at resume" wording never exempts an action from current revocation, expiry, content drift or the host's policy checks. A user may change the mandate during execution. Keep the original grant as provenance, and apply the effective grant at the action boundary. The historical human-send boundary applies where the adopting host requires it; a user-authorized automated send still follows disciplines 13 and 18 with its actual account and receipt.
+
+**A retrieval score is a policy input, not a calibrated probability by default.** The recorded 0.8/0.5 thresholds and historical weighting remain as source-derived starting policies. Calibrate their meaning on local labelled queries before treating them as confidence; inspect the source passage before claiming a fact is supported. Approval of an inferred fact changes review standing, never erases its derivation provenance.
+
+**Import screening and network confinement are different mechanisms.** A syntactic public-URL check is not complete SSRF prevention. If a host fetches an external unit, its fetcher must apply the authorized destination policy across DNS resolution, resolved addresses and redirects and prevent credential forwarding. The local import helper does not prove a network path it never executed.
+
+**Completion is stronger than status syntax.** The hook and prompt checker remain structural floors. The [evaluation guide](../../../docs/evaluation/README.md) provides an actual artifact-checking route with independent conditions, hashes and failed-row visibility. Use it for its declared local boundary; host delivery and semantic quality retain their own instruments. Complete-source coverage and a successful synthetic case are useful achievements, each with its own scope; neither becomes an unmeasured model-improvement score.
 
 ## How these compose with the core
 

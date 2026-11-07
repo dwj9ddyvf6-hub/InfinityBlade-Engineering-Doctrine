@@ -59,13 +59,24 @@ def tau(c_fa, c_fn, p_need):
             raise ValueError(f"missing {name}: fail closed")
     if c_fa < 0 or c_fn < 0 or not 0.0 <= p_need <= 1.0:
         raise ValueError("cost or probability out of range: fail closed")
-    denominator = c_fa + p_need * c_fn
-    return 1.0 if denominator == 0 else c_fa / denominator
+    scale = max(c_fa, c_fn)
+    if scale == 0:
+        return 1.0
+    denominator = c_fa / scale + p_need * (c_fn / scale)
+    return 1.0 if denominator == 0 else (c_fa / scale) / denominator
 
 
 def check_rate(history, now, min_interval, max_fires_per_window, window_s=3600):
-    if min_interval is None or max_fires_per_window is None:
-        raise ValueError("rate caps unconfigured: fail closed")
+    for label, value in (("now", now), ("min_interval", min_interval), ("window_s", window_s)):
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+            raise ValueError(f"{label} must be finite")
+    if min_interval < 0 or window_s <= 0:
+        raise ValueError("min_interval must be nonnegative and window_s positive")
+    if isinstance(max_fires_per_window, bool) or not isinstance(max_fires_per_window, int) or max_fires_per_window < 0:
+        raise ValueError("max_fires_per_window must be a nonnegative integer")
+    history = list(history)
+    if any(isinstance(ts, bool) or not isinstance(ts, (int, float)) or not math.isfinite(ts) for ts in history):
+        raise ValueError("history timestamps must be finite")
     recent = [ts for ts in history if now - ts < window_s]
     if recent and now - max(recent) < min_interval:
         return False
@@ -79,10 +90,12 @@ def decide_lane(config, p_accept, p_need, now=None, history=()):
     would_accept by the caller and is not sent. Promotion to auto is a human
     configuration change, represented by config['mode'] == 'auto'.
     """
-    if p_accept is None or not 0.0 <= p_accept <= 1.0:
+    if isinstance(p_accept, bool) or not isinstance(p_accept, (int, float)) or not math.isfinite(p_accept) or not 0.0 <= p_accept <= 1.0:
         raise ValueError("p_accept missing or out of range: fail closed")
     threshold = tau(config.get("C_FA"), config.get("C_FN"), p_need)
     margin = config.get("margin", 0.0)
+    if isinstance(margin, bool) or not isinstance(margin, (int, float)) or not math.isfinite(margin) or margin < 0:
+        raise ValueError("margin must be finite and nonnegative")
     if p_accept >= threshold:
         verdict = "fire"
     elif p_accept >= threshold - margin:

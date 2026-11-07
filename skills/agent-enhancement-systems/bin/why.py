@@ -12,7 +12,7 @@ import hashlib
 import json
 import os
 import re
-from _storage import atomic_text, locked
+from _storage import atomic_text, atomic_bytes, locked, read_text, read_bytes, append_text
 import time
 import uuid
 
@@ -73,14 +73,13 @@ def append_entry(path, entry):
     if errors:
         raise ValueError(f"rationale entry refused: {errors}")
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-    with open(path, "a", encoding="utf-8") as handle:
-        handle.write(json.dumps(entry, sort_keys=True) + "\n")
+    with locked(path):
+        append_text(path, json.dumps(entry, sort_keys=True) + "\n")
     return entry["id"]
 
 
 def _file_digest(path):
-    with open(path, "rb") as handle:
-        return hashlib.sha256(handle.read()).hexdigest()
+    return hashlib.sha256(read_bytes(path)).hexdigest()
 
 
 def load_store(path):
@@ -123,32 +122,37 @@ class FragmentRegistry:
         self.index_path = os.path.join(registry, "index.json")
 
     def _index(self):
-        if os.path.isfile(self.index_path):
-            with open(self.index_path, encoding="utf-8") as handle:
-                return json.load(handle)
+        if os.path.lexists(self.index_path):
+            index = json.loads(read_text(self.index_path))
+            if not isinstance(index, dict) or any(not re.fullmatch(r"[a-f0-9]{64}", digest) or not isinstance(row, dict)
+                    or not isinstance(row.get("names"), list) or any(not isinstance(name, str) for name in row["names"])
+                    for digest, row in index.items()):
+                raise ValueError("invalid fragment index")
+            return index
         return {}
 
     def _save(self, index):
         os.makedirs(self.objects, exist_ok=True)
-        tmp = self.index_path + ".tmp"
-        with open(tmp, "w", encoding="utf-8") as handle:
-            json.dump(index, handle, indent=1, sort_keys=True)
-        os.replace(tmp, self.index_path)
+        atomic_text(self.index_path, json.dumps(index, indent=1, sort_keys=True))
 
     def put_bytes(self, data, name):
+        if not isinstance(data, bytes) or not isinstance(name, str) or not name:
+            raise ValueError("fragment needs bytes and a nonempty name")
         digest = hashlib.sha256(data).hexdigest()
-        os.makedirs(self.objects, exist_ok=True)
-        dest = os.path.join(self.objects, digest)
-        if not os.path.isfile(dest):
-            with open(dest + ".tmp", "wb") as handle:
-                handle.write(data)
-            os.replace(dest + ".tmp", dest)
-        index = self._index()
-        record = index.get(digest, {"names": [], "size": len(data), "stored_at": time.time()})
-        if name not in record["names"]:
-            record["names"].append(name)
-        index[digest] = record
-        self._save(index)
+        with locked(self.index_path):
+            os.makedirs(self.objects, exist_ok=True)
+            dest = os.path.join(self.objects, digest)
+            if os.path.lexists(dest):
+                if read_bytes(dest) != data:
+                    raise ValueError("existing fragment object differs from its hash")
+            else:
+                atomic_bytes(dest, data)
+            index = self._index()
+            record = index.get(digest, {"names": [], "size": len(data), "stored_at": time.time()})
+            if name not in record["names"]:
+                record["names"].append(name)
+            index[digest] = record
+            self._save(index)
         return digest
 
     def resolve(self, prefix):
@@ -164,8 +168,7 @@ class FragmentRegistry:
         path = os.path.join(self.objects, digest)
         if os.path.islink(path):
             raise ValueError("fragment object must not be a symlink")
-        with open(path, "rb") as handle:
-            data = handle.read()
+        data = read_bytes(path)
         if hashlib.sha256(data).hexdigest() != digest:
             raise ValueError("fragment content hash mismatch")
         return data
@@ -180,7 +183,9 @@ class FragmentRegistry:
         bad = []
         for digest in self._index():
             path = os.path.join(self.objects, digest)
-            if not os.path.isfile(path):
+            if os.path.islink(path):
+                bad.append((digest, "symlink object"))
+            elif not os.path.isfile(path):
                 bad.append((digest, "missing object"))
             elif _file_digest(path) != digest:
                 bad.append((digest, "hash mismatch"))

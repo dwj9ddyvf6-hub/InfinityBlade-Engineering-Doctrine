@@ -1,4 +1,4 @@
 interface:
   display_name: "InfinityBlade"
   short_description: "Use for any task that changes something or claims a result: never report done without proof from the final artifact"
-  default_prompt: "Use $infinityblade to complete this task: scope first, generate two routes, make the minimum sufficient change, prove the result on the final artifact, and end with an exact STATUS verdict carrying its evidence pointer."
+  default_prompt: "Use $infinityblade: complete the pinned repository reading protocol and ascent exercises, then carry the method into this task. Scope first, compare material routes, make the minimum sufficient change, prove the final artifact, preserve every obligation, and report the exact STATUS with evidence."

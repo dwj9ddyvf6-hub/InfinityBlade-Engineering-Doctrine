@@ -48,25 +48,31 @@ def lint_text(text, reference_date=None, window_days=DEFAULT_WINDOW_DAYS):
         raise ValueError("window_days must be a nonnegative integer")
     findings = []
     containers = []
-    in_dated_container = False
     for number, line in enumerate(text.splitlines(), 1):
         heading = re.match(r"^(#{1,6})\s", line)
+        stamp = DATE_RE.search(line)
+        observed = None
+        invalid = False
+        if stamp:
+            try:
+                observed = date.fromisoformat(stamp.group(1))
+            except ValueError:
+                invalid = True
+                if heading or (NUMBER.search(line) and VOLATILE.search(line)):
+                    findings.append({"code": "FRESH-4", "line": number, "message": "invalid calendar date"})
         if heading:
             level = len(heading.group(1))
             containers = [(depth, dated) for depth, dated in containers if depth < level]
-            containers.append((level, bool(DATE_RE.search(line))))
-            in_dated_container = any(dated for _, dated in containers)
-        stamp = DATE_RE.search(line)
+            containers.append((level, observed))
         if NUMBER.search(line) and VOLATILE.search(line):
-            if not stamp and "as of" not in line.lower() and not in_dated_container:
+            effective = observed or next((dated for _, dated in reversed(containers) if dated is not None), None)
+            if invalid:
+                continue
+            if effective is None:
                 findings.append({"code": "FRESH-1", "line": number,
                                  "message": "unstamped quantitative present-tense claim about a volatile noun"})
-            elif stamp:
-                try:
-                    age = (reference - date.fromisoformat(stamp.group(1))).days
-                except ValueError:
-                    findings.append({"code": "FRESH-4", "line": number, "message": "invalid calendar date"})
-                    continue
+            else:
+                age = (reference - effective).days
                 if age > window_days:
                     findings.append({"code": "FRESH-2", "line": number, "age_days": age,
                                      "message": "stamp older than the freshness window",

@@ -6,8 +6,8 @@ Auth model (environment-based; no credential files anywhere in this skill):
 - The API SECRET is read from the ALPACA_API_SECRET_KEY environment
   variable at call time. It is never read from a file in this skill, and
   it is never logged, printed, or persisted by this code.
-- The API KEY ID is a public identifier (like a username: it travels in
-  plain text on every request and is visible in the Alpaca dashboard).
+- The API KEY ID is an account credential identifier. It travels in an
+  authenticated HTTPS header and must not be published in diagnostics.
   It is read from the ALPACA_KEY_ID environment variable. It is never a
   substitute for the secret.
 - Both reads fail closed when the variable is absent.
@@ -16,11 +16,15 @@ Auth model (environment-based; no credential files anywhere in this skill):
 from __future__ import annotations
 
 import json
+import argparse
 import math
 import os
 import sys
 import time
 import urllib.parse
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
+from decimal import Decimal, InvalidOperation
 
 import requests
 
@@ -49,6 +53,8 @@ _ALLOWED_HOSTS = (
 
 _MAX_RETRIES = 4  # total attempts on 429 (initial + 3 backoffs)
 
+# Kept as a compatibility name for old importing test fixtures. Credentials
+# are read together at request time; rotation must never mix old/new pairs.
 _secret_cache: str | None = None
 
 
@@ -63,6 +69,25 @@ class AlpacaError(Exception):
 def fail(message: str, exit_code: int = 1) -> "NoReturn":
     print(f"ERROR: {message}", file=sys.stderr)
     sys.exit(exit_code)
+
+
+def decimal_argument(value):
+    """Parse CLI money/quantity without binary-float rounding."""
+    try:
+        number = Decimal(value)
+        if not number.is_finite():
+            raise InvalidOperation
+    except (InvalidOperation, TypeError, ValueError):
+        raise argparse.ArgumentTypeError("must be a finite decimal number") from None
+    return number
+
+
+def decimal_text(value):
+    """Exact ordinary decimal representation; whole quantities have no .0."""
+    number = Decimal(str(value))
+    if not number.is_finite():
+        raise ValueError("must be a finite decimal number")
+    return str(int(number)) if number == number.to_integral_value() else format(number, "f")
 
 
 # Documented bases (references/api_details.md). Live is selectable only via
@@ -86,15 +111,12 @@ def env_mode() -> str:
 
 
 def key_id() -> str:
-    """Public API key ID from the ALPACA_KEY_ID environment variable.
-
-    The key ID is a public identifier, not a secret. Fail closed when absent.
-    """
+    """Account credential identifier; fail closed when absent."""
     kid = os.environ.get("ALPACA_KEY_ID", "").strip()
     if not kid:
         fail(
             "Missing Alpaca key ID. Set ALPACA_KEY_ID in the environment "
-            "(the public key identifier, not the secret)."
+            "(the account key identifier, not the secret)."
         )
     return kid
 
@@ -102,21 +124,33 @@ def key_id() -> str:
 def secret_key() -> str:
     """API secret from the ALPACA_API_SECRET_KEY environment variable.
 
-    Read once per process and cached in memory only. The value is only
+    Read at request time so in-process rotation cannot retain an old secret.
+    The value is only
     ever placed in the APCA-API-SECRET-KEY header of requests to
     _ALLOWED_HOSTS. Fail closed when absent.
     """
-    global _secret_cache
-    if _secret_cache:
-        return _secret_cache
     secret = os.environ.get("ALPACA_API_SECRET_KEY", "").strip()
     if not secret:
         fail(
             "Missing Alpaca secret. Set ALPACA_API_SECRET_KEY in the "
             "environment; never store it in a file in this skill."
         )
-    _secret_cache = secret
     return secret
+
+
+def retry_after_seconds(value, now=None):
+    """RFC 9110 delay-seconds or HTTP-date; invalid values give no override."""
+    try:
+        seconds = float(value)
+    except (TypeError, ValueError):
+        try:
+            stamp = parsedate_to_datetime(value)
+            if stamp.tzinfo is None:
+                return None
+            seconds = (stamp - (now or datetime.now(timezone.utc))).total_seconds()
+        except (TypeError, ValueError, OverflowError):
+            return None
+    return max(0.0, seconds) if math.isfinite(seconds) else None
 
 
 
@@ -149,13 +183,25 @@ def api_request(
     *,
     params: dict | None = None,
     payload: dict | None = None,
+    budget_seconds: float = 120.0,
 ) -> object:
     """HTTP call with Alpaca auth headers and exponential backoff on 429.
 
-    Prints nothing itself; returns the decoded JSON body. Raises AlpacaError
-    on unrecoverable HTTP or network failures.
+    The monotonic budget bounds retries and backoff, with each HTTP timeout
+    clipped to remaining budget. requests' socket timeout is not a strict
+    wall-clock deadline for a peer that continuously trickles bytes.
+    Returns decoded JSON; raises AlpacaError on incomplete/invalid transport.
     """
     ensure_allowed_url(url, _ALLOWED_HOSTS)
+    host = urllib.parse.urlparse(url).hostname
+    if host in {urllib.parse.urlparse(base).hostname for base in _BASES.values()}:
+        if host != urllib.parse.urlparse(trading_base()).hostname:
+            raise AlpacaError("Trading host does not match the configured ALPACA_ENV")
+    if isinstance(budget_seconds, bool) or not isinstance(budget_seconds, (int, float)) or not math.isfinite(budget_seconds) or budget_seconds <= 0:
+        raise ValueError("budget_seconds must be positive and finite")
+    method = method.upper()
+    mutation = method not in ("GET", "HEAD")
+    deadline = time.monotonic() + budget_seconds
     kid = key_id()
     secret = secret_key()
     headers = {
@@ -167,7 +213,18 @@ def api_request(
     delay = 1.0
     last_exc: Exception | None = None
     saw_429 = False
+    def pause_before_retry(seconds):
+        remaining = deadline - time.monotonic()
+        if seconds >= remaining:
+            error = AlpacaError("Retry deferred: provider backoff exceeds the remaining request budget")
+            error.retry_after_seconds = seconds
+            error.outcome_unknown = False  # Only called after read failure or explicit429.
+            raise error
+        time.sleep(seconds)
     for attempt in range(_MAX_RETRIES):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise AlpacaError("Request retry budget exhausted before the next attempt")
         # Step-0 telemetry (T11, 2026-10-13): count every physical request
         # per endpoint class; fail-silent -- telemetry never breaks a call.
         try:
@@ -192,7 +249,7 @@ def api_request(
                 headers=headers,
                 params=params,
                 json=payload,
-                timeout=30,
+                timeout=min(30.0, remaining),
                 allow_redirects=False,
             )
         except requests.RequestException as exc:
@@ -205,7 +262,7 @@ def api_request(
             # reconcile against broker state instead of blindly retrying.
             # The 429 branch below is unchanged for all methods: a 429 is
             # a pre-processing rejection, safe to retry.
-            if method.upper() not in ("GET", "HEAD"):
+            if mutation:
                 err = AlpacaError(
                     f"Request failed ({method.upper()}): request outcome "
                     f"unknown -- verify broker state before retrying ({type(exc).__name__})"
@@ -214,19 +271,16 @@ def api_request(
                 raise err
             last_exc = exc
             if attempt + 1 < _MAX_RETRIES:
-                time.sleep(delay)
+                pause_before_retry(delay)
                 delay *= 2
             continue
         if resp.status_code == 429:
             saw_429 = True
-            retry_after = resp.headers.get("Retry-After", "")
-            try:
-                parsed_delay = float(retry_after)
-                pause = max(delay, parsed_delay) if math.isfinite(parsed_delay) else delay
-            except (ValueError, TypeError):
-                pause = delay
+            retry_after = next((v for k, v in resp.headers.items() if k.lower() == "retry-after"), None)
+            parsed_delay = retry_after_seconds(retry_after)
+            pause = max(delay, parsed_delay) if parsed_delay is not None else delay
             if attempt + 1 < _MAX_RETRIES:
-                time.sleep(pause)
+                pause_before_retry(pause)
                 delay *= 2
             continue
         if 200 <= resp.status_code < 300:
@@ -236,18 +290,22 @@ def api_request(
                 return resp.json()
             except ValueError:
                 err = AlpacaError("Successful HTTP response contained invalid JSON; reconcile the requested operation")
-                err.outcome_unknown = method.upper() not in ("GET", "HEAD")
+                err.outcome_unknown = mutation
                 raise err
         # Non-retryable HTTP error: surface the provider's message, never keys.
         if 300 <= resp.status_code < 400:
-            raise AlpacaError("Redirect refused: credentials are never forwarded to redirected URLs")
-        body = resp.text[:1000].replace(secret, "[REDACTED]")
+            err = AlpacaError("Redirect refused: credentials are never forwarded to redirected URLs")
+            err.outcome_unknown = mutation
+            raise err
+        # Redact before truncation: a credential crossing the truncation
+        # boundary must not leak its prefix. Both account key and secret count.
+        body = resp.text.replace(secret, "[REDACTED]").replace(kid, "[REDACTED]")[:1000]
         # Twice-daily bugcheck 2026-10-06: carry the HTTP status on the
         # exception so callers can match on it robustly instead of
         # substring-matching the message (e.g. " 404" false-matches 1404).
         err = AlpacaError(f"Alpaca API error {resp.status_code}: {body}")
         err.status_code = resp.status_code
-        err.outcome_unknown = resp.status_code >= 500 and method.upper() not in ("GET", "HEAD")
+        err.outcome_unknown = mutation and (resp.status_code >= 500 or resp.status_code == 408)
         if err.outcome_unknown:
             err.args = (str(err) + "; outcome unknown: reconcile broker state before retrying",)
         raise err
@@ -271,6 +329,20 @@ def missing_order(order_id):
             "note": "No record at the queried endpoint; verify account, environment and order identity before resolving local state."}
 
 
+def require_order_response(result, *, mutation=False, client_order_id=None):
+    """Validate an acknowledgement's identity without inventing fill truth."""
+    valid = (isinstance(result, dict) and all(isinstance(result.get(k), str) and result[k].strip()
+             for k in ("id", "status")))
+    if client_order_id is not None:
+        valid = valid and result.get("client_order_id") == client_order_id
+    if not valid:
+        error = AlpacaError("Invalid order acknowledgement: missing or mismatched order identity/status; reconcile by the original client order ID")
+        error.outcome_unknown = mutation
+        error.client_order_id = client_order_id
+        raise error
+    return result
+
+
 def operation_acknowledgement(operation, target, response=None):
     """Distinguish a mutation's HTTP acknowledgement from its final outcome."""
     receipt = dict(response or {})
@@ -287,8 +359,37 @@ def operation_acknowledgement(operation, target, response=None):
 
 def emit(obj: object) -> None:
     """Write JSON to stdout (compact for bars, readable for objects)."""
-    print(json.dumps(obj, separators=(",", ":"), default=str))
+    print(json.dumps(obj, separators=(",", ":"), default=str, allow_nan=False))
 
 
 def quote_path(segment: str) -> str:
     return urllib.parse.quote(segment, safe="")
+
+
+def timestamp_instant(value):
+    """Parse an offset-aware provider timestamp; compare instants, not strings."""
+    if not isinstance(value, str) or not value:
+        raise AlpacaError("Bar coverage incomplete: missing timestamp")
+    try:
+        stamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if stamp.tzinfo is None:
+            raise ValueError("offset missing")
+    except (ValueError, TypeError) as error:
+        raise AlpacaError("Bar coverage incomplete: invalid timestamp") from error
+    return stamp.astimezone(timezone.utc)
+
+
+def validate_bar(bar):
+    """Validate rather than silently omit malformed observations."""
+    if not isinstance(bar, dict):
+        raise AlpacaError("Bar coverage incomplete: non-object observation")
+    stamp = timestamp_instant(bar.get("t"))
+    for field in ("o", "h", "l", "c", "v"):
+        value = bar.get(field)
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+            raise AlpacaError("Bar coverage incomplete: invalid OHLCV value")
+        if value < 0 or (field != "v" and value == 0):
+            raise AlpacaError("Bar coverage incomplete: nonpositive price or negative volume")
+    if not bar["l"] <= min(bar["o"], bar["c"]) <= max(bar["o"], bar["c"]) <= bar["h"]:
+        raise AlpacaError("Bar coverage incomplete: inconsistent OHLC geometry")
+    return stamp

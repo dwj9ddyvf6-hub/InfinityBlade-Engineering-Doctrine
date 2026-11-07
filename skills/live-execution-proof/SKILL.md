@@ -1,7 +1,7 @@
 ---
 name: live-execution-proof
 description: Use whenever a trading or automation system is about to be called working, live, or proven, even when its component tests all pass; skip for design review of a system that has never run.
-version: 1.0.1
+version: 1.0.2
 ---
 
 # Live Execution Proof
@@ -28,7 +28,7 @@ The replacement: Define the live path, trace one real item end to end, and count
 
 - Verify claimed results by tracing at least one real item end to end from input through submission to fill or named rejection.
 
-- Refuse a GREEN verdict for any acceptance row whose only evidence is a unit test, a fake broker run or a hand built state fixture.
+- Refuse a GREEN verdict for a live-boundary acceptance row whose only evidence is a unit test, a fake broker run or a hand built state fixture. Those checks can close their own local contracts; retain their results without promoting them into external proof. Never create an unauthorized order or message to obtain evidence.
 
 ## Prove the system creates its own state
 
@@ -40,7 +40,7 @@ The replacement: Define the live path, trace one real item end to end, and count
 
 ## Isolate failures and prove single running
 
-- Require proof that overlapping scheduled invocations cannot run the same pass at once, such as a live single instance lock plus a duplicate count of zero for the window.
+- Require proof that overlapping scheduled invocations cannot run the same pass at once, by observing competing invocations against the actual ownership boundary and checking restart/reconciliation behavior. A single-instance lock plus zero observed duplicates is supporting evidence; zero duplicates alone does not prove exclusion under overlap.
 
 - Check that one bad intent, symbol or record is rejected on its own and cannot abort the whole pass for every later item.
 
@@ -64,7 +64,7 @@ The replacement: Define the live path, trace one real item end to end, and count
 
 - Run the proof during a real session window when fills actually occur instead of reconstructing the path afterwards from reports.
 
-- Shrink the audit to the order path alone and prove it completely rather than covering more surface with fixture level evidence.
+- Make the order path the first bounded audit phase and prove it completely, then continue through the remaining requested surfaces. Keep every acceptance row visible; a narrower proven phase never shrinks the user’s requested audit or turns unverified rows GREEN.
 
 ## Host portability
 

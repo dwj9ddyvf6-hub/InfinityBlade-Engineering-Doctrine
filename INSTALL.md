@@ -12,6 +12,16 @@ python3 tools/build_bundle.py --skill infinityblade --output /tmp/infinityblade-
 
 Multiple `--skill` arguments select entrypoints and the prerequisites to inspect; the archive still contains the complete repository source. The exporter retains the repository-relative source layout and includes a `BUNDLE-MANIFEST.json` with hashes and declared external prerequisites. Extract the archive into a stable authorized directory and keep that layout. `--require-runtime` refuses selections with unresolved declared runtime prerequisites; a successful source export alone is not a runtime-readiness claim.
 
+New exports use manifest schema 2 and preserve executable source modes. A Git export includes every tracked regular file and excludes untracked state. Re-exporting an extracted bundle uses its manifest inventory, including binary resources; additions require an explicitly updated inventory or a tracked checkout. A plain directory without Git or a manifest uses the exporter's clean-source exclusions. Legacy schema 1 readback remains available without a mode-preservation claim. If an extraction tool drops executable permissions, restore the manifest's declared modes before invoking executable scripts directly.
+
+Verify the archive before using it:
+
+```bash
+python3 tools/build_bundle.py --verify /tmp/infinityblade-source.zip
+```
+
+This readback verifies declared inventory, bytes and schema-2 modes. Publisher authenticity, external runtime behavior and host activation require their own evidence.
+
 From the preserved repository or bundle root, run:
 
 ```bash
@@ -22,6 +32,12 @@ python3 tools/skill_router.py --list
 
 Read each result and its scope. The validator checks local repository contracts; the prompt checker checks wording. Neither proves that a model follows the doctrine. Use the bundle manifest as its exact inventory. Exporting the files is not the same as reading and auditing them.
 
+## Complete the reading and ascent
+
+The complete source is the curriculum. Read [PRIMER.md](PRIMER.md), the core, then every tracked resource through the [reading protocol](docs/READING-PROTOCOL.md). Use the [ascent path](docs/ASCENT-PATH.md) to turn the material into sharper judgment and demonstrated work. Keep reading notes outside the public repository.
+
+The automatic reader uses a pinned Git checkout. An exported bundle has no Git database; use its verified `BUNDLE-MANIFEST.json` as the complete source inventory and read every listed file in bounded chunks, retaining hashes and per-chunk notes through the host's available reader. Source export, full reading, local mechanism checks and demonstrated behavioral transfer each have their own completion evidence.
+
 ## 2. Activate it in the host
 
 | Host | Activation |
@@ -29,7 +45,7 @@ Read each result and its scope. The validator checks local repository contracts;
 | **Claude Code** | Register the preserved source using the host's supported skills import/directory mechanism. Its conventional user path is `~/.claude/skills/infinityblade/`; project scope uses `.claude/skills/infinityblade/`. Preserve access to the primer and routed siblings when using either. |
 | **Codex** | Register the preserved source through the host's skill mechanism; a conventional directory is `~/.codex/skills/infinityblade/`. Invoke with `Use $infinityblade …` where supported. Check the active host's actual path and import behavior. |
 | **Other Agent Skills hosts** | Use the documented importer or skill directories and verify that dependency links remain accessible. |
-| **Cursor** | Put the [README prompt](README.md#use-it-in-30-seconds) in `.cursor/rules/infinityblade.mdc` with the host's supported always-apply metadata; include a locator to the preserved source. |
+| **Cursor** | Put the [README prompt](README.md#start-in-30-seconds-complete-the-ascent) in `.cursor/rules/infinityblade.mdc` with the host's supported always-apply metadata; include a locator to the preserved source. |
 | **GitHub Copilot** | Put the prompt in `.github/copilot-instructions.md`, with the source locator. |
 | **Repository instruction files** | Use `AGENTS.md`, `CLAUDE.md` or `GEMINI.md` as supported by the host; retain the core source location and scope. |
 | **Chat model / API** | Use the prompt plus the primer/core contents in the available instruction/context mechanism. Files the host cannot read do not count as loaded. |
@@ -73,4 +89,4 @@ Resolve the command relative to the host's actual working directory. For another
 
 **What it checks:** the final assistant text carries a recognized `STATUS:` verdict with a supported evidence-pointer shape, or the exact no-change scope marker. A bare label is refused. A nonexistent or irrelevant locator can still pass a wording check; the hook does not verify evidence truth or grant completion. The active-hook guard prevents an endless stop loop. Input/configuration problems must be reported as such, never converted into successful proof.
 
-**Activation scope:** the core skips casual conversation and pure explanation. A host configured to demand a STATUS line on every reply uses `STATUS: GREEN, no change made` only for those skipped replies. It cannot excuse a result claim, performed work or a missing evidence row. Other hosts can apply the same shape checker at their own supported completion boundary; verify that integration independently.
+**Activation scope:** the core skips casual conversation and pure explanation. The shipped checker accepts the standalone `STATUS: GREEN, no change made` marker for those skipped categories. A host applying enforcement to all conversational replies needs its own documented skip/answer adapter; the marker must never replace the answer the user requested. Until that adapter is verified, name the integration gap. It cannot excuse a result claim, performed work or a missing evidence row. Other hosts can apply the same shape checker at their own supported completion boundary; verify that integration independently.

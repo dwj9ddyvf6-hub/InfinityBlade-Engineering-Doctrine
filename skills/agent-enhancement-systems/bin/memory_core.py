@@ -8,10 +8,10 @@ The store is one directory owned by the adopting host:
     <store>/retrievals.jsonl
     <store>/erasure/       receipts and tombstones written by forgetting
 
-No second store is created. Facts are JSON objects so a host can inspect,
-diff, and migrate them without a database service. Writes that change two
-facts together stage the full replacement in memory, validate it, then write
-once. Standard library only.
+Facts remain inspectable JSON. A single store lock serializes cooperating
+readers/writers; a private write-ahead journal completes interrupted multi-file
+operations before any public read or write. The journal stores replacement
+content, never the erased fact payload. Standard library only.
 """
 import hashlib
 import json
@@ -19,10 +19,13 @@ import os
 import re
 import sys
 from datetime import date
+from functools import wraps
+from contextlib import ExitStack
+from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from operations import NearMissLedger, deterministic_id
-from _storage import atomic_text, bounded_blocks
+from _storage import atomic_text, bounded_blocks, locked, read_text, sync_directory
 
 TOK = re.compile(r"[a-z0-9]+")
 EDGES = ("updates", "extends", "derives")
@@ -83,23 +86,80 @@ def score_operations(ops):
     return {"operations": rows, "overall": overall}
 
 
+def _transaction(method):
+    @wraps(method)
+    def wrapped(self, *args, **kwargs):
+        with locked(self.lock_path):
+            self._recover()
+            return method(self, *args, **kwargs)
+    return wrapped
+
+
 class MemoryStore:
     def __init__(self, root):
+        root = str(Path(root).resolve())
         self.root = root
+        self.lock_path = os.path.join(root, ".memory")
+        self.journal_path = os.path.join(root, ".pending-transaction.json")
         self.facts_path = os.path.join(root, "facts.jsonl")
         self.profile_path = os.path.join(root, "profile.json")
         self.retrievals_path = os.path.join(root, "retrievals.jsonl")
 
+    def _recover(self):
+        if not os.path.lexists(self.journal_path):
+            return
+        journal = json.loads(read_text(self.journal_path))
+        if journal.get("schema_version") != 1 or not isinstance(journal.get("writes"), list):
+            raise ValueError("invalid memory transaction journal; repair before reading")
+        paths = set()
+        for row in journal["writes"]:
+            if not isinstance(row, dict) or not all(isinstance(row.get(k), str) for k in ("path", "text", "sha256")):
+                raise ValueError("invalid journal write")
+            target = Path(row["path"])
+            if not target.is_absolute() or target in paths or target == Path(self.journal_path):
+                raise ValueError("invalid journal destination")
+            paths.add(target)
+            if hashlib.sha256(row["text"].encode("utf-8")).hexdigest() != row["sha256"]:
+                raise ValueError("journal replacement hash mismatch")
+        # The journal belongs to the trusted host store. Its optional external
+        # index destination is the exact path explicitly supplied at erasure.
+        # All replacements were preflighted before the commit record persisted.
+        for row in journal["writes"]:
+            atomic_text(row["path"], row["text"])
+        os.unlink(self.journal_path)
+        sync_directory(self.root)
+
+    def _commit(self, replacements):
+        writes = []
+        for path, text in replacements.items():
+            target = Path(path).absolute()
+            if target.is_symlink() or (target.exists() and not target.is_file()):
+                raise ValueError("memory transaction target is not a regular file")
+            writes.append({"path": str(target), "text": text,
+                           "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()})
+        if not writes:
+            return
+        # Commit point. Failure after this write leaves a recoverable operation;
+        # no subsequent API call exposes a partially applied view.
+        self._write_json(self.journal_path, {"schema_version": 1, "writes": writes})
+        self._recover()
+
+    @_transaction
+    def recover(self):
+        """Complete a committed interrupted operation; no external effect runs."""
+        return {"recovered": True, "pending_transaction": False}
+
+    @_transaction
     def initialize(self):
-        os.makedirs(self.root, exist_ok=True)
-        if not os.path.isfile(self.facts_path):
-            with open(self.facts_path, "w", encoding="utf-8"):
-                pass
-        if not os.path.isfile(self.profile_path):
-            self._write_json(self.profile_path, {"static": [], "dynamic": []})
-        if not os.path.isfile(self.retrievals_path):
-            with open(self.retrievals_path, "w", encoding="utf-8"):
-                pass
+        os.makedirs(self.root, exist_ok=True, mode=0o700)
+        replacements = {}
+        for path, content in ((self.facts_path, ""), (self.profile_path, json.dumps({"static": [], "dynamic": []})),
+                              (self.retrievals_path, "")):
+            if not os.path.lexists(path):
+                replacements[path] = content
+            else:
+                read_text(path)  # Refuse redirected/nonregular existing state.
+        self._commit(replacements)
         return self
 
     @staticmethod
@@ -107,15 +167,16 @@ class MemoryStore:
         atomic_text(path, json.dumps(data, indent=1, sort_keys=True))
 
     def _read_facts(self):
-        if not os.path.isfile(self.facts_path):
+        if not os.path.lexists(self.facts_path):
             return []
-        with open(self.facts_path, encoding="utf-8") as handle:
-            return [json.loads(line) for line in handle if line.strip()]
+        return [json.loads(line) for line in read_text(self.facts_path).splitlines() if line.strip()]
 
     def _write_facts(self, facts):
         errors = self._validate_facts(facts)
         if errors:
             raise ValueError(f"memory transaction blocked: {errors}")
+        if {fact["id"] for fact in facts} & self._tombstones():
+            raise ValueError("forgotten fact id cannot be resurrected")
         atomic_text(self.facts_path, "".join(json.dumps(f, sort_keys=True) + "\n" for f in facts))
 
     @staticmethod
@@ -124,7 +185,27 @@ class MemoryStore:
         total = 0
         seen = set()
         for fact in facts:
+            if not isinstance(fact, dict):
+                errors.append("fact must be an object")
+                continue
             fid = fact.get("id")
+            if not isinstance(fid, str) or not fid:
+                errors.append("fact ID must be a nonempty string")
+                continue
+            if not isinstance(fact.get("text"), str):
+                errors.append(f"{fid}: text must be a string")
+                continue
+            for stamp in ("valid_from", "valid_until", "learned_on"):
+                if fact.get(stamp) is not None:
+                    try:
+                        date.fromisoformat(fact[stamp])
+                    except (TypeError, ValueError):
+                        errors.append(f"{fid}: {stamp} must be an ISO date")
+            if fact.get("valid_from") and fact.get("valid_until") and str(fact["valid_until"]) < str(fact["valid_from"]):
+                errors.append(f"{fid}: validity interval is reversed")
+            for field in ("links", "entities"):
+                if field in fact and (not isinstance(fact[field], list) or any(not isinstance(x, str) for x in fact[field])):
+                    errors.append(f"{fid}: {field} must be a string array")
             if not fid:
                 errors.append("fact without id")
             elif fid in seen:
@@ -145,27 +226,34 @@ class MemoryStore:
             errors.append(f"total core characters {total} exceeds {TOTAL_CORE_CHARS}")
         return errors
 
+    @_transaction
     def validate_store(self):
         return self._validate_facts(self._read_facts())
 
-    def add_profile_fact(self, kind, bucket, text):
+    @_transaction
+    def add_profile_fact(self, kind, bucket, text, source_fact_id=None):
         if kind not in PROFILE_CAPS:
             raise ValueError("profile kind must be static or dynamic")
-        with open(self.profile_path, encoding="utf-8") as handle:
-            profile = json.load(handle)
+        profile = json.loads(read_text(self.profile_path))
         if len(profile[kind]) >= PROFILE_CAPS[kind]:
             raise ValueError(f"profile cap reached: {kind} holds at most {PROFILE_CAPS[kind]} facts")
-        profile[kind].append({"bucket": bucket, "text": text})
+        row = {"bucket": bucket, "text": text}
+        if source_fact_id is not None:
+            if source_fact_id not in self._fact_map():
+                raise ValueError("profile source_fact_id must reference a present fact")
+            row["source_fact_id"] = source_fact_id
+        profile[kind].append(row)
         self._write_json(self.profile_path, profile)
         return profile
 
+    @_transaction
     def profile(self):
-        with open(self.profile_path, encoding="utf-8") as handle:
-            return json.load(handle)
+        return json.loads(read_text(self.profile_path))
 
+    @_transaction
     def promote_session_lesson(self, lesson, accepted, reviewer, on_date):
         """The named promotion gate from working memory to permanent memory."""
-        if not accepted:
+        if accepted is not True:
             raise ValueError("only accepted lessons cross into permanent memory")
         fact = dict(lesson)
         fact.update(status="current", learned_on=on_date,
@@ -175,23 +263,46 @@ class MemoryStore:
 
     @classmethod
     def migrate_from(cls, source_root, target_root, replace=False):
-        """Copy a prior-format store, validate it, and prove retrievability."""
-        source = cls(source_root)
-        target = cls(target_root).initialize()
-        if not replace and (target._read_facts() or any(target.profile().values())):
-            raise ValueError("target store is nonempty; explicit replace=True is required")
-        facts = source._read_facts()
-        target._write_facts(facts)
-        profile = source.profile()
-        target._write_json(target.profile_path, profile)
-        retrievable = 0
-        for fact in facts:
-            if any(hit["id"] == fact["id"] for hit in target.search(fact["id"])):
-                retrievable += 1
-        return {"facts": len(facts), "retrievable": retrievable,
-                "errors": target.validate_store()}
+        """Copy one consistent store snapshot, retaining erasure prohibitions."""
+        source, target = cls(source_root), cls(target_root)
+        if source.root == target.root:
+            raise ValueError("source and target must be different stores")
+        target.initialize()
+        with ExitStack() as stack:
+            for store in sorted((source, target), key=lambda x: x.root):
+                stack.enter_context(locked(store.lock_path))
+                store._recover()
+            if not replace and (target._read_facts() or any(target.profile().values())):
+                raise ValueError("target store is nonempty; explicit replace=True is required")
+            facts = source._read_facts()
+            errors = source._validate_facts(facts)
+            if errors:
+                raise ValueError(f"invalid source memory: {errors}")
+            tombs = source._tombstone_rows() + target._tombstone_rows()
+            tombs = list({row["id"]: row for row in tombs}.values())
+            if {f["id"] for f in facts} & {r["id"] for r in tombs}:
+                raise ValueError("migration would resurrect a forgotten fact")
+            replacements = {target.facts_path: "".join(json.dumps(f, sort_keys=True) + "\n" for f in facts),
+                            target.profile_path: json.dumps(source.profile()),
+                            target.retrievals_path: read_text(source.retrievals_path),
+                            os.path.join(target.root, "erasure", "tombstones.jsonl"):
+                                "".join(json.dumps(r, sort_keys=True) + "\n" for r in tombs)}
+            for receipt in Path(source.root, "erasure").glob("erasure-*.json"):
+                destination = Path(target.root, "erasure", receipt.name)
+                content = read_text(receipt)
+                if destination.exists() and read_text(destination) != content:
+                    raise ValueError("migration receipt name conflict; preserve both stores")
+                replacements[str(destination)] = content
+            target._commit(replacements)
+            retrievable = sum(any(hit["id"] == fact["id"] for hit in target.search(fact["id"])) for fact in facts)
+            return {"facts": len(facts), "retrievable": retrievable, "errors": target.validate_store(),
+                    "erasure_tombstones_preserved": len(tombs)}
 
+    @_transaction
     def add_fact(self, fact):
+        errors = self._validate_facts([fact])
+        if errors:
+            raise ValueError(f"invalid memory fact: {errors}")
         if fact.get("id") in self._tombstones():
             raise ValueError("forgotten fact id cannot be resurrected")
         facts = self._read_facts()
@@ -201,12 +312,14 @@ class MemoryStore:
         self._write_facts(facts)
         return fact["id"]
 
+    @_transaction
     def list_facts(self):
         return self._read_facts()
 
     def _fact_map(self, facts=None):
         return {fact["id"]: fact for fact in (facts if facts is not None else self._read_facts())}
 
+    @_transaction
     def apply_edge(self, new_id, target_id, edge, on_date):
         if new_id == target_id:
             raise ValueError("a fact cannot supersede itself")
@@ -222,8 +335,15 @@ class MemoryStore:
         if edge == "updates":
             if target.get("status") == "superseded":
                 raise ValueError("target is already superseded")
-            new.update(status="current", valid_from=new.get("valid_from", on_date))
-            target.update(status="superseded", valid_until=target.get("valid_until") or on_date)
+            date.fromisoformat(on_date)
+            effective_from = max(new.get("valid_from") or on_date, on_date)
+            date.fromisoformat(effective_from)
+            new.update(status="current", valid_from=effective_from)
+            # Linking an already dated future successor must not create an
+            # artificial gap at today's review date, nor extend a predecessor
+            # beyond an independently known expiry.
+            target.update(status="superseded", valid_until=min(
+                target.get("valid_until") or effective_from, effective_from))
         elif edge == "derives":
             new.update(inferred=True, review=new.get("review", "pending"))
         self._write_facts(facts)
@@ -240,6 +360,7 @@ class MemoryStore:
                     counts[linked] += 1
         return counts
 
+    @_transaction
     def review_queue(self):
         facts = self._read_facts()
         support = self._support_counts(facts)
@@ -247,6 +368,7 @@ class MemoryStore:
                    if f.get("review") == "pending"]
         return sorted(pending, key=lambda row: (-row["support"], row["id"]))
 
+    @_transaction
     def review(self, fact_id, decision, on_date):
         if decision not in ("approve", "decline"):
             raise ValueError("review decision must be approve or decline")
@@ -261,6 +383,7 @@ class MemoryStore:
         self._write_facts(facts)
         return {"id": fact_id, "decision": decision}
 
+    @_transaction
     def propose_correction(self, target_id, new_text, on_date):
         facts = self._read_facts()
         if target_id not in self._fact_map(facts):
@@ -274,6 +397,7 @@ class MemoryStore:
         self._write_facts(facts)
         return successor_id
 
+    @_transaction
     def apply_correction(self, successor_id, on_date):
         facts = self._read_facts()
         by_id = self._fact_map(facts)
@@ -290,7 +414,19 @@ class MemoryStore:
         self._write_facts(facts)
         return {"applied": successor_id, "superseded": target["id"]}
 
-    def search(self, query, top_n=20):
+    @_transaction
+    def search(self, query, top_n=20, as_of=None):
+        if isinstance(top_n, bool) or not isinstance(top_n, int) or top_n < 1:
+            raise ValueError("top_n must be a positive integer")
+        reference = date.fromisoformat(as_of) if as_of is not None else date.today()
+        def visible(fact):
+            if fact.get("status") == "proposed" or fact.get("opt_out_search"):
+                return False
+            if fact.get("status") == "superseded" and not fact.get("valid_until"):
+                return False
+            start, end = fact.get("valid_from"), fact.get("valid_until")
+            return ((not start or date.fromisoformat(start) <= reference)
+                    and (not end or reference < date.fromisoformat(end)))
         facts = self._read_facts()
         q_tokens = _tokens(query)
         q_lower = query.lower()
@@ -300,7 +436,7 @@ class MemoryStore:
                 entity_counts[entity.lower()] = entity_counts.get(entity.lower(), 0) + 1
         hits = []
         for fact in facts:
-            if fact.get("status") in ("proposed", "superseded") or fact.get("opt_out_search"):
+            if not visible(fact):
                 continue
             tokens = _tokens(fact.get("text", "") + " " + fact.get("id", ""))
             keyword = len(q_tokens & tokens)
@@ -327,15 +463,16 @@ class MemoryStore:
             if depth >= 3:
                 continue
             for link in by_id[fid].get("links", []):
-                if link in by_id and link not in seen and by_id[link].get("status") not in ("proposed", "superseded") and not by_id[link].get("opt_out_search"):
+                if link in by_id and link not in seen and visible(by_id[link]):
                     seen.add(link)
                     ranked.append({"id": link, "score": 0.0, "via": "thread", "thread_depth": depth + 1,
                                    "inferred": bool(by_id[link].get("inferred") and by_id[link].get("review") != "approved"), "text": by_id[link]["text"]})
                     frontier.append((link, depth + 1))
         return ranked
 
-    def recall(self, query, top_n=20):
-        hits = self.search(query, top_n)
+    @_transaction
+    def recall(self, query, top_n=20, as_of=None):
+        hits = self.search(query, top_n, as_of=as_of)
         ranked = [hit for hit in hits if hit["via"] == "ranked"]
         if not ranked:
             return {"tier": "not present", "confidence": 0.0, "hits": [], "previews": [],
@@ -349,93 +486,120 @@ class MemoryStore:
         rounds = 0
         if confidence < 0.5:
             rounds = 1
-            hits = self.search(query, top_n * 2)
+            hits = self.search(query, top_n * 2, as_of=as_of)
             ranked = [hit for hit in hits if hit["via"] == "ranked"]
         previews = [{"id": hit["id"], "preview": hit["text"][:PREVIEW_CHARS],
                      "note": "related only; not claimed relevant"} for hit in ranked[:PREVIEW_MAX]]
         return {"tier": "closest-only", "confidence": confidence, "hits": [], "previews": previews,
                 "exploration_rounds": rounds, "store_state": "ready"}
 
-    def build_context(self, query, budget_chars=8000):
-        hits = self.search(query)
-        return bounded_blocks([(hit["id"], f"[{hit['id']}]\n{hit['text']}") for hit in hits], budget_chars)
+    @_transaction
+    def build_context(self, query, budget_chars=8000, as_of=None):
+        hits = self.search(query, as_of=as_of)
+        return bounded_blocks([(hit["id"], f"[{hit['id']}{'; inferred, review pending' if hit['inferred'] else ''}]\n{hit['text']}")
+                               for hit in hits], budget_chars)
 
+    @_transaction
     def record_retrieval(self, ids, on_date):
-        with open(self.retrievals_path, "a", encoding="utf-8") as handle:
-            for fid in ids:
-                handle.write(json.dumps({"id": fid, "date": on_date}) + "\n")
+        date.fromisoformat(on_date)
+        ids = list(ids)
+        known = {f["id"] for f in self._read_facts()}
+        if any(fid not in known for fid in ids):
+            raise ValueError("retrieval must reference present facts")
+        previous = read_text(self.retrievals_path)
+        atomic_text(self.retrievals_path, previous + "".join(json.dumps({"id": fid, "date": on_date}) + "\n" for fid in ids))
 
+    @_transaction
     def demotion_candidates(self, reference_date, days=14):
+        date.fromisoformat(reference_date)
+        if isinstance(days, bool) or not isinstance(days, int) or days < 0:
+            raise ValueError("days must be a nonnegative integer")
         retrieved = set()
         if os.path.isfile(self.retrievals_path):
-            with open(self.retrievals_path, encoding="utf-8") as handle:
-                lines = handle.readlines()
-            for line in lines:
-                if not line.strip():
-                    continue
-                row = json.loads(line)
-                if _days_between(row["date"], reference_date) <= days:
-                    retrieved.add(row["id"])
+            for line in read_text(self.retrievals_path).splitlines():
+                if line.strip():
+                    row = json.loads(line)
+                    if 0 <= _days_between(row["date"], reference_date) <= days:
+                        retrieved.add(row["id"])
         return [{"id": f["id"], "reason": "standing fact with zero retrievals in the window; review, never silent deletion"}
                 for f in self._read_facts() if f.get("status") == "current" and f["id"] not in retrieved]
 
-    def _tombstones(self):
+    def _tombstone_rows(self):
         path = os.path.join(self.root, "erasure", "tombstones.jsonl")
-        out = set()
-        if os.path.isfile(path):
-            with open(path, encoding="utf-8") as handle:
-                lines = handle.readlines()
-            for line in lines:
-                if line.strip():
-                    out.add(json.loads(line)["id"])
-        return out
+        return [json.loads(line) for line in read_text(path).splitlines() if line.strip()] if os.path.lexists(path) else []
 
+    def _tombstones(self):
+        return {row["id"] for row in self._tombstone_rows()}
+
+    @_transaction
     def forget_by_id(self, ids, on_date, index_path=None):
+        date.fromisoformat(on_date)
+        ids = list(dict.fromkeys(ids))
+        if any(not isinstance(fid, str) or not fid for fid in ids):
+            raise ValueError("forgetting requires nonempty exact string IDs")
         facts = self._read_facts()
-        by_id = self._fact_map(facts)
-        gone = self._tombstones()
-        results, removed = {}, []
-        for fid in ids:
-            if fid in by_id:
-                results[fid] = "forgotten"; removed.append(fid)
-            elif fid in gone:
-                results[fid] = "already_forgotten"
-            else:
-                results[fid] = "not_found"
-        if removed:
-            index_cleaned = []
-            kept = None
-            if index_path and os.path.isfile(index_path):
-                with open(index_path, encoding="utf-8") as handle:
-                    index = json.load(handle)
-                if not isinstance(index, dict) or any(not isinstance(v, str) for v in index.values()):
-                    raise ValueError("erasure index must be an object mapping strings to fact IDs")
-                removed_ids = set(removed)
-                kept = {k: v for k, v in index.items() if k not in removed_ids and v not in removed_ids}
-                index_cleaned = sorted(set(index) - set(kept))
-            self._write_facts([f for f in facts if f["id"] not in removed])
-            if kept is not None:
-                self._write_json(index_path, kept)
-            erasure = os.path.join(self.root, "erasure")
-            os.makedirs(erasure, exist_ok=True)
-            receipt = {"date": on_date, "results": {fid: results[fid] for fid in removed},
-                       "index_cleaned": index_cleaned}
-            receipt_name = f"erasure-{on_date}-{deterministic_id([on_date] + removed)[:8]}.json"
-            with open(os.path.join(erasure, receipt_name), "w", encoding="utf-8") as handle:
-                json.dump(receipt, handle, indent=1)
-            with open(os.path.join(erasure, "tombstones.jsonl"), "a", encoding="utf-8") as handle:
-                for fid in removed:
-                    handle.write(json.dumps({"id": fid, "date": on_date, "receipt": receipt_name}) + "\n")
-            results["_receipt"] = os.path.join(erasure, receipt_name)
+        by_id, gone = self._fact_map(facts), self._tombstones()
+        results = {fid: "forgotten" if fid in by_id else "already_forgotten" if fid in gone else "not_found" for fid in ids}
+        removed = [fid for fid in ids if fid in by_id]
+        if not removed:
+            return results
+        removed_ids = set(removed)
+        replacements, index_cleaned = {}, []
+        if index_path is not None:
+            if Path(index_path).is_symlink():
+                raise ValueError("derived index must not be a symlink")
+            index_path = str(Path(index_path).resolve())
+            reserved = {self.facts_path, self.profile_path, self.retrievals_path, self.journal_path}
+            if index_path in reserved or Path(index_path).is_relative_to(Path(self.root, "erasure")):
+                raise ValueError("derived index must not alias canonical memory state")
+            index = json.loads(read_text(index_path))
+            if not isinstance(index, dict) or any(not isinstance(v, str) for v in index.values()):
+                raise ValueError("erasure index must be an object mapping strings to fact IDs")
+            kept = {k: v for k, v in index.items() if k not in removed_ids and v not in removed_ids}
+            # Receipts retain only a count, not private index keys/content.
+            index_cleaned = sorted(set(index) - set(kept))
+            replacements[index_path] = json.dumps(kept, sort_keys=True)
+        retained = []
+        for fact in facts:
+            if fact["id"] in removed_ids:
+                continue
+            fact = dict(fact)
+            if "links" in fact:
+                fact["links"] = [fid for fid in fact["links"] if fid not in removed_ids]
+            if fact.get("supersedes") in removed_ids:
+                fact.pop("supersedes", None)
+                fact.pop("edge", None)
+            retained.append(fact)
+        errors = self._validate_facts(retained)
+        if errors:
+            raise ValueError(f"invalid retained memory: {errors}")
+        replacements[self.facts_path] = "".join(json.dumps(f, sort_keys=True) + "\n" for f in retained)
+        retrievals = [json.loads(line) for line in read_text(self.retrievals_path).splitlines() if line.strip()]
+        replacements[self.retrievals_path] = "".join(json.dumps(row, sort_keys=True) + "\n" for row in retrievals if row["id"] not in removed_ids)
+        profile = self.profile()
+        for kind in PROFILE_CAPS:
+            profile[kind] = [row for row in profile[kind] if row.get("id") not in removed_ids and row.get("source_fact_id") not in removed_ids]
+        replacements[self.profile_path] = json.dumps(profile, sort_keys=True)
+        receipt_name = f"erasure-{on_date}-{deterministic_id([on_date] + sorted(removed))[:16]}.json"
+        receipt = {"date": on_date, "results": {fid: results[fid] for fid in removed},
+                   "index_cleaned_count": len(index_cleaned), "scope": "exact IDs, linked references, retrieval records and linked profile facts; unlinked text and external backups are not inferred"}
+        replacements[os.path.join(self.root, "erasure", receipt_name)] = json.dumps(receipt, sort_keys=True)
+        tombstones = self._tombstone_rows() + [{"id": fid, "date": on_date, "receipt": receipt_name} for fid in removed]
+        replacements[os.path.join(self.root, "erasure", "tombstones.jsonl")] = "".join(json.dumps(row, sort_keys=True) + "\n" for row in tombstones)
+        self._commit(replacements)
+        results["_receipt"] = os.path.join(self.root, "erasure", receipt_name)
         return results
 
+    @_transaction
     def semantic_forget_preview(self, query):
         return sorted({hit["id"] for hit in self.search(query) if hit["via"] == "ranked"})
 
+    @_transaction
     def forget_semantic(self, preview_ids, on_date, index_path=None):
         """Delete exactly the previewed IDs. The match is never re-run here."""
         return self.forget_by_id(list(preview_ids), on_date, index_path=index_path)
 
+    @_transaction
     def audit_corpus(self, near_miss_path=None):
         facts = self._read_facts()
         hashes, tokens, classes = {}, {}, {}

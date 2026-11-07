@@ -1,7 +1,7 @@
 ---
 name: agent-enhancement-systems
 description: Use when building, wiring, or auditing an agent's proactive lanes, instincts, memory, recall, skill tests, library gates, handoffs, rationale records, freshness, outbound sends, deterministic IDs, effect queues, routing, near-miss learning, or content-bound approvals. Do not use for ordinary one-off work that creates none of those systems.
-version: 1.0.1
+version: 1.0.2
 capabilities: read, write
 ---
 
@@ -18,10 +18,10 @@ The replacement: this folder ships the machinery. Import the module, wire it at 
 1. Run the package proof before trusting any module:
 
    ```bash
-   python3 tests/test_agent_enhancement.py
+   python3 -m unittest discover -s skills/agent-enhancement-systems/tests -v
    ```
 
-   Expected result: the runner reports the executed test count and `OK`, with exit status zero. Record the actual count and source revision; the count grows as regressions are added. If the run fails, fix the package or report UNVERIFIED. Do not work around a red package test by copying a module elsewhere.
+   Run from the repository root. Expected result: discovery includes every test module in the package, the runner reports a nonzero executed test count and `OK`, with exit status zero. A missing module, zero discovered tests or unexplained skips is not a passing package proof. Record the actual count and source revision; the count grows as regressions are added. If the run fails, fix the package or report UNVERIFIED. Do not work around a red package test by copying a module elsewhere.
 
 2. Read the discipline map below and choose the smallest module that owns the surface. Do not import all modules by default.
 
@@ -61,7 +61,7 @@ The replacement: this folder ships the machinery. Import the module, wire it at 
 | 15. Durable effect queue | `bin/operations.py` | `EffectQueue.enqueue` before attempting the effect |
 | 16. Owner routing and slots | `bin/operations.py` | `route_followup` and `SlotGuard.reserve_worker` before work starts |
 | 17. Near-miss ledger | `bin/operations.py` | `NearMissLedger.record` at a gate rejection |
-| 18. Content-bound approvals | `bin/operations.py` | `ApprovalStore.check` immediately before the act |
+| 18. Content-bound approvals | `bin/operations.py` | `ApprovalStore.authorize_and_consume` immediately before the act |
 
 Disciplines 3 and 8 are owned by the existing procedure skills `gate-test-integrity`, `hermetic-test-isolation`, `proof-before-green`, and `claim-verification-ledger`. This folder does not duplicate them.
 
@@ -94,4 +94,4 @@ Discipline 10 is a writing and review practice. Its value is a task-specific hid
 
 ## Proof standard for this folder
 
-The package proof is `tests/test_agent_enhancement.py`: the current regression cases covering the shipped modules, using only temporary state and the Python standard library. A change to any module re-runs the whole file. A test that passes on a clean replica and fails on a mutant is handled by `skill_lab.f7_check`; use it for strengthened tests.
+The package proof discovers the complete `tests/` directory, including `test_agent_enhancement.py`, `test_boundary_regressions.py` and added adversarial modules: current regression cases covering the shipped modules, using temporary state and the Python standard library. A change to any module re-runs the discovered package suite from the repository root; a single historical test file is not the full gate. A test that passes on a clean replica and fails on a mutant is handled by `skill_lab.f7_check`; use it for strengthened tests.

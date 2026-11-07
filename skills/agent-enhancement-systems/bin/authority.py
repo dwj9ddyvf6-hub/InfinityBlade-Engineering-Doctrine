@@ -12,11 +12,12 @@ Standard library only.
 import copy
 import hashlib
 import json
+import math
 import os
 import re
 import secrets
 import time
-from _storage import atomic_text, locked
+from _storage import atomic_text, locked, read_text
 
 CHECKPOINT_BOUNDS = {"objective": 500, "state": 2000, "evidence": 2000,
                      "decisions": 1000, "pending": 1000}
@@ -67,10 +68,9 @@ class HandoffStore:
 
     def _load(self, handoff_id):
         path = self._path(handoff_id)
-        if not os.path.isfile(path):
+        if not os.path.lexists(path):
             raise ValueError(f"unknown handoff {handoff_id!r}")
-        with open(path, encoding="utf-8") as handle:
-            return json.load(handle)
+        return json.loads(read_text(path))
 
     def _save(self, record):
         path = self._path(record["id"])
@@ -81,9 +81,11 @@ class HandoffStore:
             raise ValueError("empty summary rejected")
         if admission_strength not in ("explicit", "inferred", "not_admitted"):
             raise ValueError("admission_strength must be explicit, inferred, or not_admitted")
-        if not isinstance(ttl_s, (int, float)) or ttl_s <= 0:
+        if isinstance(ttl_s, bool) or not isinstance(ttl_s, (int, float)) or not math.isfinite(ttl_s) or ttl_s <= 0:
             raise ValueError("ttl_s must be positive")
         now = time.time() if now is None else now
+        self._valid_time(now)
+        self._valid_time(now + ttl_s)
         token = secrets.token_urlsafe(32)
         record = {"id": "ho-" + secrets.token_hex(8),
                   "token_sha256": hashlib.sha256(token.encode()).hexdigest(),
@@ -92,9 +94,21 @@ class HandoffStore:
         self._save(record)
         return record["id"], token
 
+    @staticmethod
+    def _valid_time(value):
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+            raise ValueError("handoff clock must be a finite number")
+
+    @staticmethod
+    def _valid_waiter(waiter):
+        if not isinstance(waiter, str) or not waiter.strip():
+            raise ValueError("waiter must be a nonempty identity")
+
     def claim(self, handoff_id, waiter, now=None):
+        self._valid_waiter(waiter)
         with locked(self._path(handoff_id)):
             now = time.time() if now is None else now
+            self._valid_time(now)
             record = self._load(handoff_id)
             if record["state"] != "open":
                 raise ValueError("handoff is not open")
@@ -108,8 +122,10 @@ class HandoffStore:
             return True
 
     def deliver(self, handoff_id, token, waiter, now=None):
+        self._valid_waiter(waiter)
         with locked(self._path(handoff_id)):
             now = time.time() if now is None else now
+            self._valid_time(now)
             record = self._load(handoff_id)
             if record["state"] != "open":
                 raise ValueError("handoff already consumed: second delivery rejected")

@@ -12,6 +12,8 @@ This folder carries installable craft beside the doctrine skill: complete skill 
 | Host capability | Execution, image viewing, source retrieval, scheduled hooks | Discover the advertised capability and verify the real path |
 | Host integration | Send gate, effect queue, memory writer | Prove the caller and effect; a package test alone is insufficient |
 
+**Complete the source curriculum.** Read every skill and its complete resources through the [reading protocol](../docs/READING-PROTOCOL.md); use the [ascent path](../docs/ASCENT-PATH.md) to extract transferable craft and apply it. Installation and task activation can stay selective after that complete read.
+
 **Start with these three.** proof-before-green (the verdict discipline every other skill reports under), gate-test-integrity (the gate honesty the verdict depends on), and claim-verification-ledger (the ledger that keeps delegated and saved claims honest). Install those first; add the rest when a task names their surface.
 
 The doctrine skill itself lives at [infinityblade/](infinityblade/) and is not part of the 22-skill count; it is the rule source the library operates under. Core engineering/proof procedures are general. Chart, stock, broker and backtest skills are domain-specific and activate only for their named work. Memory and agent-operation packages supply reusable code with separately verified host integration.

@@ -19,6 +19,8 @@ from alpaca_lib import (
     emit,
     fail,
     require_live_confirmation,
+    require_order_response,
+    decimal_argument,
     trading_base,
 )
 
@@ -32,7 +34,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--side", required=True, choices=["buy", "sell"])
     p.add_argument("--qty", type=int, required=True,
                    help="Whole number of contracts")
-    p.add_argument("--limit-price", type=float, required=True,
+    p.add_argument("--limit-price", type=decimal_argument, required=True,
                    help="Limit price per share of the contract")
     p.add_argument("--position-intent", required=True,
                    choices=sorted(VALID_INTENTS),
@@ -49,6 +51,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def validate(args: argparse.Namespace) -> None:
+    if args.client_order_id is not None and not args.client_order_id.strip():
+        fail("--client-order-id must be nonempty when supplied")
     # 3x-daily bugcheck 2026-10-11 night (MINOR): --limit-price nan
     # slipped past the positivity check (NaN comparisons are False) and
     # was serialized into the payload as "nan" -> 422 at the API. Same
@@ -68,7 +72,7 @@ def main() -> None:
     require_live_confirmation(args)
     validate(args)
     order = {
-        "symbol": args.symbol.upper(),
+        "symbol": args.symbol.strip().upper(),
         "side": args.side,
         "type": "limit",
         "time_in_force": args.time_in_force,
@@ -80,6 +84,7 @@ def main() -> None:
     try:
         result = api_request("POST", f"{trading_base()}/v2/orders",
                              payload=order)
+        require_order_response(result, mutation=True, client_order_id=order["client_order_id"])
     except AlpacaError as e:
         # 3x-daily bugcheck 2026-10-08 (MEDIUM): port the
         # alpaca_submit_order.py structured-error pattern. The old code
@@ -90,6 +95,8 @@ def main() -> None:
         import json as _json
         print(_json.dumps({
             "error": True,
+            "client_order_id": order["client_order_id"],
+            "reconciliation_required": bool(getattr(e, "outcome_unknown", False)),
             "status_code": getattr(e, "status_code", None),
             "outcome_unknown": bool(getattr(e, "outcome_unknown", False)),  # 3x-daily bugcheck 2026-10-14 PM BC14P-9: see alpaca_submit_order.py
             "message": str(e)[:500],

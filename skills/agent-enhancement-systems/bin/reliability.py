@@ -11,7 +11,7 @@ import hashlib
 import json
 import os
 from datetime import datetime, timezone
-from _storage import locked
+from _storage import locked, atomic_text, read_text
 
 CLASSES = ("SE0", "SE1", "SE2", "SE3", "SE4")
 REPLAYABLE = ("SE0", "SE1", "SE2")
@@ -27,10 +27,9 @@ class EvidenceCapsules:
         self.path = path
 
     def _read(self):
-        if not os.path.isfile(self.path):
+        if not os.path.lexists(self.path):
             return []
-        with open(self.path, encoding="utf-8") as handle:
-            return [json.loads(line) for line in handle if line.strip()]
+        return [json.loads(line) for line in read_text(self.path).splitlines() if line.strip()]
 
     def record(self, actor, action, effect_class, target, detail=None, ts=None, allow_se4=False):
         if effect_class not in CLASSES:
@@ -46,8 +45,9 @@ class EvidenceCapsules:
                        "prev": rows[-1]["hash"] if rows else "GENESIS"}
             capsule["hash"] = _hash(capsule)
             os.makedirs(os.path.dirname(os.path.abspath(self.path)), exist_ok=True)
-            with open(self.path, "a", encoding="utf-8") as handle:
-                handle.write(json.dumps(capsule, sort_keys=True) + "\n")
+            # Atomic full replacement keeps the prior valid chain readable if
+            # a process dies during writing; the lock spans read/verify/write.
+            atomic_text(self.path, "".join(json.dumps(row, sort_keys=True) + "\n" for row in [*rows, capsule]))
             return capsule
 
     @staticmethod
@@ -70,13 +70,15 @@ class EvidenceCapsules:
 
     def verify(self):
         try:
-            rows = self._read()
+            with locked(self.path):
+                rows = self._read()
         except (ValueError, OSError):
             return {"ok": False, "entries": None, "error": {"code": "UNREADABLE_CHAIN"}}
         return self._verify_rows(rows)
 
     def replay_plan(self):
-        rows = self._read()
+        with locked(self.path):
+            rows = self._read()
         result = self._verify_rows(rows)
         if not result["ok"]:
             raise ValueError(f"replay fails closed: {result['error']}")

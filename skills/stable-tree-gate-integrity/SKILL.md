@@ -1,7 +1,7 @@
 ---
 name: stable-tree-gate-integrity
 description: "Keep verification gates, commits, and dry-runs honest on a tree that background loops rewrite continuously: freeze before gating, stage only owned files, and never let a dry-run touch live state."
-version: 1.0.1
+version: 1.0.2
 ---
 
 # Stable-Tree Gate Integrity
@@ -18,9 +18,15 @@ On this desk, background loops rewrite tracked files continuously and scheduled 
 ## Workflow
 1. Freeze before gating: before running a full regression gate whose verdict will justify a commit, confirm no fix program, worker, or edit pass is still writing the tree. If anything is mid-edit, wait or re-run — a gate over a concurrently-edited tree is contaminated and its verdict is void.
 2. Commit only on a clean gate: one full gate pass on the final, stable tree after the last change. If a gate was contaminated, say so, discard the verdict, and re-run; never commit on a partial or tail-truncated gate log.
-3. Never bare-commit from automation: any scheduled job or script that commits stages only the files it owns, by explicit path, and if it must bypass a hook it uses `--no-verify` only with the gate-pass evidence in hand and the reason recorded in the commit body. A bare `git commit` can trigger park/restore machinery that reverts unrelated unstaged work.
+3. Never bare-commit from automation: any scheduled job or script that commits stages only the files it owns, by explicit path, and any redundant workflow-hook bypass requires an explicitly authorized host procedure, equivalent gate-pass evidence on the exact candidate and a recorded reason. `--no-verify` is not authority to disable permission, secret, privacy or safety guards. A bare `git commit` can trigger park/restore machinery that reverts unrelated unstaged work.
 4. Dry-runs are read-only against live state: a dry-run, research pass, or verification sweep must never write live ledgers, staging queues, or gate queues. Route experimental stagings to a segregated research store that production release sweeps cannot see, and add a regression blocker that fails if a dry-run path touches a live store.
 5. After any hook, restore, or park incident, diff the working tree against the preserved patch before continuing, and recover selectively — never assume the tree still holds the work you wrote.
+
+## Bind the gate to the complete input closure
+
+A stable immutable snapshot is a valid way to freeze the tested tree while unrelated work continues elsewhere. Record the candidate tree, configuration, fixture identities and relevant external input versions. If an input in that closure changes, rerun affected proof; an unrelated worktree edit does not rewrite the immutable snapshot. Verify the delivered artifact is exactly that candidate before using its receipt.
+
+A runner that discovers zero tests, omits an expected test module, skips a required case or hides a nonzero exit has not earned a pass. Record the discovered inventory and explicit skip reasons. Preserve the complete machine log; summarize it for the user without losing its evidence.
 
 ## Output Contract
 Every gate-backed commit names: the gate result on the final tree, whether the tree was stable during the run, the exact files staged, and any bypass used with its evidence. Any contaminated gate is reported as UNVERIFIED, never as pass or fail.

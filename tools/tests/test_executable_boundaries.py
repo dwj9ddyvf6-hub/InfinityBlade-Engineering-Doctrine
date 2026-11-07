@@ -213,7 +213,7 @@ class TransportBoundaries(unittest.TestCase):
 
     def test_bar_pagination_cannot_label_truncated_ended_window_complete(self):
         for module in (bars1h, bars5m):
-            response = {"bars": [{"t": "2026-01-01T00:00:00Z", "c": 1}], "next_page_token": "more"}
+            response = {"bars": [{"t": "2026-01-01T00:00:00Z", "o": 1, "h": 2, "l": 0.5, "c": 1, "v": 10}], "next_page_token": "more"}
             params = {"start": "2025-12-31T00:00:00Z"}
             args = ("FIXTURE", "1D", params, 1, 1) if module is bars1h else ("FIXTURE", params, 1, 1)
             with patch.object(module, "api_request", return_value=response), self.assertRaisesRegex(alpaca.AlpacaError, "incomplete"):

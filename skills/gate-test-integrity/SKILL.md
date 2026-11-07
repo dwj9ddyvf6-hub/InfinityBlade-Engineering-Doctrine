@@ -1,7 +1,7 @@
 ---
 name: gate-test-integrity
 description: Use whenever a regression gate, blocker test, suite result, dry run, or commit is run, prepared, or about to be trusted, reported, or acted on, including when the tree moved during the run; skip for writing or debugging an ordinary test on its own merits.
-version: 1.0.1
+version: 1.0.2
 ---
 
 # Gate and Test Integrity
@@ -20,9 +20,15 @@ The replacement: Freeze the tree, make every blocker hermetic, and prove the ver
 
 - Stage only the files the committing job or agent owns, listed by explicit path, and never run a bare commit from automation.
 
-- Use a hook bypass only with gate pass evidence in hand and record the reason in the commit body.
+- A redundant workflow-hook bypass requires an explicitly authorized host procedure, equivalent gate evidence on the exact candidate, and a recorded reason. Passing tests never authorizes disabling permission, secret, privacy or safety guards; a refusal from such a boundary remains a refusal.
 
 - Diff the working tree against the preserved patch after any hook, restore or park incident before continuing work.
+
+## Bind the gate to the complete input closure
+
+A stable immutable snapshot is a valid way to freeze the tested tree while unrelated work continues elsewhere. Record the candidate tree, configuration, fixture identities and relevant external input versions. If an input in that closure changes, rerun affected proof; an unrelated worktree edit does not rewrite the immutable snapshot. Verify the delivered artifact is exactly that candidate before using its receipt.
+
+A runner that discovers zero tests, omits an expected test module, skips a required case or hides a nonzero exit has not earned a pass. Record the discovered inventory and explicit skip reasons. Preserve the complete machine log; summarize it for the user without losing its evidence.
 
 ## Keep dry runs out of live state
 
@@ -40,7 +46,7 @@ The replacement: Freeze the tree, make every blocker hermetic, and prove the ver
 
 - Record every monkeypatch, stub or module attribute replacement a test installs and restore it in teardown or a finally block, even on failure.
 
-- Treat a failure that appears only in the full suite, or only when a file runs alone, as cross test contamination until the leaking patch or shared state is found.
+- Treat a failure that appears only in the full suite, or only when a file runs alone, as evidence of an isolation or nondeterminism defect. Investigate leaked patches and shared state first, then races, clocks, resource contention and environment differences; prove the cause instead of assuming contamination is the only explanation.
 
 ## Prove the verdict three ways
 
@@ -48,7 +54,7 @@ The replacement: Freeze the tree, make every blocker hermetic, and prove the ver
 
 - Prove the fail direction in the clean environment by showing the test fails on the pre fix code and passes on the fixed code.
 
-- Get the full failure list before judging a gate and treat a truncated or tail limited gate log as invalid for verdict purposes.
+- Get the full failure list and captured runner exit status before judging a gate. Retain the complete log as evidence; a concise display tail may link to it but cannot replace it. A lost or truncated underlying log leaves the affected verdict UNVERIFIED.
 
 - Report every gate backed commit with the gate result on the final tree, whether the tree was stable, the exact files staged and any bypass used with its evidence.
 

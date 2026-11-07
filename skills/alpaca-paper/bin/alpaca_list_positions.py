@@ -1,50 +1,36 @@
 #!/usr/bin/env python3
 """alpaca_list_positions — print all open positions as JSON."""
 import argparse
-import math
+from decimal import Decimal, InvalidOperation
 import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from alpaca_lib import api_request, emit, trading_base
+from alpaca_lib import AlpacaError, api_request, emit, trading_base
 
 
 def _normalize_qty(positions):
-    """Coerce whole-share qty strings to int-strings ("70", not "70.0").
+    """Normalize decimal quantities exactly, preserving every position field.
 
-    Forward fix 2026-10-07 (be forward thinking): the
-    broker returns qty as e.g. "70.0"; every downstream consumer parsed it
-    as float and re-stringified as "70.0", which Alpaca rejects on order
-    submit. 21 float-qty patches across audits all treated the symptom.
-    Normalizing at this single source kills the entire class: every
-    sleeve, the audit, and the ledger now receive clean int-strings.
-    Fractional quantities pass through untouched.
+    Binary float conversion can change a whole quantity above 2**53 or round
+    a fractional quantity to an integer. Invalid quantities must not masquerade
+    as a complete, usable broker position list.
     """
     if not isinstance(positions, list):
-        return positions
-    for p in positions:
-        if not isinstance(p, dict):
-            continue
-        q = p.get("qty")
+        raise AlpacaError("Positions must be an array")
+    normalized = []
+    for row in positions:
+        if not isinstance(row, dict) or "qty" not in row or isinstance(row["qty"], bool):
+            raise AlpacaError("Position lacks a valid quantity")
         try:
-            fq = float(q)
-        # 3x-daily bugcheck 2026-10-08 (LOW): int(inf) raises
-        # OverflowError, not ValueError -- a malformed broker qty like
-        # "inf" crashed the whole listing instead of passing through.
-        except (TypeError, ValueError, OverflowError):
-            continue
-        # 3x-daily bugcheck 2026-10-12 23:17 ET (LOW): float("inf") /
-        # float("nan") SUCCEED, so the try above did not guard them --
-        # int(inf) raised OverflowError and int(nan) ValueError at the
-        # comparison below, crashing the whole positions listing (every
-        # sleeve's broker view) on one malformed qty. The 2026-10-08
-        # guard only covered the float() conversion. Pass non-finite
-        # quantities through untouched instead.
-        if not math.isfinite(fq):
-            continue
-        if fq == int(fq):
-            p["qty"] = str(int(fq))
-    return positions
+            quantity = Decimal(str(row["qty"]))
+        except (InvalidOperation, ValueError) as error:
+            raise AlpacaError("Position quantity is not decimal") from error
+        if not quantity.is_finite():
+            raise AlpacaError("Position quantity must be finite")
+        value = str(int(quantity)) if quantity == quantity.to_integral_value() else format(quantity, "f")
+        normalized.append({**row, "qty": value})
+    return normalized
 
 
 def main() -> None:
@@ -61,11 +47,13 @@ def main() -> None:
     # 3x-daily bugcheck 2026-10-14 PM (LOW, BC14P-10): any other dict body passed through
     # _normalize_qty and was emitted where every caller expects a
     # LIST of positions. Fail loud.
-    if positions is not None and not isinstance(positions, list):
+    if not isinstance(positions, list):
         print("Unexpected positions response shape (non-array body)",
               file=sys.stderr)
         sys.exit(2)
-    emit(_normalize_qty(positions if positions is not None else []))
+    if any(not isinstance(p, dict) or not isinstance(p.get("symbol"), str) or not p["symbol"].strip() for p in positions):
+        raise AlpacaError("Position list contains an invalid symbol/record")
+    emit(_normalize_qty(positions))
 
 
 if __name__ == "__main__":

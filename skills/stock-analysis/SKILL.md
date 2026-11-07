@@ -24,6 +24,21 @@ The replacement: Run the frozen lenses in order, move a score only on a new fact
 
 Install `chart-read` beside this folder, provide its declared `CHART_READ_TA_REPO` engine, render script, data credentials and synthesis document, and verify those prerequisites before promising a complete read. Missing data yields the protocol's NO_VIEW/PARTIAL state, not invented geometry. The fragments preserve full specialist methods; their entry/stop/target requirements apply only to an evidence-supported actionable setup. ABSTAIN or a branch with no trigger remains valid and never requires fabricating a trade plan. Numerical trading thresholds are this method's declared policy, not universal market laws. A research request does not authorize an order.
 
+### Resolving specialist rules without losing their methods
+
+The two pinned addenda remain intact. Apply the following precedence at their specific overlap; elsewhere keep their full checklists, drills, annotation detail and pattern methods. The core evidence contract governs what can be asserted, this table governs applicability, and the specialist rules govern the chosen method. State any method-specific gate beside its provenance; a discretionary setup filter is not a universal veto over independently validated strategies.
+
+| Overlap | Operational interpretation |
+|---|---|
+| External Canon 42 requires ENTRY/SL/TARGET; the protocol permits ABSTAIN | An actionable plan gets all three, its invalidation and scenario B. An untriggered branch remains empty. An abstention records missing evidence and the observation that would enable a plan; invented prices cannot satisfy the rule. |
+| External Canon 50 permits at most one indicator window; Mastery 20 calls for volume, RSI and MACD panes | Keep a minimal working view for reading structure, and retain the full annotated review/plan view with the required panes. Save both with the same symbol, as-of time, adjustment and feed. Presentation simplification never deletes analytical evidence. |
+| External Canon 24–25 uses “absorption”; OHLCV cannot identify participants | Measure effort/result and successive test spread/volume. “Absorption hypothesis” is a labeled inference with competing explanations and an invalidating observation. It is not proof of institutional buying, inventory transfer, trapped traders or intent. Keep the Wyckoff sequence and event labels as interpretations of measured structure. |
+| External Canon 16 says to discount a target by the published success percentage | Record the geometric measured target, its price distance, the published hit rate and its reference class separately; discount confidence in attainment. A hit probability is not a price-distance multiplier or expected return. Any probability-weighted payoff needs explicit win/loss outcomes, costs and an applicable calibration; do not invent a closer target by multiplying the price or distance by a percentage. |
+| External Canon 1–10 attributes candle conventions to TA-Lib | The stated thresholds are this method's recognition policy unless parity is established for the exact TA-Lib function, version, candle settings, averaging windows and trend context. Preserve the checks; do not claim that a fixed 10-bar calibration reproduces every library pattern. |
+| Mastery and External Canon supply ranking, stop-distance, duration and stage thresholds | Use them within the named discretionary chart method, show which checklist passed or failed, and retain valid alternative strategy evidence under its own method. A failed pattern label falls back to measured structure; it does not erase an observable market move. |
+
+For every historical event, retain both the event timestamp and the latest timestamp of all required inputs. A pivot-dependent event cannot precede pivot availability; historical ATR normalization uses the ATR available before that event. Retrospective morphology without those fields remains useful, labeled retrospective, and cannot become a prospective hit-rate observation.
+
 ## Run Pass A geometry
 
 - Run `python3 bin/pass_a.py --symbol SYM` from the chart-read skill folder for a fresh deterministic compute and never work from memory.

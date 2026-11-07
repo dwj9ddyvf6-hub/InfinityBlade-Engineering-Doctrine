@@ -10,23 +10,33 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from alpaca_lib import AlpacaError, api_request, emit, quote_path, trading_base, missing_order
+from alpaca_lib import AlpacaError, api_request, emit, quote_path, trading_base, missing_order, require_order_response
 
 
 def main() -> None:
     p = argparse.ArgumentParser(
         description="Fetch one Alpaca order by id (fill status check).")
-    p.add_argument("--order-id", required=True,
+    identity = p.add_mutually_exclusive_group(required=True)
+    identity.add_argument("--order-id",
                    help="Alpaca order id (UUID)")
+    identity.add_argument("--client-order-id", help="Original intent ID, including an ambiguous submission's returned client_order_id")
     args = p.parse_args()
     try:
-        result = api_request(
-            "GET", f"{trading_base()}/v2/orders/{quote_path(args.order_id)}"
-        )
+        if args.client_order_id:
+            result = api_request("GET", f"{trading_base()}/v2/orders:by_client_order_id",
+                                 params={"client_order_id": args.client_order_id})
+        else:
+            result = api_request("GET", f"{trading_base()}/v2/orders/{quote_path(args.order_id)}")
+        require_order_response(result, client_order_id=args.client_order_id)
+        if args.order_id and result["id"] != args.order_id:
+            raise AlpacaError("Order lookup returned a different order ID")
     except AlpacaError as e:
         # A 404 only establishes absence at this endpoint, not a final order state.
         if getattr(e, "status_code", None) == 404:
-            emit(missing_order(args.order_id))
+            missing = missing_order(args.order_id or args.client_order_id)
+            if args.client_order_id:
+                missing["client_order_id"] = args.client_order_id
+            emit(missing)
             return
         raise
     # 3x-daily bugcheck 2026-10-10 (MINOR): api_request returns

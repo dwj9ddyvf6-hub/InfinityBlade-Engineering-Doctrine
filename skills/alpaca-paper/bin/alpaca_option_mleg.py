@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """alpaca_option_mleg — submit a multi-leg options spread order (paper).
 
-Submits 2-4 legs as a single atomic order (order_class=mleg). All legs
-fill together or not at all.
+Submits 2-4 legs as one combined order (order_class=mleg), preserving leg
+ratios. Acceptance is not proof that all requested spread units filled;
+reconcile parent and leg statuses and quantities, including partial fills.
 
 Alpaca's sign convention (audit 2026-10-06): positive limit_price = DEBIT
 (you pay), negative limit_price = CREDIT (you receive). For a net-credit
@@ -20,6 +21,7 @@ import math
 import os
 import sys
 import uuid
+from decimal import Decimal, InvalidOperation
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from alpaca_lib import (
@@ -28,6 +30,9 @@ from alpaca_lib import (
     emit,
     fail,
     require_live_confirmation,
+    require_order_response,
+    decimal_argument,
+    decimal_text,
     trading_base,
 )
 
@@ -40,7 +45,7 @@ def build_parser() -> argparse.ArgumentParser:
                    help="JSON array of legs: [{symbol, side, position_intent, ratio_qty}]")
     p.add_argument("--qty", type=int, required=True,
                    help="Number of spreads (whole number)")
-    p.add_argument("--limit-price", type=float, required=True,
+    p.add_argument("--limit-price", type=decimal_argument, required=True,
                    help="Net limit price for the spread (audit 2026-10-06: "
                         "positive = DEBIT you pay, negative = CREDIT you "
                         "receive; e.g. -0.05 for a $5 credit)")
@@ -56,6 +61,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def validate(args: argparse.Namespace) -> None:
+    if args.client_order_id is not None and not args.client_order_id.strip():
+        fail("--client-order-id must be nonempty when supplied")
     # 3x-daily bugcheck 2026-10-11 night (MINOR): --limit-price nan/inf
     # was serialized verbatim into the payload ("nan") and 422'd at the
     # API. The price may be NEGATIVE (credit spread = you receive), so
@@ -82,20 +89,20 @@ def main() -> None:
         for k in ("symbol", "side", "position_intent"):
             if k not in leg:
                 fail("leg %d: missing '%s'" % (i, k))
-        if leg["side"] not in ("buy", "sell"):
+        if not isinstance(leg["side"], str) or leg["side"] not in ("buy", "sell"):
             fail("leg %d: side must be buy or sell" % i)
-        if leg["position_intent"] not in VALID_INTENTS:
+        if not isinstance(leg["position_intent"], str) or leg["position_intent"] not in VALID_INTENTS:
             fail("leg %d: invalid position_intent" % i)
         if not leg["position_intent"].startswith(leg["side"] + "_"):
             fail("leg %d: side and position_intent must agree" % i)
         ratio = leg.get("ratio_qty", 1)
         try:
-            value = float(ratio)
-        except (ValueError, TypeError):
+            value = Decimal(str(ratio))
+        except (InvalidOperation, ValueError, TypeError):
             fail("leg %d: ratio_qty must be a positive whole number" % i)
-        if isinstance(ratio, bool) or not math.isfinite(value) or value <= 0 or not value.is_integer():
+        if isinstance(ratio, bool) or not value.is_finite() or value <= 0 or value != value.to_integral_value():
             fail("leg %d: ratio_qty must be a positive whole number" % i)
-        leg["ratio_qty"] = str(int(value))
+        leg["ratio_qty"] = decimal_text(value)
         if not isinstance(leg["symbol"], str) or not leg["symbol"].strip():
             fail("leg %d: symbol must be a nonempty string" % i)
         leg["symbol"] = leg["symbol"].strip().upper()
@@ -111,6 +118,7 @@ def main() -> None:
     try:
         result = api_request("POST", f"{trading_base()}/v2/orders",
                              payload=order)
+        require_order_response(result, mutation=True, client_order_id=order["client_order_id"])
     except AlpacaError as e:
         # 3x-daily bugcheck 2026-10-08 (MEDIUM): port the
         # alpaca_submit_order.py structured-error pattern (see
@@ -118,6 +126,8 @@ def main() -> None:
         # JSONDecodeError in callers, double-submit risk on blind retry).
         print(json.dumps({
             "error": True,
+            "client_order_id": order["client_order_id"],
+            "reconciliation_required": bool(getattr(e, "outcome_unknown", False)),
             "status_code": getattr(e, "status_code", None),
             "outcome_unknown": bool(getattr(e, "outcome_unknown", False)),  # 3x-daily bugcheck 2026-10-14 PM BC14P-9: see alpaca_submit_order.py
             "message": str(e)[:500],

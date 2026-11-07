@@ -1,7 +1,7 @@
 ---
 name: claim-verification-ledger
 description: Use whenever a not found, closed, or cannot be done verdict is about to be reported, whenever a save, backup, push, export, or deletion is about to be reported done, and whenever a delegated or background result is about to be repeated as fact.
-version: 1.0.1
+version: 1.0.2
 ---
 
 # Claim Verification and Coverage Ledger
@@ -42,7 +42,7 @@ The replacement: Every claim is unverified until it matches a fresh check of the
 
 - Treat a tool error, an empty result page and a failed lookup as facts about that one route, and record the exact error or empty result beside the route that produced it.
 
-- Save each enumerated item and then read it back from the destination and compare its hash or byte count against the source record.
+- Save each enumerated item and then read it back from the destination and compare its content hash or exact bytes against the source record. A matching byte count is an inventory check, never content-identity proof: equal-size corruption must fail. If the destination intentionally transforms the representation, declare the semantic invariants first and verify those with source/destination identities and a transformation receipt.
 
 - Report save progress as the verified count over the enumerated total, counted at the destination, never as the count a pusher claims to have sent.
 
@@ -50,7 +50,7 @@ The replacement: Every claim is unverified until it matches a fresh check of the
 
 - Retry a failed save by re-reading the destination state first so two writers racing the same repo rebase on the landed state instead of bouncing each other.
 
-- Restart a killed save from its verified count and its enumeration rather than from the start and say which items remain unverified.
+- Restart a killed save from the per-item verified identity/hash ledger and its enumeration rather than from the start; derive the count from those rows and name the remaining items. A count alone cannot identify which sparse or reordered items arrived.
 
 ## Verify a delegated or reported claim
 

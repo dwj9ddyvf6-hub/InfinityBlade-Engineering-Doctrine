@@ -10,6 +10,7 @@ Standard library only.
 """
 import ipaddress
 import json
+import math
 import re
 import sys, os
 from datetime import date
@@ -46,13 +47,18 @@ def confidence_for_count(count, strong_source=False):
 
 
 def validate_instinct(unit):
+    if not isinstance(unit, dict):
+        return ["instinct must be an object"]
     errors = []
     for field in ("id", "trigger", "action", "domain", "evidence", "summary"):
         if not unit.get(field):
             errors.append(f"{field} missing")
     confidence = unit.get("confidence")
-    if not isinstance(confidence, (int, float)) or not 0 <= confidence <= 0.9:
+    if isinstance(confidence, bool) or not isinstance(confidence, (int, float)) or not math.isfinite(confidence) or not 0 <= confidence <= 0.9:
         errors.append("confidence must be between 0 and 0.9")
+    success = unit.get("success_rate", 0)
+    if isinstance(success, bool) or not isinstance(success, (int, float)) or not math.isfinite(success) or not 0 <= success <= 1:
+        errors.append("success_rate must be finite and between zero and one")
     if unit.get("scope") not in ("project", "global"):
         errors.append("scope must be project or global")
     if unit.get("status") not in ("active", "pending", "frozen"):

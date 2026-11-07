@@ -17,7 +17,7 @@ import sys
 from datetime import datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from alpaca_lib import AlpacaError, api_request, data_base, emit, fail, quote_path
+from alpaca_lib import AlpacaError, api_request, data_base, emit, fail, quote_path, validate_bar, timestamp_instant
 
 
 def default_start(limit):
@@ -84,7 +84,14 @@ def fetch_bars(symbol, params, max_pages, max_windows, end=None):
         raise ValueError("max_pages and max_windows must be positive")
     params = dict(params)
     bars_all = []
-    seen = set()
+    seen = {}
+    token_history = set()
+    requested_start = timestamp_instant(params["start"]) if params.get("start") else None
+    requested_end = timestamp_instant(end or params["end"]) if (end or params.get("end")) else None
+    if requested_start and requested_end and requested_start > requested_end:
+        raise ValueError("start must not follow end")
+    if end:
+        params["end"] = end
     windows = 0
     while True:
         windows += 1
@@ -123,11 +130,24 @@ def fetch_bars(symbol, params, max_pages, max_windows, end=None):
             raw = data.get("bars")
             if isinstance(raw, list):
                 for b in raw:
-                    t = b.get("t") if isinstance(b, dict) else None
-                    if t is not None and t not in seen:
-                        seen.add(t)
+                    instant = validate_bar(b)
+                    if (requested_start and instant < requested_start) or (requested_end and instant > requested_end):
+                        raise AlpacaError("Bar coverage incomplete: observation outside requested time window")
+                    prior = seen.get(instant)
+                    if prior is not None:
+                        if any(prior[k] != b[k] for k in ("o", "h", "l", "c", "v")):
+                            raise AlpacaError("Bar coverage incomplete: conflicting observations for one timestamp")
+                    else:
+                        seen[instant] = b
                         bars_all.append(b)
-            page_token = data.get("next_page_token") if isinstance(data, dict) else None
+            page_token = data.get("next_page_token")
+            if page_token is not None and (not isinstance(page_token, str) or not page_token):
+                raise AlpacaError("Bar coverage incomplete: invalid continuation token")
+            if page_token is not None:
+                token_key = (params.get("start"), page_token)
+                if token_key in token_history:
+                    raise AlpacaError("Bar coverage incomplete: repeated continuation token")
+                token_history.add(token_key)
             if not page_token or pages >= max_pages:
                 truncated = bool(page_token)
                 break
@@ -138,8 +158,8 @@ def fetch_bars(symbol, params, max_pages, max_windows, end=None):
         if len(bars_all) == n_before or not bars_all:
             raise AlpacaError("Bar coverage incomplete: pagination made no progress")
         # Slide the window forward: resume from the newest bar fetched.
-        params["start"] = max(b["t"] for b in bars_all)
-    bars_all.sort(key=lambda b: b.get("t") or "")
+        params["start"] = max(bars_all, key=lambda b: timestamp_instant(b["t"]))["t"]
+    bars_all.sort(key=lambda b: timestamp_instant(b["t"]))
     return bars_all
 
 

@@ -1,7 +1,7 @@
 ---
 name: persisted-field-consumption-audit
 description: Use whenever a migration to a canonical source is about to be called complete, or a surface is built from persisted producer fields, even when a caller list looks complete; skip for greenfield builds with no predecessor route.
-version: 1.0.1
+version: 1.0.2
 ---
 
 # Consumer and Field Consumption Audit
@@ -34,7 +34,7 @@ The replacement: Audit every consumer of every persisted field before calling th
 
 - Classify every hit with line level proof as ENGINE when it feeds the canonical system outputs, OFF-ENGINE when it is proven not to feed those outputs, or COSMETIC when it is label or display only, and fix cosmetic hits too because a wrong label teaches a wrong doctrine.
 
-- Reroute every ENGINE hit to the canonical route fail closed, so the consumer produces nothing when the canonical source is unavailable and never falls back to a retired route or a stale cache.
+- Reroute every ENGINE hit to the canonical route fail closed, so the consumer produces no decision or action from a missing canonical input and never falls back to a retired route or a stale cache. Emit an explicit unavailable/stale status. Independently authorized protective actions retain their own validated inputs and owner; a missing entry signal does not disable an exit path.
 
 - Name the consumer for each persisted field, or mark it unconsumed and state what the intended reader was supposed to show from it, recording zero reference results as findings rather than harmless extras.
 
@@ -74,7 +74,7 @@ The replacement: Audit every consumer of every persisted field before calling th
 
 - Ship a named regression blocker wired into the gate that re runs the exhaustive search and fails when any unclassified hit on a retired route appears, when a designated surface field has zero consumers, when a backstop role is rendered as a trading stop, or when a lifecycle flag is keyed by symbol alone.
 
-- Verify the fail direction by reasoning or by a temporary revert, and record the blocker name and its gate wiring in the audit output.
+- Verify the fail direction by executing a temporary revert or targeted mutant in an isolated copy, and record the blocker name and its gate wiring in the audit output. Require failure caused by the planted defect, not an import error or broken harness. Reasoning alone leaves fail-direction proof UNVERIFIED.
 
 - Report the audit with the coverage ledger counts, a classification table with one row per hit, and the field ledger naming consumer, role and scope for each designated field.
 

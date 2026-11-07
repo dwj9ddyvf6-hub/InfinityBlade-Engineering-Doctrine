@@ -26,9 +26,9 @@
     {
       "name": "agent-enhancement-systems",
       "description": "Use when building, wiring, or auditing an agent's proactive lanes, instincts, memory, recall, skill tests, library gates, handoffs, rationale records, freshness, outbound sends, deterministic IDs, effect queues, routing, near-miss learning, or content-bound approvals. Do not use for ordinary one-off work that creates none of those systems.",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "entrypoint": "skills/agent-enhancement-systems/SKILL.md",
-      "source_sha256": "199f490b8a07026fe650859fed1aab03e6052ed1169be5c646bc63dea0b5221c",
+      "source_sha256": "45fea4265e444d75bbe5417c3ad713008a51c206a8972667f6e71102355a9e06",
       "kind": "local-reference-mechanisms",
       "evidence_boundary": "Runnable local mechanisms; host integrations and external effects need separate implementation and proof.",
       "related_skills": [
@@ -58,7 +58,8 @@
         "skills/agent-enhancement-systems/templates/memory-fact.json",
         "skills/agent-enhancement-systems/templates/skill-eval.json",
         "skills/agent-enhancement-systems/tests/test_agent_enhancement.py",
-        "skills/agent-enhancement-systems/tests/test_boundary_regressions.py"
+        "skills/agent-enhancement-systems/tests/test_boundary_regressions.py",
+        "skills/agent-enhancement-systems/tests/test_persistence_protocols.py"
       ],
       "reading_order": [
         "PRIMER.md",
@@ -71,7 +72,7 @@
       "description": "Trade and inspect Alpaca paper trading accounts with the account identity proven from the configured credentials before any account-level action; use for paper-account reads and orders, and skip for live trading.",
       "version": "1.0.1",
       "entrypoint": "skills/alpaca-paper/SKILL.md",
-      "source_sha256": "358d67f2bc2b957f7a9cac261f1dc32fdd4da456d966366dd1113e7c5d9bdbc4",
+      "source_sha256": "71cf4e467759f48a59c49faced7b6c1bec4afe98ca667068873044bdf5ac86e6",
       "kind": "credentialed-service-client",
       "evidence_boundary": "Credentialed broker integration; never execute as a repository audit or installation test.",
       "related_skills": [],
@@ -122,7 +123,7 @@
       "description": "On-demand chart reading that runs deterministic Pass A geometry, renders multi-timeframe charts, and delivers a perceptual Pass B read with scenarios, triggers, and invalidation whenever the user names a ticker; skip for automated signal runners, which have their own engines.",
       "version": "1.0.1",
       "entrypoint": "skills/chart-read/SKILL.md",
-      "source_sha256": "cd8404b2904749750bf1dea7c07b3b6891be3ad7ad9c0a0726ac8d7ca2b34d9c",
+      "source_sha256": "318c0fc6011fe949e5cb9473463280253111086665a98333a8193bb547b3e4fe",
       "kind": "external-runtime-dependent",
       "evidence_boundary": "Chart procedure and helpers; external data/analysis dependencies must be verified separately.",
       "related_skills": [
@@ -143,9 +144,9 @@
     {
       "name": "claim-verification-ledger",
       "description": "Use whenever a not found, closed, or cannot be done verdict is about to be reported, whenever a save, backup, push, export, or deletion is about to be reported done, and whenever a delegated or background result is about to be repeated as fact.",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "entrypoint": "skills/claim-verification-ledger/SKILL.md",
-      "source_sha256": "1d33d6a3f1f24d9e4a7827ae058f4d49792ba413508e6f4e3ea0bf83d27caf87",
+      "source_sha256": "64e0f90252b79909e58e965a4f16e70e33c16af0485b26646dadb39c85761595",
       "kind": "procedure",
       "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
       "related_skills": [
@@ -201,9 +202,9 @@
     {
       "name": "efficiency-breakthroughs",
       "description": "Use whenever a data pipeline is slow, lossy, flaky, or hard to debug, with the pipeline mechanics for complete reads, bulk transport, rate limits, caches, watchdogs, seam validation, freshness, and reconciliation, each distilled from an incident where it was learned at cost.",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "entrypoint": "skills/efficiency-breakthroughs/SKILL.md",
-      "source_sha256": "eac935831fd23dc006e3442a6573c75df9f55d676f4f52480b16c22370aecbbc",
+      "source_sha256": "50bac44ff302819eb967cc4b1d38d11fe4200e43a3851f43a6c8f084f917bce6",
       "kind": "procedure",
       "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
       "related_skills": [],
@@ -219,9 +220,9 @@
     {
       "name": "gate-test-integrity",
       "description": "Use whenever a regression gate, blocker test, suite result, dry run, or commit is run, prepared, or about to be trusted, reported, or acted on, including when the tree moved during the run; skip for writing or debugging an ordinary test on its own merits.",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "entrypoint": "skills/gate-test-integrity/SKILL.md",
-      "source_sha256": "201b688c19a918b2ba1b552d8ea41185ea4507e3005c70686b959ed2a51d0def",
+      "source_sha256": "7cc56040c2913e2754a85059e9ef255767e0c444a12ee88cca9feb3bea8eb5dd",
       "kind": "procedure",
       "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
       "related_skills": [
@@ -240,9 +241,9 @@
     {
       "name": "hermetic-test-isolation",
       "description": "Make regression tests prove the same verdict alone, in the full suite, and in a clean export, with no live-state reads, no unrestored monkeypatches, and no import-frozen paths, before any gate result is trusted.",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "entrypoint": "skills/hermetic-test-isolation/SKILL.md",
-      "source_sha256": "dc90f251f25d578f8268b7e5d89d29651de881dc0a76033d3b535d9b5ab8e2b0",
+      "source_sha256": "ea5b3d2b902607ee96cb8244cf90e63ed7b43f23656ce4222ea0e84b58109eb7",
       "kind": "procedure",
       "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
       "related_skills": [],
@@ -258,9 +259,9 @@
     {
       "name": "infinityblade",
       "description": "Operating discipline for finishing real work correctly, efficiently and honestly. Use for any task that changes something or claims a result — code, debugging, deployment, automation, data work, research with sources, documents built from facts, or reviewing whether work is done. Skip for casual conversation and pure explanation.",
-      "version": "3.2.0",
+      "version": "3.3.0",
       "entrypoint": "skills/infinityblade/SKILL.md",
-      "source_sha256": "b7caf3e6a7c45633c724ef34b8ce31f715185a3a6b0cf5205b7a4e9f0366b66f",
+      "source_sha256": "60043254d71c18831d3bea121e29cc1cc29ebe4ffc36054822077748875eedf7",
       "kind": "core-operating-doctrine",
       "evidence_boundary": "Procedure and local source-checking helpers; no automatic host installation.",
       "related_skills": [
@@ -327,9 +328,9 @@
     {
       "name": "live-execution-proof",
       "description": "Use whenever a trading or automation system is about to be called working, live, or proven, even when its component tests all pass; skip for design review of a system that has never run.",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "entrypoint": "skills/live-execution-proof/SKILL.md",
-      "source_sha256": "07fe83fbfa3e77a3e88a127f2a0cc11b3780655d6bbd58a005abfebe101e4b0d",
+      "source_sha256": "3663a2b7a152a0a8c666f35d093fc3395dcce5c37d537ecab6e5532c6ecc0185",
       "kind": "procedure",
       "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
       "related_skills": [],
@@ -345,9 +346,9 @@
     {
       "name": "memory-recall-systems",
       "description": "Use whenever an agent's memory, recall, context discipline, or long-job resource bounds are being designed, repaired, or audited: hybrid search over the markdown estate under a forced search rule, a canary eval on the agent's own history, masking over summarising, delta-only summaries, invalidate-never-delete, decay-ranked forgetting with write-gating, and checkpointed, memory-bounded long jobs, each grounded in the measured evidence of the 2026-11-06 research report shipped in this folder.",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "entrypoint": "skills/memory-recall-systems/SKILL.md",
-      "source_sha256": "730cc5a475a76f128c4f293c23fd7058eef36ff9877687e3d82e5294c556496e",
+      "source_sha256": "ca5bb12e6105343c38c52b4ac96a619b5d26850c9571594460f16257495f156c",
       "kind": "local-retrieval-mechanism",
       "evidence_boundary": "Local index/search/evaluation over explicitly supplied documents; not access to a host's internal memory.",
       "related_skills": [],
@@ -366,9 +367,9 @@
     {
       "name": "persisted-field-consumption-audit",
       "description": "Use whenever a migration to a canonical source is about to be called complete, or a surface is built from persisted producer fields, even when a caller list looks complete; skip for greenfield builds with no predecessor route.",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "entrypoint": "skills/persisted-field-consumption-audit/SKILL.md",
-      "source_sha256": "9ea40529b4ad5d906903070fb7dd7616d5b2e94cf4116ec147e315d9727d5f6a",
+      "source_sha256": "a141a8a4b020582b7ae235d9c60a0065d4a2256d5c5e81d17ab6396cc20e1278",
       "kind": "procedure",
       "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
       "related_skills": [],
@@ -424,9 +425,9 @@
     {
       "name": "save-readback-verification",
       "description": "Use whenever a save, backup, push, export, or deletion is about to be reported done, and whenever a delegated, background, or subagent result is about to be repeated as fact, even when the save looks small; skip for live execution proof or absence proof.",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "entrypoint": "skills/save-readback-verification/SKILL.md",
-      "source_sha256": "775ff4de0b5262b7c8799b18eaa0fce02c3c9f2c66a6f10c75935a76a4eab538",
+      "source_sha256": "bc29c5444e472b255798c5912389c02399371c68a222bf97f70090ba04eb418a",
       "kind": "procedure",
       "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
       "related_skills": [],
@@ -442,9 +443,9 @@
     {
       "name": "single-door-consumer-audit",
       "description": "Enumerate every consumer of a canonical source, engine, or feed by exhaustive search, never by caller list, and prove each one rerouted, exempt, or off-engine before declaring a single-door migration complete.",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "entrypoint": "skills/single-door-consumer-audit/SKILL.md",
-      "source_sha256": "0f69dae76c5c045012d113a740be35cc31cc2f1b568b12cbc0eb93a2b7d68bef",
+      "source_sha256": "db29f4dd975604a2cf4793d4db04fb4d6709789bfdaa484e49798cc7049dc3b0",
       "kind": "procedure",
       "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
       "related_skills": [
@@ -462,9 +463,9 @@
     {
       "name": "stable-tree-gate-integrity",
       "description": "Keep verification gates, commits, and dry-runs honest on a tree that background loops rewrite continuously: freeze before gating, stage only owned files, and never let a dry-run touch live state.",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "entrypoint": "skills/stable-tree-gate-integrity/SKILL.md",
-      "source_sha256": "08043539c07e46406bef0914a8ae1aec5ef68d553b97c73d23d37ab0a30b5dff",
+      "source_sha256": "c6d992c8961564fa8d04cd52a729e5b5b9f0c0e3d52aef4b62077f3d73b80f5e",
       "kind": "procedure",
       "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
       "related_skills": [],
@@ -482,7 +483,7 @@
       "description": "Full stock analysis and on-demand chart reading in one protocol, running Pass A geometry, the perceptual Pass B read, edge labeled strategy lenses, market context and a rigorous synthesis whenever the user names a ticker to read or analyze.",
       "version": "1.0.1",
       "entrypoint": "skills/stock-analysis/SKILL.md",
-      "source_sha256": "7a0493ebef7a95f727206dc0390c346e6aaeaf3c590a93c4534a1d6b693fff98",
+      "source_sha256": "39529b5cf02b8719a3717ca7ac712753d43dd57b137cdcc8c8cee0e12a1b823a",
       "kind": "external-runtime-dependent",
       "evidence_boundary": "Analysis procedure and lens helpers; external data and sibling capabilities are not bundled runtime proof.",
       "related_skills": [

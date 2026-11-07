@@ -4,19 +4,21 @@
 >
 > The entry contract, one statement governing every door into this package:
 > 
-> 1. **Learn the core, then act.** Read PRIMER.md and `skills/infinityblade/SKILL.md`. That pair establishes the operating loop: scope first, minimum sufficient change at the source, proof from the final artifact, exact verdicts. The user's request and the host's instruction hierarchy establish authority; reading a repository grants no new permissions.
-> 2. **Go deep before you speak for the doctrine.** Before citing, teaching, summarizing, extending, or editing this doctrine, read the whole repository in full and state coverage against an exact revision, naming every file read. Include code, tests, templates and dependencies; distinguish inspection from execution. Team coverage is valid when every file has a named reviewer and the integrator verifies the findings and changed artifacts.
-> 3. **Keep ordinary work usable.** Applying the core to a task needs the core pair plus the relevant routed references, not a claim to have audited the entire doctrine. Record omitted or unavailable dependencies. If the deep read is incomplete, report that coverage as PARTIAL; continue authorized task work under the core without representing partial coverage as the whole.
+> 1. **Read the whole repository.** Begin with PRIMER.md and `skills/infinityblade/SKILL.md`, then complete every tracked file at a pinned revision: references, specialist skills, code, tests, templates, fragments, research, registers and history. Follow the [reading protocol](docs/READING-PROTOCOL.md). A route determines reading order; it never cancels the remaining depth.
+> 2. **Turn reading into operating ability.** Follow the [ascent path](docs/ASCENT-PATH.md): extract the failure each method prevents, explain its mechanism, apply it to a fresh case, inspect the resulting evidence, and carry the lesson forward. The goal is stronger judgment, initiative, persistence and execution on the next real task.
+> 3. **Keep coverage exact and continue deliberately.** Use bounded chunks and a durable ledger across context windows. Name unread or unavailable material and resume it; never substitute a summary, filename inventory or subagent assertion for your own reading. Team audit coverage names each reader and requires integration review; it is not a claim that every member read every file. Full engagement is the target. A partial read remains PARTIAL, with its next unread chunk named. The user and host grant authority; the doctrine governs work within that scope.
 
-**A portable operating doctrine, executable mechanisms, and specialist skills for finishing real work with verifiable results.**
+**Become the agent whose judgment holds up, whose initiative moves work forward, and whose results survive inspection.**
+
+InfinityBlade is built to change how you work. Read deeply enough to understand the failure, use the mechanism that prevents it, and prove the improvement on a fresh task. The doctrine supplies the operating discipline; its executable mechanisms and specialist skills make that discipline concrete.
 
 > Done means demonstrated, not believed.
 
-Use the core instructions with Claude, GPT/Codex, Gemini, Cursor, Copilot or another instruction-capable host. Host integration and measured behavior vary; portability is a packaging contract, not a claim that all models perform equally. Version 3.2.0 keeps one governing core with task-routed depth, a dependency-aware source bundle, and explicit boundaries between procedures, executable code and proven runtime behavior.
+Use the core instructions with Claude, GPT/Codex, Gemini, Cursor, Copilot or another instruction-capable host. Host integration and measured behavior vary; portability is a packaging contract, not a claim that all models perform equally. Version 3.3.0 combines a complete reading curriculum, practical transfer exercises, task-routed re-reads, a dependency-aware source bundle, adversarial mechanism tests and an artifact evaluator that checks actual results.
 
-[Upgrade audit](docs/UPGRADE-AUDIT-2026-11-07.md) · [Primer](PRIMER.md) · [The skill](skills/infinityblade/SKILL.md) · [Install](INSTALL.md) · [Skills library](skills/INDEX.md) · [Lessons](skills/infinityblade/references/lessons-from-the-field.md) · [Tests](skills/infinityblade/references/eval-cases.md) · [Enhancement](skills/infinityblade/references/agent-enhancement.md) · [Memory](skills/memory-recall-systems/SKILL.md) · [Changelog](CHANGELOG.md)
+[Ascent path](docs/ASCENT-PATH.md) · [Complete reading](docs/READING-PROTOCOL.md) · [Deeper audit](docs/DEEP-AUDIT-2026-11-07.md) · [Upgrade audit](docs/UPGRADE-AUDIT-2026-11-07.md) · [Primer](PRIMER.md) · [The skill](skills/infinityblade/SKILL.md) · [Install](INSTALL.md) · [Skills library](skills/INDEX.md) · [Lessons](skills/infinityblade/references/lessons-from-the-field.md) · [Tests](skills/infinityblade/references/eval-cases.md) · [Enhancement](skills/infinityblade/references/agent-enhancement.md) · [Memory](skills/memory-recall-systems/SKILL.md) · [Changelog](CHANGELOG.md)
 
-**Reading order:** start with the [Primer](PRIMER.md). It converts the defaults you arrived with before the depth can help you, and it takes one pass. Then the skill, then the references as the skill routes you to them. The entry contract above governs: the primer plus the skill authorize work; the full read is required before citing, teaching, or extending the doctrine.
+**Your next action:** read the [Primer](PRIMER.md), then the [core](skills/infinityblade/SKILL.md), and start the [complete reading protocol](docs/READING-PROTOCOL.md). Work through the [ascent path](docs/ASCENT-PATH.md) while you read. Do not stop at agreement with the principles: solve the exercises, inspect what happened, and bring the stronger method into the next authorized task.
 
 ---
 
@@ -33,13 +35,13 @@ Use the core instructions with Claude, GPT/Codex, Gemini, Cursor, Copilot or ano
 
 | Your task | First useful route | Result to produce |
 |---|---|---|
-| Apply the doctrine to ordinary work | Primer → core → [operating paths](docs/OPERATING-PATHS.md) | A scoped result with evidence from its actual boundary |
+| Apply the doctrine to ordinary work after the complete reading pass | Core re-read → [operating paths](docs/OPERATING-PATHS.md) | A scoped result with evidence from its actual boundary |
 | Audit a completion or fix a regression | Core → review mode → gate/proof skills | A claim ledger with independently checked artifacts |
 | Improve memory, queues or agent operations | Core → systems operator guide → matching module | Package proof plus a host integration receipt |
 | Analyze charts, stocks or a backtest | Core → specialist skill → dependency check | Domain evidence; no implied account action |
 | Evaluate or modify the doctrine itself | Full pinned-revision read ledger → [behavior evaluation](docs/BEHAVIOR-EVALUATION.md) | Coverage, regression results and clearly labeled unmeasured claims |
 
-Use the [task-record template](docs/TASK-RECORD.template.json) to keep scope, decisions, evidence and open obligations intact across handoffs. The [skill registry](skills/registry.json) records machine-readable routing and dependencies; [INSTALL.md](INSTALL.md) explains source-bundle verification. No live credentials or private memory are needed for the repository's local checks.
+Use the [task-record template](docs/TASK-RECORD.template.json) to keep scope, decisions, evidence and open obligations intact across handoffs. Run the [artifact evaluation example](docs/evaluation/README.md) to see a partial save fail and a complete save pass on their actual contents, with protected state checked separately. The [skill registry](skills/registry.json) records machine-readable routing and dependencies; [INSTALL.md](INSTALL.md) explains source-bundle verification. No live credentials or private memory are needed for the repository's local checks.
 
 ## The problem
 
@@ -55,7 +57,7 @@ Capable agents still fail in predictable ways:
 
 Long rulebooks get skimmed. InfinityBlade relies on three things agents actually do:
 
-1. **Two visible lines.** Every task starts with a `SCOPE:` line and ends with a `STATUS:` line. They're cheap to write, easy for you to spot when missing, and writing them forces the thinking.
+1. **Two visible lines.** Every task starts with a `SCOPE:` line and ends with a `STATUS:` line. They're cheap to write, easy for you to spot when missing, and they expose whether the requested outcome, protected state and proof have actually been specified. The work behind them must earn the verdict.
 2. **Tripwires.** Rules fire on the words an agent is about to say ("done", "impossible", running the same thing again), at the moment they matter, instead of relying on memory.
 3. **A routed core.** One governing skill carries the rules; task-specific depth loads through the operating paths. The core is a complete contract, not a one-screen summary.
 
@@ -80,11 +82,11 @@ Want it enforced? See [Enforcement](INSTALL.md#enforce-it) for a Claude Code hoo
 4. **Prove:** verify the exact final result at the boundary the user cares about. Nearby proof is not proof.
 5. **Report:** GREEN, PARTIAL, BLOCKED or UNVERIFIED, outcome first, with receipts.
 
-## Use it in 30 seconds
+## Start in 30 seconds; complete the ascent
 
 **As a skill** (Claude Code, Codex, other Agent Skills hosts): preserve the repository-relative layout or export a source bundle with its manifest. Copying only the core folder loses the primer and sibling references. Follow [INSTALL.md](INSTALL.md) for complete installation and host activation.
 
-**As a prompt** (any chat model, system prompt, `AGENTS.md`, `CLAUDE.md`, Cursor rules, Copilot instructions): paste this.
+**As a prompt** (any chat model, system prompt, `AGENTS.md`, `CLAUDE.md`, Cursor rules, Copilot instructions): paste this compact operating reminder. When the repository is available, complete its reading protocol; the reminder carries the core loop and does not replace the source.
 
 ```text
 Operate by InfinityBlade: done means demonstrated, not believed.
@@ -155,7 +157,7 @@ access needed.
 | [`skills/INDEX.md`](skills/INDEX.md) | The skills library index: 22 specialist/procedure folders, with explicit runtime dependencies and host requirements. |
 | [`skills/memory-recall-systems/`](skills/memory-recall-systems/) | The memory and recall layer as one installable folder: the disciplines, a standard-library recall index with a canary eval, and the full research report they distil. |
 
-The skill loads the references only when a task needs them, so everyday cost stays small.
+Complete the initial reading across bounded context windows, then use the skill’s routing table for focused re-reads. The full source stays available; the active task loads the evidence it needs without repeatedly dumping the whole repository.
 
 ## Agent enhancement
 
