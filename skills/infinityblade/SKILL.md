@@ -186,4 +186,5 @@ Lead with the outcome. Give receipts: what was checked, where, expected vs obser
 | Unsure how a rule applies | [examples.md](references/examples.md) |
 | Testing the skill after a change | [eval-cases.md](references/eval-cases.md) |
 | Building or tuning memory, initiative, skills, outbound gating, durable effects, routing, near-miss learning, content-bound approvals or self-improvement systems | [agent-enhancement.md](references/agent-enhancement.md) |
+| Designing, repairing, or auditing an agent's memory, recall, context discipline, forgetting, or long-job resource bounds | [memory-recall-systems](../memory-recall-systems/SKILL.md), with the full evidence in its references/ |
 | Checking whether an idea was already deferred, cautioned against, or rejected | [agent-enhancement-registers.md](references/agent-enhancement-registers.md) |
