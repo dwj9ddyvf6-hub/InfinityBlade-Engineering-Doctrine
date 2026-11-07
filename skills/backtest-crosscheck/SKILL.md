@@ -1,7 +1,7 @@
 ---
 name: backtest-crosscheck
 description: Cross-check a simple daily-bar mechanical backtest headline against a second, independent oracle engine before the result is reported, graded, adopted, or used to kill a setup; skip for intraday, options, or path-dependent strategies, which are out of the oracle scope.
-version: 1.0.0
+version: 1.0.1
 ---
 
 # Backtest Cross-Check With the Standing Oracle
@@ -17,16 +17,20 @@ Use when a backtest of a simple daily-bar mechanical sleeve or strategy produces
 ## The oracle
 
 - Engine: quantjourney-bt (Apache-2.0), pinned at commit 16fe1ac6c8345bae922207ee4d2f4eb123a89166, vendored at <oracle-install>/quantjourney-bt/ (set ORACLE_DIR to your install location) with its README protocol and the worked EMA 20/50 corroboration fixture under examples/ema-2050/.
-- Standing by a standing ruling of the adopting project, dated 2026-10-31, after its adoption study reproduced a reference backtest exactly on trade count, wins, and win rate with the return gap fully attributed.
+- Historical origin: a project adoption ruling dated 2026-10-31, whose study reportedly reproduced a reference backtest exactly on trade count, wins, and win rate with the return gap fully attributed. This is provenance, not a ruling made by a new adopter. A new host must verify the pinned external engine and fixture before adopting it locally.
 - Offline only: ExecutionSimulator, FillEngine, PortfolioLedger on local bars. Never the QuantJourney gateway, SDK connector path, or any hosted service.
 - Scope limit: deterministic daily-bar rules with next-open or close fills. Intraday, options, and path-dependent strategies are out of scope; say so instead of forcing a fit.
+
+## Adoption boundary
+
+The engine and worked fixture are external prerequisites, not files shipped in this folder. Verify the pin, license, fixture inputs and expected outputs from their actual source; report the cross-check BLOCKED or UNVERIFIED when unavailable. The numerical kill criteria below are the recorded method's policy, not statistical guarantees. A changed policy needs a dated local ruling and a fresh independent fixture; no cross-check authorizes an order.
 
 ## Protocol
 
 - State the falsifiable claim and kill criteria before running anything: sign flip of the net result, trade count differing by more than 25 percent without a named mechanical cause, or return differing by more than a third without a fully itemised cause.
 - Record our own headline numbers and their source first, then translate the rules into the oracle's idiom with a written translation log. Any rule that cannot map one to one is named in the log, never silently adjusted.
 - Same universe, same window, same underlying bars. Match cost assumptions as closely as the oracle's model allows and itemise every parameter that could not be matched.
-- Report the comparison table and decompose the return gap into named causes (fill model, cost model, data, translation, sizing mechanics). Sizing mechanics alone may account for roughly 2 percent relative; anything beyond needs its own named cause.
+- Report the comparison table and decompose the return gap into named causes (fill model, cost model, data, translation, sizing mechanics). The historical fixture attributed roughly 2 percent relative to sizing mechanics; that is an incident result, not a universal allowance. Every observed gap needs its own named cause.
 - Verdicts: CORROBORATED, CORROBORATED WITH NAMED GAPS, NOT CORROBORATED. A NOT CORROBORATED verdict blocks reporting our number as settled until the divergence is root-caused.
 - Save scripts, outputs, and the comparison in the study's own research record. The tools directory keeps only the pinned engine and the fixture.
 

@@ -37,34 +37,36 @@ Read the eighteen disciplines in order. Each opens with what it buys you in two 
 
 ## The eighteen disciplines
 
-**Ship status (added 2026-11-02).** Each discipline below carries a ship status line directly under its heading, in one of two kinds. *Mechanism-shipped* means a skill folder in this package ships the mechanism, and the label names it. *Specification-only* means this reference states the mechanism precisely and the host must implement it; reading the specification installs nothing, and a discipline that needs code in the host (a queue, a gate inside a send path, a ledger, a cap enforced at validation time) is UNVERIFIED as a mechanism in any host that has not built it. Summary (corrected 3.1.1): disciplines 3 and 8 are mechanism-shipped as installable skills, discipline 1 ships a starter mechanism (tools/priced_initiative_score.py); the other fifteen are specification-only.
+**Ship status (governing update, 3.2.0).** Distinguish three things: a written procedure, a runnable local implementation, and an integrated host capability. This repository ships procedures and local code, and specifies host integration contracts; no local file establishes that an adopter’s host is wired or live. The previous 3.1.1 summary called fifteen disciplines specification-only and called procedure-only folders “mechanism-shipped”; that inventory is superseded by the exact matrix below. The full specifications, historical source limits and stronger host contracts remain intact. A local implementation covers only the named tested contract, not every design requirement described in its discipline.
 
-| Discipline | Ship status |
-|---|---|
-| 1. Price every proactive lane | Starter mechanism shipped (3.1.0): tools/priced_initiative_score.py; host lanes remain specification-only |
-| 2. Keep instincts: a confidence-scored procedural memory | Specification-only |
-| 3. Audit the gates for false greens | Mechanism-shipped: skills/gate-test-integrity/, skills/hermetic-test-isolation/ |
-| 4. Run memory as a profile plus a graph | Specification-only |
-| 5. Make recall honest and maintenance governed | Specification-only |
-| 6. Test skills the way blockers test code | Specification-only |
-| 7. Gate what enters the library, and grade reliability | Specification-only |
-| 8. Mechanise the completion claim | Mechanism-shipped: skills/proof-before-green/, skills/claim-verification-ledger/; starter checker tools/status_evidence_check.py and the evidence-pointer stop hook (3.1.0) |
-| 9. Treat compaction and delegation as authority boundaries | Specification-only |
-| 10. Run a bounded hidden-rubric pass on ungated prose | Specification-only |
-| 11. Record the why, not just the what | Specification-only |
-| 12. Keep every fact timeless, dated, or a pointer | Specification-only |
-| 13. Gate outbound messages by purpose, receipt, and hard cap | Specification-only |
-| 14. Give every event, decision, and delivery a deterministic ID | Specification-only |
-| 15. Queue side effects durably, and never confuse waiting with failure | Specification-only |
-| 16. Route follow-ups to their owner, and reserve slots by discipline | Specification-only |
-| 17. Keep a near-miss ledger | Specification-only |
-| 18. Approvals are content-bound, expiring, and generation-scoped | Specification-only |
+| Discipline | Shipped artifact | Boundary still requiring proof |
+|---|---|---|
+| 1. Price proactive lanes | `tools/priced_initiative_score.py`; systems `bin/proactive.py` | Calibration, authorized lane configuration and blocking gate in the actual send path |
+| 2. Keep instincts | Systems `bin/instincts.py` | Trusted capture, promotion, scheduled maintenance and host injection |
+| 3. Audit false greens | Gate-test-integrity and hermetic-test-isolation procedures; systems `skill_lab.f7_check` helper | Independent oracle, real mutant, isolated execution and production gate integration |
+| 4. Profile plus graph | Systems `bin/memory_core.py` | Canonical-store adaptation, extraction quality and privacy boundaries |
+| 5. Honest recall | Systems memory core; memory-recall `tools/memory_search.py` | Host corpus, canary quality, maintenance and all-copy erasure |
+| 6. Test skills | Systems `bin/skill_lab.py` | Actual model trials, balanced fixtures and held-out behavioral results |
+| 7. Library gates/reliability | Systems `bin/skill_lab.py`, `bin/reliability.py` | Full risk review, host enforcement and independent outcome grading |
+| 8. Completion claims | Proof/claim procedures; STATUS checker and stop hook | Evidence relevance and truth; wording checks cannot prove either |
+| 9. Authority boundaries | Systems `bin/authority.py` | Canonical persistent mandate and host enforcement across resumes |
+| 10. Prose review | Written bounded review practice | Human/model judgment and measured usefulness; no generic scorer is claimed |
+| 11. Rationale records | Systems `bin/why.py` | Accuracy, ownership and actual retrieval by the host |
+| 12. Fact freshness | Systems `bin/freshness.py` | Live source observation and freshness policy per fact kind |
+| 13. Outbound messages | Systems `bin/operations.py` | Authorized transport and authoritative delivery receipt |
+| 14. Deterministic IDs | Systems operations | Correct identity fields and deduplication at every real boundary |
+| 15. Durable effects | Systems operations | Restart/competing-worker tests and receiver idempotency or reconciliation |
+| 16. Follow-ups/slots | Systems operations | Actual scheduler integration and sender authority |
+| 17. Near-miss ledger | Systems operations | Bounded host storage; diagnostics never become admission authority |
+| 18. Content-bound approvals | Systems operations | Host authority policy, exact effect binding and act-time validation |
+
+“Systems” above means [`agent-enhancement-systems`](../../agent-enhancement-systems/SKILL.md). Its [operator guide](../../agent-enhancement-systems/references/operator-guide.md) names entry points and host proof. Source presence is inspectable here; runtime adoption is not presumed. [Operating paths](../../../docs/OPERATING-PATHS.md) supplies the evidence ladder.
 
 ### 1. Price every proactive lane
 
 *What this buys you:* Unasked work that earns its interruption, and silence everywhere else. A lane that cannot pay its price never speaks.
 
-**Ship status (2026-11-02):** specification-only. No folder in this package ships this mechanism; a host implements it from this text.
+**Ship status (3.2.0):** bin/proactive.py and the top-level priced-initiative scorer. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 **Rule:** nothing interrupts for free, and the price is proven before the
 lane speaks. Every scheduled job, hook, or monitor that can surface unasked
@@ -74,8 +76,11 @@ cannot state its cost defaults to silent logging.
 
 - **Score the policy before deploying it.** Log timelines and label
   windows: MUST (acting averts a failure, benefit 4), MAY (acting is
-  welcome, benefit 2), MUST-NOT (acting is a violation, cost 4); any other
-  fire costs 1. Benefit is credited once per window, MUST before MAY; cost
+  welcome, benefit 2), MUST-NOT (acting is a violation, additional cost 4).
+  Every fire costs 1, including a violating fire, so MUST-NOT costs 5 in total
+  under the shipped scorer. This clarifies the formerly ambiguous “cost 4 /
+  any other fire costs 1” wording against the package implementation. Benefit
+  is credited once per window, MUST before MAY; cost
   is charged per fire, independently, so a violation is charged even on a
   fire that also earned a benefit. Report fires, MUST recall, violation
   rate, and benefit minus lambda times cost at lambda in
@@ -83,8 +88,8 @@ cannot state its cost defaults to silent logging.
   real interruption cost; if silence wins at that lambda, silence is the
   policy.
 - **Gate at fire time with a separate judge.** A cheap pass over
-  (observations, proposed action-or-null) returns a first-person thought
-  and judgement. A rejection feeds the thought back for a bounded number
+  (observations, proposed action-or-null) returns a concise decision rationale
+  and judgement. A rejection feeds the stated reason back for a bounded number
   of *different* retries; exhaustion is silence, and a proposal of nothing
   is judged by the same gate. The gate is on by default: in the source
   system it is opt-in, its feedback policy is one sentence in a prompt,
@@ -164,7 +169,7 @@ and the gate needs a local holdout before any lane relies on it.*
 
 *What this buys you:* Corrections and repeated workflows compound instead of evaporating at session end. The agent gets better at your work, measurably.
 
-**Ship status (2026-11-02):** specification-only. No folder in this package ships this mechanism; a host implements it from this text.
+**Ship status (3.2.0):** bin/instincts.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 **Rule:** corrections, error resolutions, and repeated workflows are raw
 material, not noise. Distil them into atomic trigger-to-action units
@@ -231,7 +236,7 @@ must not drift toward the automatic form.*
 
 *What this buys you:* Gates that cannot certify what they never judged. False green becomes a defect class with a name, a test, and a graveyard.
 
-**Ship status (2026-11-02):** mechanism-shipped, as the installable skills `skills/gate-test-integrity/` and `skills/hermetic-test-isolation/`, which carry the gate-audit and test-isolation procedures. Host-side mutation harnesses and fuzz runners specified under this discipline remain specification-only.
+**Ship status (3.2.0):** written gate-audit/isolation procedures and the `skill_lab.f7_check` helper. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 **Rule:** a passing test is a claim, and claims need independent expected
 values. Periodically audit gate-wired tests with a six-judgement protocol:
@@ -315,7 +320,7 @@ unacceptable.*
 
 *What this buys you:* Memory that distinguishes what is always true of a person from what was true once, and can prove which is which.
 
-**Ship status (2026-11-02):** specification-only. No folder in this package ships this mechanism; a host implements it from this text.
+**Ship status (3.2.0):** bin/memory_core.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 **Rule:** split memory into a small static profile and a dynamic recent
 layer, type every relationship between facts, and govern how facts enter,
@@ -424,7 +429,7 @@ reduces to a single published Recall@15 figure.*
 
 *What this buys you:* Recall that reports its own tier, supported, closest only, or not present, so memory never launders a guess into a fact.
 
-**Ship status (2026-11-02):** specification-only. No folder in this package ships this mechanism; a host implements it from this text.
+**Ship status (3.2.0):** bin/memory_core.py plus the memory-recall search/canary tool. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 **Rule:** a memory lookup reports what it actually found, and a deletion
 is not done until every derived copy is clean.
@@ -484,8 +489,8 @@ is not done until every derived copy is clean.
   consolidation-on-save at 0.85 similarity) and justify added
   complexity, including discipline 4's fuller fusion, against
   measured need rather than adopting it as the baseline.
-- Edit memory by principles, not by accreting narrow rules: provenance
-  lives in the commit, not the file; a contrastive example teaches more
+- Edit memory by principles, not by accreting narrow rules: detailed edit provenance
+  lives in commits, while portable fact records retain their source locator and validity dates; a contrastive example teaches more
   than an added rule; store analysis, not logs; after every add, trace
   the index to confirm the new entry is reachable; and place each item by
   test (core, deferred, skill, or do not store). Reference sizing from
@@ -520,7 +525,7 @@ recall accuracy, so a recall-only eval overstates profile quality.*
 
 *What this buys you:* Skills pressure-tested against the rationalizations that will actually be used to skip them, before they ship.
 
-**Ship status (2026-11-02):** specification-only. No folder in this package ships this mechanism; a host implements it from this text.
+**Ship status (3.2.0):** bin/skill_lab.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 **Rule:** a playbook that has never been pressure-tested is a draft, and
 its guidance must be written in the form its failures take.
@@ -646,7 +651,7 @@ qualification is the narrowed description rule above.*
 
 *What this buys you:* A library where nothing enters ungraded and nothing unreliable keeps a trusted name.
 
-**Ship status (2026-11-02):** specification-only. No folder in this package ships this mechanism; a host implements it from this text.
+**Ship status (3.2.0):** bin/skill_lab.py and bin/reliability.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 **Rule:** third-party skills, plugins, and connectors are untrusted input
 until scanned, and a revised playbook ships only after it passes its eval
@@ -801,17 +806,17 @@ measured-versus-replayed provenance.*
 
 *What this buys you:* Completion claims checked by mechanism, not by the claimant's confidence. The cheapest trust machine in the set.
 
-**Ship status (2026-11-02):** mechanism-shipped, as the installable skill `skills/proof-before-green/` (with `skills/claim-verification-ledger/`), which ships the agent-side proof procedure. The blocking completion gate and the stop hook also specified under this discipline are specification-only; no host gate ships in this package.
+**Ship status (3.2.0):** written proof/claim procedures, tools/status_evidence_check.py and hooks/require-status.sh. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 **Rule:** convert proof-before-GREEN from a habit into a mechanism that
 fires when the habit slips.
 
-- A completion claim with no evidence produced *in this message* (test
+- A completion claim without relevant final-state evidence linked *from this message* (test
   result, exit code, command output, read-back) is blocked once and
   downgraded to UNVERIFIED, never looped. Satisfaction words are claims
   too. An agent's report that something succeeded is not evidence; the
   diff, the output, and the read-back are.
-- Scope bounds the deliverable, not the verification. The full check runs
+- Scope bounds the deliverable, not permission to ignore relevant regressions. The full check required by the project runs
   even when the task named one file, and any failure it shows, including
   one this change did not cause, is named in the report. A red result
   scrolled past and unmentioned makes the report false by omission.
@@ -896,8 +901,10 @@ fires when the habit slips.
   interrupt the loop: an irreversible or destructive step, a
   security-sensitive step, a side effect outside the worktree that norms
   say to ask about first, or a plan so broken every path is a guess.
-- Three failed fixes is a stop, not a streak: question the architecture
-  instead of attempting a fourth fix on the same hypothesis.
+- Three failed fixes on the same hypothesis require a stop and an architecture review,
+  not a fourth equivalent attempt. The five-round task cap above may include
+  a genuinely revised hypothesis after that review; it never licenses repeated
+  attempts that produce no new evidence.
 - At verdict points, vote before concluding: at the root-cause and
   completion moments, take 3 to 5 deliberately different starts,
   treat disagreement as strong evidence and agreement as weak, and
@@ -952,7 +959,7 @@ capture does not.*
 
 *What this buys you:* Delegation and compaction that carry context without smuggling authority across the boundary.
 
-**Ship status (2026-11-02):** specification-only. No folder in this package ships this mechanism; a host implements it from this text.
+**Ship status (3.2.0):** bin/authority.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 **Rule:** summaries carry context, never authority.
 
@@ -1018,7 +1025,7 @@ bounds blockers in point 5, rather than trust in the pattern.*
 
 *What this buys you:* A bounded quality pass over the prose no gate covers, so ungated does not mean unexamined.
 
-**Ship status (2026-11-02):** specification-only. No folder in this package ships this mechanism; a host implements it from this text.
+**Ship status (3.2.0):** the bounded prose-review procedure; no automatic quality scorer. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 **Rule:** deliverables no gate covers (reads, syntheses, recommendations,
 reports) get one internal quality pass before they ship.
@@ -1038,8 +1045,8 @@ reports) get one internal quality pass before they ship.
   work, with citations, instead of only adding. Treat the source's own
   results as maintenance discipline, not efficacy proof; it prints no
   baseline.
-- Delete emotional-pressure lines (tips, penalties, career threats) from
-  prompts wherever found. The evidence says they are dead weight.
+- Remove unsupported emotional-pressure devices (tips, penalties, career threats) from
+  operational prompts when they add no verifiable requirement. Preserve the underlying obligations and incident evidence; measure wording effects locally rather than claiming a universal psychological result.
 
 *Why:* gates check artifacts and code; prose judgement had no check at
 all. This is the cheapest quality mechanism in the set: playbook wording,
@@ -1058,7 +1065,7 @@ untested by the pass, not upgraded to a confirmation.*
 
 *What this buys you:* Decisions that arrive with the alternatives they beat, so the next agent does not re-litigate settled ground at full price.
 
-**Ship status (2026-11-02):** specification-only. No folder in this package ships this mechanism; a host implements it from this text.
+**Ship status (3.2.0):** bin/why.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 **Rule:** every decision that closes a path is stored with the path it
 closed. A rationale entry records the decision, the rejected alternatives
@@ -1121,7 +1128,7 @@ context limits is adjacent practice, a weak confirmation only.*
 
 *What this buys you:* Facts that carry their own expiry, so stale knowledge announces itself instead of posing as current.
 
-**Ship status (2026-11-02):** specification-only. No folder in this package ships this mechanism; a host implements it from this text.
+**Ship status (3.2.0):** bin/freshness.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 **Rule:** every stored fact must be timeless, dated, or a pointer.
 Nothing may claim to be current without a stamp.
@@ -1170,7 +1177,7 @@ lightly evidenced.*
 
 *What this buys you:* Outbound messages that exist for a stated purpose, leave a permanent receipt, and stop at a hard cap code enforces.
 
-**Ship status (2026-11-02):** specification-only. No folder in this package ships this mechanism; a host implements it from this text.
+**Ship status (3.2.0):** bin/operations.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 **Rule:** a message an agent sends unasked or on a principal's behalf
 leaves only through a send path that checks its purpose, records a
@@ -1202,7 +1209,7 @@ routing-note cap at `src/app/tools/main.ts:18`).
 
 *What this buys you:* Events and deliveries that deduplicate by construction, not by vigilance.
 
-**Ship status (2026-11-02):** specification-only. No folder in this package ships this mechanism; a host implements it from this text.
+**Ship status (3.2.0):** bin/operations.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 **Rule:** identity is derived from content, not assigned by arrival
 order, and deduplication is layered so the same thing cannot enter
@@ -1230,7 +1237,7 @@ deepseek-ai/dsh-superagent-prototype at commit 6337fc8, `src/core/ids.ts:4` (det
 
 *What this buys you:* Side effects that survive a crash in a named waiting state, never silently lost and never double-fired.
 
-**Ship status (2026-11-02):** specification-only. No folder in this package ships this mechanism; a host implements it from this text.
+**Ship status (3.2.0):** bin/operations.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 **Rule:** an intended side effect is a durable queue row before it is an
 action, retried under a stated policy, and deleted only by the attempt
@@ -1282,7 +1289,7 @@ Later distinct from failure).
 
 *What this buys you:* Follow-ups that reach their owner, with a human slot always reserved, instead of pooling where they age unseen.
 
-**Ship status (2026-11-02):** specification-only. No folder in this package ships this mechanism; a host implements it from this text.
+**Ship status (3.2.0):** bin/operations.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 **Rule:** work that already has a live owner is routed straight to that
 owner without re-triage, and concurrency is a reserved-slot discipline
@@ -1332,7 +1339,7 @@ and stays an open row until the record is recovered.
 
 *What this buys you:* Gate rejections that teach, in a bounded ledger that can never be cited as proof a class is impossible.
 
-**Ship status (2026-11-02):** specification-only. No folder in this package ships this mechanism; a host implements it from this text.
+**Ship status (3.2.0):** bin/operations.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 Proposals that matched a gate but were not admitted are recorded in a
 bounded, diagnostics-only ledger: at most 4,096 laws, 512 reported, 4
@@ -1348,13 +1355,13 @@ the false-green audit (discipline 3) and the memory junk audit
 
 *What this buys you:* Approvals bound to the exact bytes and target approved, so consent cannot drift onto content nobody saw.
 
-**Ship status (2026-11-02):** specification-only. No folder in this package ships this mechanism; a host implements it from this text.
+**Ship status (3.2.0):** bin/operations.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 An approval or authorisation binds a stated action once to its resolved
 target identity fields and to the hash of the content it was granted
 over; any post-trust edit invalidates the record; approvals carry an
 expiry (30 days by default) and can be revoked; a generation counter
-voids bindings made before a compaction. Evaluation before any outward
+invalidates stale executable bindings when the host’s declared authority policy requires it. Compaction does not itself revoke a user’s persistent authorization: reconstruct and rebind the same mandate from its canonical record without asking again unless scope, content, target or authority actually changed. Evaluation before any outward
 or irreversible action returns one of five verdicts:
 authorized_unique / requires_selection / authorization_invalid /
 drifted / out_of_scope. No implication crosses actions: publish implies
@@ -1431,9 +1438,8 @@ qualixar/bounded-loops `trust_store.py`.
   reported UNMEASURED with the source named, never as 0, empty, or OK.
   An extraction or summarisation step that fails returns an error state,
   never an empty success.
-- Disciplines 6 and 7 (the skill gate suite): a SKILL.md at or over
-  20,000 bytes loses its tail silently after compaction, so size is a
-  gate, and oversized skills split body plus references. Trigger evals
+- Disciplines 6 and 7 (the skill gate suite): one inspected host truncated a SKILL.md at or over
+  20,000 bytes after compaction. This is a host-specific compatibility limit, not a universal Agent Skills specification. Declare and test the adopting host’s budget; when it binds, split body plus references while retaining all content and checking the exported dependency closure. Trigger evals
   use positive plus negative queries, 3 runs per query, a 0.5 threshold,
   a stratified train/test split, winner selected on the validation score, the
   improver fed only failures plus attempt history with a do-not-repeat
@@ -1564,3 +1570,7 @@ The backlog of deferred ideas, the round-4 cautions, the round-6 coverage note, 
 ## Starter mechanisms shipped in 3.1.0
 
 Two flagship specifications now ship as runnable starters. Discipline 1: `tools/priced_initiative_score.py` scores a logged lane timeline (MUST, MAY, MUST-NOT windows) and reports benefit minus lambda times cost across the lambda set, so a lane's price is computed, not asserted. Discipline 8: `tools/status_evidence_check.py` and the strengthened stop hook refuse a bare STATUS label with no evidence pointer. Both are starters, named as such: they prove the mechanism shape, and a host lane is still UNVERIFIED until the mechanism runs inside its own serving path.
+
+## Compatibility and authority qualifications (3.2.0)
+
+Historical constants in this reference are source-derived starting points, not universal performance thresholds. Adopt them only with a named local owner, workload and validation. Host instructions and persistent user authorization govern; neither a repository rule nor a summary can create new authority. A mandated second approval is not invented merely because context was compacted. A deferred or rejected design retains its recorded reason and revisit trigger; local policies are not declarations that another host can never use that architecture. Privacy erasure takes precedence over ordinary history retention, with verified removal of controlled derived copies and a non-sensitive receipt.

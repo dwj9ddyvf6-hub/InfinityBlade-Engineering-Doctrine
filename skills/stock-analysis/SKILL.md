@@ -1,7 +1,7 @@
 ---
 name: stock-analysis
 description: Full stock analysis and on-demand chart reading in one protocol, running Pass A geometry, the perceptual Pass B read, edge labeled strategy lenses, market context and a rigorous synthesis whenever the user names a ticker to read or analyze.
-version: 1.0.0
+version: 1.0.1
 ---
 
 # Stock and Chart Analysis
@@ -20,6 +20,10 @@ The replacement: Run the frozen lenses in order, move a score only on a new fact
 
 - Keep both modes paper only and state that a read is not an order and never implies one.
 
+## Applicability and external prerequisites
+
+Install `chart-read` beside this folder, provide its declared `CHART_READ_TA_REPO` engine, render script, data credentials and synthesis document, and verify those prerequisites before promising a complete read. Missing data yields the protocol's NO_VIEW/PARTIAL state, not invented geometry. The fragments preserve full specialist methods; their entry/stop/target requirements apply only to an evidence-supported actionable setup. ABSTAIN or a branch with no trigger remains valid and never requires fabricating a trade plan. Numerical trading thresholds are this method's declared policy, not universal market laws. A research request does not authorize an order.
+
 ## Run Pass A geometry
 
 - Run `python3 bin/pass_a.py --symbol SYM` from the chart-read skill folder for a fresh deterministic compute and never work from memory.
@@ -34,7 +38,7 @@ The replacement: Run the frozen lenses in order, move a score only on a new fact
 
 - Use kind-aware level tests on recent swings, because a bar below a prior high can never be a rejected-low-test and each test kind carries its own meaning.
 
-- Use level clusters built as 2.5 ATR-scaled pivot zones, and read touches against independent episodes rather than counting repeated touches on one episode as separate evidence.
+- Use level clusters built as ATR-scaled pivot zones with the shipped `tol_atr=0.25` default (the chart protocol’s “2.5” labels its section/version, not a 2.5 ATR coefficient), and read touches against independent episodes rather than counting repeated touches on one episode as separate evidence.
 
 - Re run `python3 bin/test_pass_a.py` after any edit to pass_a.py and require all 66 checks green before trusting the output, because the parity test carries 66 checks and all must pass (corrected in 3.1.1; earlier text said 18).
 
@@ -68,7 +72,7 @@ The replacement: Run the frozen lenses in order, move a score only on a new fact
 
 - Close with a pre-mortem on how the read is wrong in two weeks and a self critique that states the strongest case against the delivered lean.
 
-- Tag every substantive claim with one evidence class from computed, measured, lit-derived, derived-inference, validated-model or judgment, and drop any claim that has no computed or measured anchor.
+- Tag every substantive claim with one evidence class from computed, measured, lit-derived, derived-inference, validated-model or judgment. Market-specific observations need a computed or measured anchor. Literature claims need their source and applicability limits; an attribution is not a measured effect on this instrument. Omit unsupported claims.
 
 - Keep language neutral and measured, describing what price did in verifiable words, and never use claims about smart money, genuine accumulation, distribution or trapped participants that OHLCV cannot prove.
 
@@ -136,7 +140,7 @@ The replacement: Run the frozen lenses in order, move a score only on a new fact
 
 - Use `muse.connector_search` to find other connectors and `muse.skill_search` to find related skills.
 
-- If nothing here fits, look on the web for a maintained API or MCP server and set it up with [Custom Connectors and MCPs](/opt/muse/skills/custom-connector-setup/SKILL.md), or build a custom connector.
+- If nothing here fits, look on the web for a maintained API or MCP server and set it up with the host’s connector-setup procedure (historical locator: `/opt/muse/skills/custom-connector-setup/SKILL.md`, an external host dependency; see [portable host setup](../../docs/OPERATING-PATHS.md#establish-a-portable-host-contract)), or build a custom connector.
 
 ## Alternatives for better results
 
@@ -154,3 +158,7 @@ Fragment files live in the fragments/ directory beside this SKILL.md; resolve ea
 ## Dependencies, named
 
 This skill runs Pass A from the chart-read skill folder. Install chart-read beside it; without that folder, Pass A does not run and any read produced is UNVERIFIED.
+
+## Host portability
+
+`muse.*` names above describe the originating host. Discover equivalent advertised search, read, image-view and execution capabilities on the current host; do not call tools that are absent. The historical connector-setup path is not bundled. Use [the portable host contract](../../docs/OPERATING-PATHS.md#establish-a-portable-host-contract), retain the same evidence and authorization boundaries, and name a missing capability rather than pretending the recipe ran. Installing a connector or service still requires the task’s authority.

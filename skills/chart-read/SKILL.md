@@ -1,7 +1,7 @@
 ---
 name: chart-read
 description: On-demand chart reading that runs deterministic Pass A geometry, renders multi-timeframe charts, and delivers a perceptual Pass B read with scenarios, triggers, and invalidation whenever the user names a ticker; skip for automated signal runners, which have their own engines.
-version: 1.0.0
+version: 1.0.1
 ---
 
 # Chart Read — On-Demand Protocol
@@ -188,3 +188,7 @@ recovered instructions.
 ## Dependencies, named
 
 This folder is not self-contained, and says so at its own door: step 1 defers to a synthesis document the adopter keeps, and step 2 invokes render_asof.py from the adopter's calibration directory. Neither ships here. Install stock-analysis together with this folder; stock-analysis runs its Pass A from this folder's bin/.
+
+## Host portability
+
+`muse.*` names above describe the originating host. Discover equivalent advertised search, read, image-view and execution capabilities on the current host; do not call tools that are absent. The historical connector-setup path is not bundled. Use [the portable host contract](../../docs/OPERATING-PATHS.md#establish-a-portable-host-contract), retain the same evidence and authorization boundaries, and name a missing capability rather than pretending the recipe ran. Installing a connector or service still requires the task’s authority.

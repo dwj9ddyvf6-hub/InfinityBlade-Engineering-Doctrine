@@ -13,6 +13,9 @@ Standard library only.
 import json
 import os
 import re
+import math
+import time
+from _storage import locked
 
 BENEFIT = {"MUST": 4, "MAY": 2}
 DEFAULT_LAMBDAS = (0.25, 0.5, 1, 2, 4)
@@ -25,12 +28,16 @@ NEXT_STEP_HINTS = ("next", "shall i", "want me to", "ready", "you can", "tap",
 
 def score_timeline(windows, lambdas=DEFAULT_LAMBDAS):
     """Score labelled windows. Benefit is once per window; cost is per fire."""
+    if not windows:
+        raise ValueError("timeline must contain observed windows")
+    if any(isinstance(lam, bool) or not isinstance(lam, (int, float)) or not math.isfinite(lam) or lam < 0 for lam in lambdas):
+        raise ValueError("interruption prices must be finite and nonnegative")
     benefit = 0
     cost = 0
     for window in windows:
         label = window.get("label")
         fires = window.get("fires", 0)
-        if not isinstance(fires, int) or fires < 0:
+        if isinstance(fires, bool) or not isinstance(fires, int) or fires < 0:
             raise ValueError("fires must be a non-negative integer")
         if label not in ("MUST", "MAY", "MUST-NOT", "OTHER"):
             raise ValueError(f"unknown window label {label!r}")
@@ -48,7 +55,7 @@ def score_timeline(windows, lambdas=DEFAULT_LAMBDAS):
 def tau(c_fa, c_fn, p_need):
     """PRISM threshold: C_FA / (C_FA + p_need * C_FN). Fail closed."""
     for name, value in (("C_FA", c_fa), ("C_FN", c_fn), ("p_need", p_need)):
-        if value is None or not isinstance(value, (int, float)):
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
             raise ValueError(f"missing {name}: fail closed")
     if c_fa < 0 or c_fn < 0 or not 0.0 <= p_need <= 1.0:
         raise ValueError("cost or probability out of range: fail closed")
@@ -82,7 +89,8 @@ def decide_lane(config, p_accept, p_need, now=None, history=()):
         verdict = "slow"
     else:
         verdict = "silent"
-    if verdict == "fire" and now is not None:
+    if verdict == "fire":
+        now = time.time() if now is None else now
         if not check_rate(history, now, config.get("min_interval"),
                           config.get("max_fires_per_window"), config.get("window_s", 3600)):
             verdict = "blocked"
@@ -112,7 +120,11 @@ def validate_assessment(enabled_rule_ids, assessment, mode="observe"):
         if not str(row.get("evidence", "")).strip():
             raise ValueError("every judgement requires non-empty evidence")
     result = dict(assessment)
+    if result.get("decision") not in ("accept", "reject", "defer", "would_accept", "silent"):
+        raise ValueError("unknown assessment decision")
     if result.get("decision") == "accept":
+        if result.get("strength") not in ("explicit", "inferred"):
+            raise ValueError("accept requires explicit or inferred admission strength")
         if not any(row["verdict"] == "match" for row in judged):
             raise ValueError("accept requires at least one matched rule")
         if not str(result.get("intent_evidence", "")).strip():
@@ -165,6 +177,9 @@ def consistency_filter(entries):
     """Drop inconsistent judge-calibration entries; never repair them."""
     kept, dropped, by_input = [], [], {}
     for entry in entries:
+        key = (entry.get("input") or "").strip().lower()
+        by_input.setdefault(key, set()).add(entry.get("human_label"))
+    for entry in entries:
         reasons = []
         if entry.get("human_label") not in ("fire", "silent", "slow"):
             reasons.append("label outside the allowed set")
@@ -173,9 +188,8 @@ def consistency_filter(entries):
         if not entry.get("rationale"):
             reasons.append("missing rationale")
         key = (entry.get("input") or "").strip().lower()
-        if key in by_input and by_input[key] != entry.get("human_label"):
+        if len(by_input[key]) > 1:
             reasons.append("duplicate input with disagreeing human label")
-        by_input.setdefault(key, entry.get("human_label"))
         if reasons:
             dropped.append({**entry, "drop_reasons": reasons})
         else:
@@ -217,12 +231,13 @@ class LaneLedger:
     def record_reformulation(self, origin_event, what_changed):
         if not what_changed:
             raise ValueError("a reformulation must name what changed")
-        prior = [r for r in self.rows() if r.get("verdict") == "reformulation"
-                 and r.get("origin_event") == origin_event]
-        if prior:
-            raise ValueError("at most one reformulation per origin event")
-        return self.record({"verdict": "reformulation", "origin_event": origin_event,
-                            "what_changed": what_changed})
+        with locked(self.path):
+            prior = [r for r in self.rows() if r.get("verdict") == "reformulation"
+                     and r.get("origin_event") == origin_event]
+            if prior:
+                raise ValueError("at most one reformulation per origin event")
+            return self.record({"verdict": "reformulation", "origin_event": origin_event,
+                                "what_changed": what_changed})
 
     def audit_silence(self, sample_n=5):
         rows = self.rows()

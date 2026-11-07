@@ -16,6 +16,7 @@ Auth model (environment-based; no credential files anywhere in this skill):
 from __future__ import annotations
 
 import json
+import math
 import os
 import sys
 import time
@@ -25,9 +26,15 @@ import requests
 
 def ensure_allowed_url(url, allowed_hosts):
     """Refuse to send credentials to any host outside the allowlist."""
-    host = urllib.parse.urlparse(url).hostname or ""
-    if host not in allowed_hosts:
-        fail(f"Refusing to send credentials to non-allowlisted host: {host}")
+    try:
+        parsed = urllib.parse.urlparse(url)
+        valid = (parsed.scheme == "https" and parsed.hostname in allowed_hosts
+                 and parsed.port in (None, 443) and parsed.username is None
+                 and parsed.password is None and not parsed.fragment)
+    except ValueError:
+        valid = False
+    if not valid:
+        fail("Refusing credential-bearing request: HTTPS, default TLS port, and an allowlisted host are required")
 
 _SECRET_HEADER = "APCA-API-SECRET-KEY"
 _KEY_ID_HEADER = "APCA-API-KEY-ID"
@@ -148,36 +155,36 @@ def api_request(
     Prints nothing itself; returns the decoded JSON body. Raises AlpacaError
     on unrecoverable HTTP or network failures.
     """
+    ensure_allowed_url(url, _ALLOWED_HOSTS)
     kid = key_id()
     secret = secret_key()
-    ensure_allowed_url(url, _ALLOWED_HOSTS)
     headers = {
         _KEY_ID_HEADER: kid,
         _SECRET_HEADER: secret,
         "Content-Type": "application/json",
         "Accept": "application/json",
     }
-    # Step-0 telemetry (T11, 2026-10-13): count every physical request
-    # per endpoint class; fail-silent -- telemetry never breaks a call.
-    try:
-        import json as _tj, os as _to
-        from datetime import datetime as _tdt, timezone as _ttz
-        _tp = os.environ.get("ALPACA_TELEMETRY_PATH", "")
-        if not _tp:
-            raise RuntimeError("telemetry disabled")
-        os.makedirs(os.path.dirname(_tp), exist_ok=True)
-        with open(_tp, "a") as _tf:
-            _tf.write(json.dumps({
-                "ts": _tdt.now(_ttz.utc).isoformat(),
-                "consumer": "alpaca_lib", "endpoint": url.split("/v")[0][-30:] + "/v" + url.split("/v", 1)[1].split("/")[0] if "/v" in url else url[:60],
-                "timeframe": (params or {}).get("timeframe", ""),
-                "count": 1}) + "\n")
-    except Exception:
-        pass
     delay = 1.0
     last_exc: Exception | None = None
     saw_429 = False
     for attempt in range(_MAX_RETRIES):
+        # Step-0 telemetry (T11, 2026-10-13): count every physical request
+        # per endpoint class; fail-silent -- telemetry never breaks a call.
+        try:
+            import json as _tj, os as _to
+            from datetime import datetime as _tdt, timezone as _ttz
+            _tp = os.environ.get("ALPACA_TELEMETRY_PATH", "")
+            if not _tp:
+                raise RuntimeError("telemetry disabled")
+            os.makedirs(os.path.dirname(_tp), exist_ok=True)
+            with open(_tp, "a") as _tf:
+                _tf.write(json.dumps({
+                    "ts": _tdt.now(_ttz.utc).isoformat(),
+                    "consumer": "alpaca_lib", "endpoint": url.split("/v")[0][-30:] + "/v" + url.split("/v", 1)[1].split("/")[0] if "/v" in url else url[:60],
+                    "timeframe": (params or {}).get("timeframe", ""),
+                    "count": 1}) + "\n")
+        except Exception:
+            pass
         try:
             resp = requests.request(
                 method,
@@ -186,6 +193,7 @@ def api_request(
                 params=params,
                 json=payload,
                 timeout=30,
+                allow_redirects=False,
             )
         except requests.RequestException as exc:
             # Row43-A3 (2026-10-13): a network exception after the request
@@ -200,18 +208,26 @@ def api_request(
             if method.upper() not in ("GET", "HEAD"):
                 err = AlpacaError(
                     f"Request failed ({method.upper()}): request outcome "
-                    f"unknown -- verify broker state before retrying: {exc}"
+                    f"unknown -- verify broker state before retrying ({type(exc).__name__})"
                 )
                 err.outcome_unknown = True
                 raise err
             last_exc = exc
-            time.sleep(delay)
-            delay *= 2
+            if attempt + 1 < _MAX_RETRIES:
+                time.sleep(delay)
+                delay *= 2
             continue
         if resp.status_code == 429:
             saw_429 = True
-            time.sleep(delay)  # respect rate limit; back off exponentially
-            delay *= 2
+            retry_after = resp.headers.get("Retry-After", "")
+            try:
+                parsed_delay = float(retry_after)
+                pause = max(delay, parsed_delay) if math.isfinite(parsed_delay) else delay
+            except (ValueError, TypeError):
+                pause = delay
+            if attempt + 1 < _MAX_RETRIES:
+                time.sleep(pause)
+                delay *= 2
             continue
         if 200 <= resp.status_code < 300:
             if resp.status_code == 204 or not resp.content:
@@ -219,14 +235,21 @@ def api_request(
             try:
                 return resp.json()
             except ValueError:
-                return {"raw": resp.text}
+                err = AlpacaError("Successful HTTP response contained invalid JSON; reconcile the requested operation")
+                err.outcome_unknown = method.upper() not in ("GET", "HEAD")
+                raise err
         # Non-retryable HTTP error: surface the provider's message, never keys.
-        body = resp.text[:1000]
+        if 300 <= resp.status_code < 400:
+            raise AlpacaError("Redirect refused: credentials are never forwarded to redirected URLs")
+        body = resp.text[:1000].replace(secret, "[REDACTED]")
         # Twice-daily bugcheck 2026-10-06: carry the HTTP status on the
         # exception so callers can match on it robustly instead of
         # substring-matching the message (e.g. " 404" false-matches 1404).
         err = AlpacaError(f"Alpaca API error {resp.status_code}: {body}")
         err.status_code = resp.status_code
+        err.outcome_unknown = resp.status_code >= 500 and method.upper() not in ("GET", "HEAD")
+        if err.outcome_unknown:
+            err.args = (str(err) + "; outcome unknown: reconcile broker state before retrying",)
         raise err
     # 3x-daily bugcheck 2026-10-07: when every attempt was a 429 (no
     # network exception ever occurred), last_exc is None and the old
@@ -234,11 +257,32 @@ def api_request(
     if saw_429 and last_exc is None:
         detail = "HTTP 429 on every attempt"
     else:
-        detail = str(last_exc)
+        detail = type(last_exc).__name__ if last_exc is not None else "unreachable"
     raise AlpacaError(
         f"Request failed after {_MAX_RETRIES} attempts "
         f"(rate-limited or unreachable): {detail}"
     )
+
+
+def missing_order(order_id):
+    """Absence from one account endpoint is not a terminal-order proof."""
+    return {"status": "not_found", "id": order_id, "terminal_state_verified": False,
+            "reconciliation_required": True,
+            "note": "No record at the queried endpoint; verify account, environment and order identity before resolving local state."}
+
+
+def operation_acknowledgement(operation, target, response=None):
+    """Distinguish a mutation's HTTP acknowledgement from its final outcome."""
+    receipt = dict(response or {})
+    receipt.update(request_accepted=True, operation=operation, target=target,
+                   final_state_verified=False, reconciliation_required=True)
+    if operation == "cancel_order":
+        receipt.update(cancel_requested=True, cancelled=None, order_id=target)
+    elif operation == "close_position":
+        receipt.update(close_requested=True, closed=None, symbol=target)
+    else:
+        raise ValueError("unknown acknowledgement operation")
+    return receipt
 
 
 def emit(obj: object) -> None:

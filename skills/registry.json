@@ -1,0 +1,505 @@
+{
+  "schema_version": 1,
+  "purpose": "Derived discovery metadata and explicit capability boundaries; source SKILL.md files remain authoritative.",
+  "generated_by": "python3 tools/validate_repo.py --write-registry",
+  "runtime_dependency_declaration": "skills/runtime-dependencies.json",
+  "skill_count": 23,
+  "skills": [
+    {
+      "name": "absence-proof-coverage-ledger",
+      "description": "Use whenever a not found, does not exist, never published, closed, or cannot be done verdict is about to be reported, even when one search already came back empty; skip for ordinary lookups where the item is expected to be found.",
+      "version": "1.0.1",
+      "entrypoint": "skills/absence-proof-coverage-ledger/SKILL.md",
+      "source_sha256": "05a9af3463575a564908608579e179b547df13c22dfda3d85650606bbd472edb",
+      "kind": "procedure",
+      "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
+      "related_skills": [],
+      "files": [
+        "skills/absence-proof-coverage-ledger/SKILL.md"
+      ],
+      "reading_order": [
+        "PRIMER.md",
+        "skills/infinityblade/SKILL.md",
+        "skills/absence-proof-coverage-ledger/SKILL.md"
+      ]
+    },
+    {
+      "name": "agent-enhancement-systems",
+      "description": "Use when building, wiring, or auditing an agent's proactive lanes, instincts, memory, recall, skill tests, library gates, handoffs, rationale records, freshness, outbound sends, deterministic IDs, effect queues, routing, near-miss learning, or content-bound approvals. Do not use for ordinary one-off work that creates none of those systems.",
+      "version": "1.0.1",
+      "entrypoint": "skills/agent-enhancement-systems/SKILL.md",
+      "source_sha256": "199f490b8a07026fe650859fed1aab03e6052ed1169be5c646bc63dea0b5221c",
+      "kind": "local-reference-mechanisms",
+      "evidence_boundary": "Runnable local mechanisms; host integrations and external effects need separate implementation and proof.",
+      "related_skills": [
+        "memory-recall-systems",
+        "claim-verification-ledger",
+        "literal-scope-and-silent-checks"
+      ],
+      "files": [
+        "skills/agent-enhancement-systems/SKILL.md",
+        "skills/agent-enhancement-systems/bin/_storage.py",
+        "skills/agent-enhancement-systems/bin/authority.py",
+        "skills/agent-enhancement-systems/bin/freshness.py",
+        "skills/agent-enhancement-systems/bin/instincts.py",
+        "skills/agent-enhancement-systems/bin/memory_core.py",
+        "skills/agent-enhancement-systems/bin/operations.py",
+        "skills/agent-enhancement-systems/bin/proactive.py",
+        "skills/agent-enhancement-systems/bin/reliability.py",
+        "skills/agent-enhancement-systems/bin/skill_lab.py",
+        "skills/agent-enhancement-systems/bin/why.py",
+        "skills/agent-enhancement-systems/references/memory-extraction-spec.md",
+        "skills/agent-enhancement-systems/references/operator-guide.md",
+        "skills/agent-enhancement-systems/references/prose-review.md",
+        "skills/agent-enhancement-systems/templates/approval-request.json",
+        "skills/agent-enhancement-systems/templates/checkpoint.json",
+        "skills/agent-enhancement-systems/templates/decision-entry.json",
+        "skills/agent-enhancement-systems/templates/lane-config.json",
+        "skills/agent-enhancement-systems/templates/memory-fact.json",
+        "skills/agent-enhancement-systems/templates/skill-eval.json",
+        "skills/agent-enhancement-systems/tests/test_agent_enhancement.py",
+        "skills/agent-enhancement-systems/tests/test_boundary_regressions.py"
+      ],
+      "reading_order": [
+        "PRIMER.md",
+        "skills/infinityblade/SKILL.md",
+        "skills/agent-enhancement-systems/SKILL.md"
+      ]
+    },
+    {
+      "name": "alpaca-paper",
+      "description": "Trade and inspect Alpaca paper trading accounts with the account identity proven from the configured credentials before any account-level action; use for paper-account reads and orders, and skip for live trading.",
+      "version": "1.0.1",
+      "entrypoint": "skills/alpaca-paper/SKILL.md",
+      "source_sha256": "358d67f2bc2b957f7a9cac261f1dc32fdd4da456d966366dd1113e7c5d9bdbc4",
+      "kind": "credentialed-service-client",
+      "evidence_boundary": "Credentialed broker integration; never execute as a repository audit or installation test.",
+      "related_skills": [],
+      "files": [
+        "skills/alpaca-paper/SKILL.md",
+        "skills/alpaca-paper/bin/alpaca_cancel_order.py",
+        "skills/alpaca-paper/bin/alpaca_close_position.py",
+        "skills/alpaca-paper/bin/alpaca_get_account.py",
+        "skills/alpaca-paper/bin/alpaca_get_bars_1h.py",
+        "skills/alpaca-paper/bin/alpaca_get_bars_5min.py",
+        "skills/alpaca-paper/bin/alpaca_get_order.py",
+        "skills/alpaca-paper/bin/alpaca_lib.py",
+        "skills/alpaca-paper/bin/alpaca_list_orders.py",
+        "skills/alpaca-paper/bin/alpaca_list_positions.py",
+        "skills/alpaca-paper/bin/alpaca_option_chain.py",
+        "skills/alpaca-paper/bin/alpaca_option_mleg.py",
+        "skills/alpaca-paper/bin/alpaca_option_order.py",
+        "skills/alpaca-paper/bin/alpaca_option_quotes.py",
+        "skills/alpaca-paper/bin/alpaca_submit_order.py",
+        "skills/alpaca-paper/references/api_details.md"
+      ],
+      "reading_order": [
+        "PRIMER.md",
+        "skills/infinityblade/SKILL.md",
+        "skills/alpaca-paper/SKILL.md"
+      ]
+    },
+    {
+      "name": "backtest-crosscheck",
+      "description": "Cross-check a simple daily-bar mechanical backtest headline against a second, independent oracle engine before the result is reported, graded, adopted, or used to kill a setup; skip for intraday, options, or path-dependent strategies, which are out of the oracle scope.",
+      "version": "1.0.1",
+      "entrypoint": "skills/backtest-crosscheck/SKILL.md",
+      "source_sha256": "b3e462b2b8ebe6672bd3cf7ca2efbd71af674359d14ff53f95668d9a2a6e305d",
+      "kind": "external-oracle-dependent",
+      "evidence_boundary": "Independent oracle engine is an explicitly external prerequisite; a paper contract is not a runnable oracle.",
+      "related_skills": [],
+      "files": [
+        "skills/backtest-crosscheck/SKILL.md"
+      ],
+      "reading_order": [
+        "PRIMER.md",
+        "skills/infinityblade/SKILL.md",
+        "skills/backtest-crosscheck/SKILL.md"
+      ]
+    },
+    {
+      "name": "chart-read",
+      "description": "On-demand chart reading that runs deterministic Pass A geometry, renders multi-timeframe charts, and delivers a perceptual Pass B read with scenarios, triggers, and invalidation whenever the user names a ticker; skip for automated signal runners, which have their own engines.",
+      "version": "1.0.1",
+      "entrypoint": "skills/chart-read/SKILL.md",
+      "source_sha256": "cd8404b2904749750bf1dea7c07b3b6891be3ad7ad9c0a0726ac8d7ca2b34d9c",
+      "kind": "external-runtime-dependent",
+      "evidence_boundary": "Chart procedure and helpers; external data/analysis dependencies must be verified separately.",
+      "related_skills": [
+        "stock-analysis"
+      ],
+      "files": [
+        "skills/chart-read/SKILL.md",
+        "skills/chart-read/bin/pass_a.py",
+        "skills/chart-read/bin/test_pass_a.py",
+        "skills/chart-read/bin/watch_trigger.py"
+      ],
+      "reading_order": [
+        "PRIMER.md",
+        "skills/infinityblade/SKILL.md",
+        "skills/chart-read/SKILL.md"
+      ]
+    },
+    {
+      "name": "claim-verification-ledger",
+      "description": "Use whenever a not found, closed, or cannot be done verdict is about to be reported, whenever a save, backup, push, export, or deletion is about to be reported done, and whenever a delegated or background result is about to be repeated as fact.",
+      "version": "1.0.1",
+      "entrypoint": "skills/claim-verification-ledger/SKILL.md",
+      "source_sha256": "1d33d6a3f1f24d9e4a7827ae058f4d49792ba413508e6f4e3ea0bf83d27caf87",
+      "kind": "procedure",
+      "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
+      "related_skills": [
+        "absence-proof-coverage-ledger",
+        "save-readback-verification",
+        "live-execution-proof"
+      ],
+      "files": [
+        "skills/claim-verification-ledger/SKILL.md"
+      ],
+      "reading_order": [
+        "PRIMER.md",
+        "skills/infinityblade/SKILL.md",
+        "skills/claim-verification-ledger/SKILL.md"
+      ]
+    },
+    {
+      "name": "conviction-surface-definition",
+      "description": "Define what a requested ranking, board, or summary surface is and where its conviction is formed before building it, and source it only from that formation point.",
+      "version": "1.0.1",
+      "entrypoint": "skills/conviction-surface-definition/SKILL.md",
+      "source_sha256": "b4b5e6de4da1a516cf176de4b39aa415fa4fdac0f39918bb38239ed66d0f23df",
+      "kind": "procedure",
+      "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
+      "related_skills": [],
+      "files": [
+        "skills/conviction-surface-definition/SKILL.md"
+      ],
+      "reading_order": [
+        "PRIMER.md",
+        "skills/infinityblade/SKILL.md",
+        "skills/conviction-surface-definition/SKILL.md"
+      ]
+    },
+    {
+      "name": "doctrine-provenance-check",
+      "description": "Audit every veto, filter, and gate, in code and in spoken framing, against stored doctrine and its provenance before calling a signal invalid or shipping a gate change.",
+      "version": "1.0.1",
+      "entrypoint": "skills/doctrine-provenance-check/SKILL.md",
+      "source_sha256": "46559083dcbdfb25ca7565a9804e54a606650e86dc3c18403ce4169bbe6bda15",
+      "kind": "procedure",
+      "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
+      "related_skills": [],
+      "files": [
+        "skills/doctrine-provenance-check/SKILL.md"
+      ],
+      "reading_order": [
+        "PRIMER.md",
+        "skills/infinityblade/SKILL.md",
+        "skills/doctrine-provenance-check/SKILL.md"
+      ]
+    },
+    {
+      "name": "efficiency-breakthroughs",
+      "description": "Use whenever a data pipeline is slow, lossy, flaky, or hard to debug, with the pipeline mechanics for complete reads, bulk transport, rate limits, caches, watchdogs, seam validation, freshness, and reconciliation, each distilled from an incident where it was learned at cost.",
+      "version": "1.0.1",
+      "entrypoint": "skills/efficiency-breakthroughs/SKILL.md",
+      "source_sha256": "eac935831fd23dc006e3442a6573c75df9f55d676f4f52480b16c22370aecbbc",
+      "kind": "procedure",
+      "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
+      "related_skills": [],
+      "files": [
+        "skills/efficiency-breakthroughs/SKILL.md"
+      ],
+      "reading_order": [
+        "PRIMER.md",
+        "skills/infinityblade/SKILL.md",
+        "skills/efficiency-breakthroughs/SKILL.md"
+      ]
+    },
+    {
+      "name": "gate-test-integrity",
+      "description": "Use whenever a regression gate, blocker test, suite result, dry run, or commit is run, prepared, or about to be trusted, reported, or acted on, including when the tree moved during the run; skip for writing or debugging an ordinary test on its own merits.",
+      "version": "1.0.1",
+      "entrypoint": "skills/gate-test-integrity/SKILL.md",
+      "source_sha256": "201b688c19a918b2ba1b552d8ea41185ea4507e3005c70686b959ed2a51d0def",
+      "kind": "procedure",
+      "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
+      "related_skills": [
+        "stable-tree-gate-integrity",
+        "hermetic-test-isolation"
+      ],
+      "files": [
+        "skills/gate-test-integrity/SKILL.md"
+      ],
+      "reading_order": [
+        "PRIMER.md",
+        "skills/infinityblade/SKILL.md",
+        "skills/gate-test-integrity/SKILL.md"
+      ]
+    },
+    {
+      "name": "hermetic-test-isolation",
+      "description": "Make regression tests prove the same verdict alone, in the full suite, and in a clean export, with no live-state reads, no unrestored monkeypatches, and no import-frozen paths, before any gate result is trusted.",
+      "version": "1.0.1",
+      "entrypoint": "skills/hermetic-test-isolation/SKILL.md",
+      "source_sha256": "dc90f251f25d578f8268b7e5d89d29651de881dc0a76033d3b535d9b5ab8e2b0",
+      "kind": "procedure",
+      "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
+      "related_skills": [],
+      "files": [
+        "skills/hermetic-test-isolation/SKILL.md"
+      ],
+      "reading_order": [
+        "PRIMER.md",
+        "skills/infinityblade/SKILL.md",
+        "skills/hermetic-test-isolation/SKILL.md"
+      ]
+    },
+    {
+      "name": "infinityblade",
+      "description": "Operating discipline for finishing real work correctly, efficiently and honestly. Use for any task that changes something or claims a result — code, debugging, deployment, automation, data work, research with sources, documents built from facts, or reviewing whether work is done. Skip for casual conversation and pure explanation.",
+      "version": "3.2.0",
+      "entrypoint": "skills/infinityblade/SKILL.md",
+      "source_sha256": "b7caf3e6a7c45633c724ef34b8ce31f715185a3a6b0cf5205b7a4e9f0366b66f",
+      "kind": "core-operating-doctrine",
+      "evidence_boundary": "Procedure and local source-checking helpers; no automatic host installation.",
+      "related_skills": [
+        "efficiency-breakthroughs",
+        "proof-before-green",
+        "memory-recall-systems"
+      ],
+      "files": [
+        "skills/infinityblade/SKILL.md",
+        "skills/infinityblade/agents/openai.yaml",
+        "skills/infinityblade/references/agent-enhancement-registers.md",
+        "skills/infinityblade/references/agent-enhancement.md",
+        "skills/infinityblade/references/eval-cases.md",
+        "skills/infinityblade/references/examples.md",
+        "skills/infinityblade/references/field-manual.md",
+        "skills/infinityblade/references/lessons-from-the-field.md",
+        "skills/infinityblade/references/playbooks.md",
+        "skills/infinityblade/references/review-mode.md"
+      ],
+      "reading_order": [
+        "PRIMER.md",
+        "skills/infinityblade/SKILL.md"
+      ]
+    },
+    {
+      "name": "judgment-provenance-check",
+      "description": "Use whenever a ranking, board, verdict, veto, or invalidation is about to be built or spoken, even when the surface looks like a simple list; skip for raw data display with no judgment in it.",
+      "version": "1.0.0",
+      "entrypoint": "skills/judgment-provenance-check/SKILL.md",
+      "source_sha256": "0e212750f6403b1bfd54a4e09cb898b4c9150cc78ec42e20753e931ae98045af",
+      "kind": "procedure",
+      "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
+      "related_skills": [
+        "doctrine-provenance-check",
+        "conviction-surface-definition"
+      ],
+      "files": [
+        "skills/judgment-provenance-check/SKILL.md"
+      ],
+      "reading_order": [
+        "PRIMER.md",
+        "skills/infinityblade/SKILL.md",
+        "skills/judgment-provenance-check/SKILL.md"
+      ]
+    },
+    {
+      "name": "literal-scope-and-silent-checks",
+      "description": "Use whenever an instruction is short, scoped, view only, or negative in form, whenever a term could name two different things, whenever the user asks for a specific form such as ideas rather than a critique, and whenever a recurring check runs; skip for open-ended build requests with no stated boundary.",
+      "version": "1.0.1",
+      "entrypoint": "skills/literal-scope-and-silent-checks/SKILL.md",
+      "source_sha256": "f9168c756b9360f1e73efb9bd43e08a67d6672a957be40ea731f7f74e9022500",
+      "kind": "procedure",
+      "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
+      "related_skills": [],
+      "files": [
+        "skills/literal-scope-and-silent-checks/SKILL.md"
+      ],
+      "reading_order": [
+        "PRIMER.md",
+        "skills/infinityblade/SKILL.md",
+        "skills/literal-scope-and-silent-checks/SKILL.md"
+      ]
+    },
+    {
+      "name": "live-execution-proof",
+      "description": "Use whenever a trading or automation system is about to be called working, live, or proven, even when its component tests all pass; skip for design review of a system that has never run.",
+      "version": "1.0.1",
+      "entrypoint": "skills/live-execution-proof/SKILL.md",
+      "source_sha256": "07fe83fbfa3e77a3e88a127f2a0cc11b3780655d6bbd58a005abfebe101e4b0d",
+      "kind": "procedure",
+      "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
+      "related_skills": [],
+      "files": [
+        "skills/live-execution-proof/SKILL.md"
+      ],
+      "reading_order": [
+        "PRIMER.md",
+        "skills/infinityblade/SKILL.md",
+        "skills/live-execution-proof/SKILL.md"
+      ]
+    },
+    {
+      "name": "memory-recall-systems",
+      "description": "Use whenever an agent's memory, recall, context discipline, or long-job resource bounds are being designed, repaired, or audited: hybrid search over the markdown estate under a forced search rule, a canary eval on the agent's own history, masking over summarising, delta-only summaries, invalidate-never-delete, decay-ranked forgetting with write-gating, and checkpointed, memory-bounded long jobs, each grounded in the measured evidence of the 2026-11-06 research report shipped in this folder.",
+      "version": "1.0.1",
+      "entrypoint": "skills/memory-recall-systems/SKILL.md",
+      "source_sha256": "730cc5a475a76f128c4f293c23fd7058eef36ff9877687e3d82e5294c556496e",
+      "kind": "local-retrieval-mechanism",
+      "evidence_boundary": "Local index/search/evaluation over explicitly supplied documents; not access to a host's internal memory.",
+      "related_skills": [],
+      "files": [
+        "skills/memory-recall-systems/SKILL.md",
+        "skills/memory-recall-systems/references/research-2026-11-06.md",
+        "skills/memory-recall-systems/tools/memory_canaries.example.json",
+        "skills/memory-recall-systems/tools/memory_search.py"
+      ],
+      "reading_order": [
+        "PRIMER.md",
+        "skills/infinityblade/SKILL.md",
+        "skills/memory-recall-systems/SKILL.md"
+      ]
+    },
+    {
+      "name": "persisted-field-consumption-audit",
+      "description": "Use whenever a migration to a canonical source is about to be called complete, or a surface is built from persisted producer fields, even when a caller list looks complete; skip for greenfield builds with no predecessor route.",
+      "version": "1.0.1",
+      "entrypoint": "skills/persisted-field-consumption-audit/SKILL.md",
+      "source_sha256": "9ea40529b4ad5d906903070fb7dd7616d5b2e94cf4116ec147e315d9727d5f6a",
+      "kind": "procedure",
+      "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
+      "related_skills": [],
+      "files": [
+        "skills/persisted-field-consumption-audit/SKILL.md"
+      ],
+      "reading_order": [
+        "PRIMER.md",
+        "skills/infinityblade/SKILL.md",
+        "skills/persisted-field-consumption-audit/SKILL.md"
+      ]
+    },
+    {
+      "name": "proof-before-green",
+      "description": "Use whenever a regression gate, blocker test, suite result, dry run, or commit is about to be trusted or reported, and whenever a system is about to be called working, live, or proven, with the verdict proven on the final tree and the final live state.",
+      "version": "1.0.1",
+      "entrypoint": "skills/proof-before-green/SKILL.md",
+      "source_sha256": "6abe4e57534d148e69ede3c2d811f5d22f4458e34f619aaef57e8220b8d9ab17",
+      "kind": "procedure",
+      "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
+      "related_skills": [
+        "gate-test-integrity",
+        "live-execution-proof",
+        "save-readback-verification"
+      ],
+      "files": [
+        "skills/proof-before-green/SKILL.md"
+      ],
+      "reading_order": [
+        "PRIMER.md",
+        "skills/infinityblade/SKILL.md",
+        "skills/proof-before-green/SKILL.md"
+      ]
+    },
+    {
+      "name": "rea-teardown",
+      "description": "Tear down a trading tool with REA reverse engineering and handle its evidence so large bundles never break the backup or a public save.",
+      "version": "1.0.1",
+      "entrypoint": "skills/rea-teardown/SKILL.md",
+      "source_sha256": "ca37ad415845940228133d4040e2f3d56a08cc385b920feaa7a9079a731016fc",
+      "kind": "procedure",
+      "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
+      "related_skills": [],
+      "files": [
+        "skills/rea-teardown/SKILL.md"
+      ],
+      "reading_order": [
+        "PRIMER.md",
+        "skills/infinityblade/SKILL.md",
+        "skills/rea-teardown/SKILL.md"
+      ]
+    },
+    {
+      "name": "save-readback-verification",
+      "description": "Use whenever a save, backup, push, export, or deletion is about to be reported done, and whenever a delegated, background, or subagent result is about to be repeated as fact, even when the save looks small; skip for live execution proof or absence proof.",
+      "version": "1.0.1",
+      "entrypoint": "skills/save-readback-verification/SKILL.md",
+      "source_sha256": "775ff4de0b5262b7c8799b18eaa0fce02c3c9f2c66a6f10c75935a76a4eab538",
+      "kind": "procedure",
+      "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
+      "related_skills": [],
+      "files": [
+        "skills/save-readback-verification/SKILL.md"
+      ],
+      "reading_order": [
+        "PRIMER.md",
+        "skills/infinityblade/SKILL.md",
+        "skills/save-readback-verification/SKILL.md"
+      ]
+    },
+    {
+      "name": "single-door-consumer-audit",
+      "description": "Enumerate every consumer of a canonical source, engine, or feed by exhaustive search, never by caller list, and prove each one rerouted, exempt, or off-engine before declaring a single-door migration complete.",
+      "version": "1.0.1",
+      "entrypoint": "skills/single-door-consumer-audit/SKILL.md",
+      "source_sha256": "0f69dae76c5c045012d113a740be35cc31cc2f1b568b12cbc0eb93a2b7d68bef",
+      "kind": "procedure",
+      "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
+      "related_skills": [
+        "persisted-field-consumption-audit"
+      ],
+      "files": [
+        "skills/single-door-consumer-audit/SKILL.md"
+      ],
+      "reading_order": [
+        "PRIMER.md",
+        "skills/infinityblade/SKILL.md",
+        "skills/single-door-consumer-audit/SKILL.md"
+      ]
+    },
+    {
+      "name": "stable-tree-gate-integrity",
+      "description": "Keep verification gates, commits, and dry-runs honest on a tree that background loops rewrite continuously: freeze before gating, stage only owned files, and never let a dry-run touch live state.",
+      "version": "1.0.1",
+      "entrypoint": "skills/stable-tree-gate-integrity/SKILL.md",
+      "source_sha256": "08043539c07e46406bef0914a8ae1aec5ef68d553b97c73d23d37ab0a30b5dff",
+      "kind": "procedure",
+      "evidence_boundary": "Instructional procedure; reading it does not install or execute a host mechanism.",
+      "related_skills": [],
+      "files": [
+        "skills/stable-tree-gate-integrity/SKILL.md"
+      ],
+      "reading_order": [
+        "PRIMER.md",
+        "skills/infinityblade/SKILL.md",
+        "skills/stable-tree-gate-integrity/SKILL.md"
+      ]
+    },
+    {
+      "name": "stock-analysis",
+      "description": "Full stock analysis and on-demand chart reading in one protocol, running Pass A geometry, the perceptual Pass B read, edge labeled strategy lenses, market context and a rigorous synthesis whenever the user names a ticker to read or analyze.",
+      "version": "1.0.1",
+      "entrypoint": "skills/stock-analysis/SKILL.md",
+      "source_sha256": "7a0493ebef7a95f727206dc0390c346e6aaeaf3c590a93c4534a1d6b693fff98",
+      "kind": "external-runtime-dependent",
+      "evidence_boundary": "Analysis procedure and lens helpers; external data and sibling capabilities are not bundled runtime proof.",
+      "related_skills": [
+        "chart-read",
+        "backtest-crosscheck"
+      ],
+      "files": [
+        "skills/stock-analysis/SKILL.md",
+        "skills/stock-analysis/bin/lenses.py",
+        "skills/stock-analysis/fragments/external-canon-addendum",
+        "skills/stock-analysis/fragments/ta-mastery-addendum"
+      ],
+      "reading_order": [
+        "PRIMER.md",
+        "skills/infinityblade/SKILL.md",
+        "skills/stock-analysis/SKILL.md"
+      ]
+    }
+  ]
+}

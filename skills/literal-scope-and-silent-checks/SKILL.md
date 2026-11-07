@@ -1,7 +1,7 @@
 ---
 name: literal-scope-and-silent-checks
 description: Use whenever an instruction is short, scoped, view only, or negative in form, whenever a term could name two different things, whenever the user asks for a specific form such as ideas rather than a critique, and whenever a recurring check runs; skip for open-ended build requests with no stated boundary.
-version: 1.0.0
+version: 1.0.1
 ---
 
 # Literal Scope and Silent Checks
@@ -76,10 +76,14 @@ The replacement: Execute short, scoped, and negative instructions literally. Run
 
 - Use `muse.connector_search` to find other connectors and `muse.skill_search` to find related skills.
 
-- If nothing here fits, look on the web for a maintained API or MCP server and set it up with [Custom Connectors and MCPs](/opt/muse/skills/custom-connector-setup/SKILL.md), or build a custom connector.
+- If nothing here fits, look on the web for a maintained API or MCP server and set it up with the host’s connector-setup procedure (historical locator: `/opt/muse/skills/custom-connector-setup/SKILL.md`, an external host dependency; see [portable host setup](../../docs/OPERATING-PATHS.md#establish-a-portable-host-contract)), or build a custom connector.
 
 ## Alternatives for better results
 
 - Re read the user exact words once more before acting when a request is under ten words, because short requests in this record carried the hardest scope boundaries.
 
 - Prefer a narrower first pass that the user can widen over a broad first pass they must correct, because a correction costs more attention than an offer to extend.
+
+## Host portability
+
+`muse.*` names above describe the originating host. Discover equivalent advertised search, read, image-view and execution capabilities on the current host; do not call tools that are absent. The historical connector-setup path is not bundled. Use [the portable host contract](../../docs/OPERATING-PATHS.md#establish-a-portable-host-contract), retain the same evidence and authorization boundaries, and name a missing capability rather than pretending the recipe ran. Installing a connector or service still requires the task’s authority.

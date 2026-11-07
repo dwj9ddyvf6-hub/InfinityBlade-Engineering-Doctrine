@@ -10,7 +10,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from alpaca_lib import AlpacaError, api_request, emit, quote_path, trading_base
+from alpaca_lib import AlpacaError, api_request, emit, quote_path, trading_base, missing_order
 
 
 def main() -> None:
@@ -24,17 +24,9 @@ def main() -> None:
             "GET", f"{trading_base()}/v2/orders/{quote_path(args.order_id)}"
         )
     except AlpacaError as e:
-        # Audit 2026-10-06: a 404 means the broker purged the order record
-        # (terminal, not transient). Emit a structured not_found so
-        # callers resolve the pending record as dead instead of retrying
-        # forever. Other errors still fail loudly.
-        # Twice-daily bugcheck 2026-10-06: match on the structured
-        # status_code carried by AlpacaError, not a message substring
-        # (the old " 404" check could false-match e.g. "1404").
+        # A 404 only establishes absence at this endpoint, not a final order state.
         if getattr(e, "status_code", None) == 404:
-            emit({"status": "not_found", "id": args.order_id,
-                  "note": "broker has no record of this order; "
-                          "treat as terminally dead"})
+            emit(missing_order(args.order_id))
             return
         raise
     # 3x-daily bugcheck 2026-10-10 (MINOR): api_request returns

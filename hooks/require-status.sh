@@ -1,34 +1,40 @@
 #!/usr/bin/env bash
-# Claude Code Stop hook: block finishing until the last reply carries a STATUS line.
-input=$(cat)
-# Don't loop: if this stop was already triggered by the hook, let it through.
-[ "$(printf '%s' "$input" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("stop_hook_active",False))')" = "True" ] && exit 0
-transcript=$(printf '%s' "$input" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("transcript_path",""))')
-[ -f "$transcript" ] || exit 0
-last=$(python3 - "$transcript" <<'PY'
-import json, sys
-text = ""
-for line in open(sys.argv[1], encoding="utf-8"):
-    try:
-        e = json.loads(line)
-    except ValueError:
-        continue
-    m = e.get("message") or {}
-    if e.get("type") == "assistant" and isinstance(m.get("content"), list):
-        t = "".join(c.get("text", "") for c in m["content"] if c.get("type") == "text")
-        if t.strip():
-            text = t
-print(text)
-PY
-)
-# 3.1.0: a bare label is refused. A STATUS line for work done must carry an
-# evidence pointer after the verdict: a path, a URL, or an evidence: token.
-# The one-line scope marker for pure conversation replies stays allowed.
-if printf '%s' "$last" | grep -qE 'STATUS: *(GREEN|PARTIAL|BLOCKED|UNVERIFIED)'; then
-  # 3.1.1: accept both the em-dash and the comma no-change forms.
-  if printf '%s' "$last" | grep -qE 'STATUS: *GREEN *(—|,) *no change made'; then exit 0; fi
-  if printf '%s' "$last" | grep -qE 'STATUS: *(GREEN|PARTIAL|BLOCKED|UNVERIFIED)[^[:cntrl:]]*(evidence:|https?://|[A-Za-z0-9_./-]+\.[A-Za-z0-9]+)'; then exit 0; fi
-  echo '{"decision":"block","reason":"InfinityBlade: the STATUS line carries no evidence pointer. Add the artifact, path, URL, or command output the verdict rests on (evidence: ...). A bare label is a rumor."}'
-  exit 0
-fi
-echo '{"decision":"block","reason":"InfinityBlade: end with a STATUS line (GREEN, PARTIAL, BLOCKED or UNVERIFIED) and its proof or what is missing. For a pure conversation reply, write STATUS: GREEN — no change made."}'
+# Claude Code Stop hook. Keep this file in the repository/bundle, or set
+# INFINITYBLADE_ROOT to that root when installing a copy of the hook.
+set -eu
+hook_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+export INFINITYBLADE_ROOT="${INFINITYBLADE_ROOT:-$hook_root}"
+exec python3 -c '
+import importlib.util, json, os, pathlib, sys
+def block(reason):
+    print(json.dumps({"decision": "block", "reason": "InfinityBlade: " + reason}))
+try:
+    event = json.load(sys.stdin)
+    if event.get("stop_hook_active") is True:
+        raise SystemExit(0)
+    path = pathlib.Path(event.get("transcript_path", ""))
+    if not path.is_file():
+        block("transcript unavailable; cannot verify the final reply")
+        raise SystemExit(0)
+    checker = pathlib.Path(os.environ["INFINITYBLADE_ROOT"]) / "tools/status_evidence_check.py"
+    spec = importlib.util.spec_from_file_location("status_evidence_check", checker)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    last = ""
+    for line in path.read_text(encoding="utf-8").splitlines():
+        try:
+            row = json.loads(line)
+        except ValueError:
+            continue
+        message = row.get("message") or {}
+        content = message.get("content")
+        if row.get("type") == "assistant" and isinstance(content, list):
+            text = "".join(c.get("text", "") for c in content if isinstance(c, dict) and c.get("type") == "text")
+            if text.strip():
+                last = text
+    ok, reason = module.check(last)
+    if not ok:
+        block(reason)
+except (OSError, ValueError, TypeError, AttributeError) as exc:
+    block("hook input or checker unavailable: " + type(exc).__name__)
+'

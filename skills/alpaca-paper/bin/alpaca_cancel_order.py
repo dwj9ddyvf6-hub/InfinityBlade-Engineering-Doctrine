@@ -7,7 +7,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from alpaca_lib import (AlpacaError, api_request, emit, quote_path,
-                        require_live_confirmation, trading_base)
+                        require_live_confirmation, trading_base, operation_acknowledgement)
 
 
 def main() -> None:
@@ -51,7 +51,7 @@ def main() -> None:
         print("Unexpected cancel response shape (non-object body)",
               file=sys.stderr)
         raise SystemExit(2)
-    emit({"cancelled": True, "order_id": args.order_id})
+    emit(operation_acknowledgement("cancel_order", args.order_id, result))
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ package. Keep host state outside this skill folder.
 ## 1. Proactive lanes (`bin/proactive.py`)
 
 1. Label a logged timeline with MUST, MAY, MUST-NOT, and OTHER windows.
-2. Call `score_timeline(windows)`. Deploy only if benefit minus lambda times
+2. Call `score_timeline(windows)`. Its cost is 1 per fire plus an additional 4 for each MUST-NOT fire (total 5 for a violation). Deploy only if benefit minus lambda times
    cost is positive at the lambda that prices the lane's real interruption.
 3. Put lane costs in configuration: `C_FA`, `C_FN`, `margin`, `min_interval`,
    `max_fires_per_window`, `mode`, and `class` (`horizontal` or `vertical`).
@@ -195,12 +195,19 @@ findings answered by disposition.
 
 ### Outbound (13)
 
-Create `OutboundGate(receipts_path, caps, open_question)` and call `send`
-inside the host's real send function. Purpose conditions are exact: result
+Create `OutboundGate(receipts_path, caps, open_question, transport=...)` and call `send`
+inside the host's authorized send function. Purpose conditions are exact: result
 needs a ready or completed outcome; attention needs the one current open
-question; answer needs a reported answer. Caps throw. The first send for an
-origin event wins; repeats return `duplicate_suppressed`. Diagnostics are
-redacted at capture with `redact`.
+question; answer needs a reported answer. Caps throw. Without a transport,
+validation returns `status=ready, sent=false`; preparation is not delivery.
+An explicit transport callback receives `surface`, `text`, `recipient` and
+`idempotency_key`, and must return a mapping with `id` or `receipt_id` before
+`sent=true` is recorded. An exception or missing acknowledgement returns
+`outcome_unknown`; the origin remains suppressed until receiver-state
+reconciliation settles the uncertainty. Repeats return `duplicate_suppressed`.
+Diagnostics are redacted at capture with `redact`. Never send a real message
+merely to prove installation; use an authorized test receiver or keep the
+host delivery boundary UNVERIFIED.
 
 ### Deterministic IDs (14)
 
@@ -211,8 +218,14 @@ state that choice where the ID is defined. Audit a JSONL stream with
 
 ### Effect queue (15)
 
-Enqueue before attempting the effect. Re-queueing increments the generation;
-only the current generation with its exact receipt can complete the row.
+Enqueue before attempting the effect. Re-queueing increments the generation
+and resets attempts/backoff; only the current generation with its exact receipt
+can complete the row. `run_next(handler)` atomically claims due pending/later
+work as `running`; the handler must explicitly complete or defer it. A running
+row after a crash remains reserved until external reconciliation proves what
+happened: never blindly replay an uncertain effect. `fail()` retries up to the
+configured `max_attempts` and then persists a visible failed row. `stop()`
+reports partial while any row remains, and completed only when the queue is empty.
 `defer_later` is waiting, not failure. `record_rate_limited` never increments
 attempts, honours Retry-After past the cap, and counts infrastructure errors
 separately. Generic failures are bounded; exhaustion lands in the queue's
@@ -236,12 +249,22 @@ states its non-authority every time.
 
 ### Approvals (18)
 
-Record with `ApprovalStore.record(action, target, content_bytes)`. Before
-the act, call `check` and require `authorized_unique`. Edited content returns
-`drifted`; an expired, revoked, used, or prior-generation record returns
-`authorization_invalid`; multiple live candidates return
-`requires_selection`; no record returns `out_of_scope`. Consume after use.
-No approval implies any other action.
+Record with `ApprovalStore.record(action, target, content_bytes)`. At the
+action boundary use `authorize_and_consume(action, candidates, content, now)`
+to atomically check exact content, target, expiry, revocation and generation,
+and consume one binding. The separate `check`/`consume` APIs remain available
+for compatibility but are not an atomic reservation across concurrent workers.
+Edited content returns `drifted`; an expired, revoked, used, or prior-generation
+record returns `authorization_invalid`; multiple live candidates return
+`requires_selection`; no record returns `out_of_scope`. Persist the intended
+effect before execution and reconcile an uncertain response. No approval implies
+another action. Reconstruct a persistent mandate from its canonical record after
+compaction when still valid; do not invent repeat user approval solely because
+an executable binding needs renewal.
 
 Proof: package test `OperationsTests`, plus one host restart test for the
-effect queue and one host send that leaves a receipt.
+effect queue and one authorized host send that leaves an authoritative receiver receipt; a fake transport proves only the local callback contract.
+
+### Queue exceptions and reconciliation
+
+`EffectQueue.run_next(handler)` treats an ordinary handler exception as `outcome_unknown` and retains the item without automatic replay: the handler may have acted before losing its acknowledgement. Only a host-confirmed safe failure may call `fail(...)` explicitly or raise `RetryableEffectError`, which retries up to the stated attempt bound and then persists a terminal failed item. Successful handlers still call `complete(...)` or `defer_later(...)` explicitly. A retained `running` or `outcome_unknown` item requires reconciliation at the actual external boundary; neither a process restart nor a local queue receipt proves the external effect did or did not happen.

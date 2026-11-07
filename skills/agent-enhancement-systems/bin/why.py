@@ -11,6 +11,8 @@ Standard library only.
 import hashlib
 import json
 import os
+import re
+from _storage import atomic_text, locked
 import time
 import uuid
 
@@ -42,7 +44,7 @@ def validate_entry(entry):
         errors.append("rejected alternatives missing")
     else:
         for row in rejected:
-            if not row.get("alternative") or not row.get("why_lost"):
+            if not isinstance(row, dict) or not row.get("alternative") or not row.get("why_lost"):
                 errors.append("each rejected alternative needs alternative and why_lost")
                 break
     if not entry.get("reason"):
@@ -150,21 +152,29 @@ class FragmentRegistry:
         return digest
 
     def resolve(self, prefix):
+        if not isinstance(prefix, str) or not re.fullmatch(r"[a-f0-9]{8,64}", prefix):
+            raise ValueError("fragment address must be an 8-to-64 character lowercase SHA-256 prefix")
         matches = [h for h in self._index() if h.startswith(prefix)]
         if len(matches) != 1:
             raise KeyError(f"hash prefix matches {len(matches)} objects")
         return matches[0]
 
     def get_bytes(self, hash_or_prefix):
-        digest = self.resolve(hash_or_prefix) if len(hash_or_prefix) < 64 else hash_or_prefix
-        with open(os.path.join(self.objects, digest), "rb") as handle:
-            return handle.read()
+        digest = self.resolve(hash_or_prefix)
+        path = os.path.join(self.objects, digest)
+        if os.path.islink(path):
+            raise ValueError("fragment object must not be a symlink")
+        with open(path, "rb") as handle:
+            data = handle.read()
+        if hashlib.sha256(data).hexdigest() != digest:
+            raise ValueError("fragment content hash mismatch")
+        return data
 
     def cite(self, name):
-        for digest, record in self._index().items():
-            if name in record["names"]:
-                return "{{fragment:%s@%s}}" % (name, digest[:16])
-        raise KeyError(f"no fragment named {name!r}")
+        matches = [digest for digest, record in self._index().items() if name in record["names"]]
+        if len(matches) != 1:
+            raise KeyError(f"fragment name resolves to {len(matches)} versions; cite the exact hash")
+        return "{{fragment:%s@%s}}" % (name, matches[0][:16])
 
     def verify(self):
         bad = []

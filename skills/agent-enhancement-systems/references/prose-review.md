@@ -25,8 +25,10 @@ first; this pass covers the prose judgement those gates cannot reach.
 5. Maintain the prompt subtractively: when a rubric line or instruction is
    shown not to work, delete it and cite the failure, instead of only adding
    new lines.
-6. Delete emotional-pressure lines (tips, penalties, career threats) from
-   prompts wherever found. They are dead weight.
+6. Remove unsupported emotional-pressure devices (tips, penalties, career threats)
+   when they add no verifiable requirement. Preserve the substantive obligation
+   and incident evidence. Treat wording efficacy as a local evaluation question,
+   not a universal claim about every model.
 
 ## Rubric template
 

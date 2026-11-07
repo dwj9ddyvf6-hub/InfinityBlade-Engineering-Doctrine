@@ -1,41 +1,76 @@
 # Install InfinityBlade
 
-Pick your host. The skill folder is `skills/infinityblade/` (keep `SKILL.md` and `references/` together).
+Install the source first, then activate the skill in your host. Keep the source layout intact: `PRIMER.md` is above the core folder, and several skills refer to siblings. Copying only `skills/infinityblade/` loses part of its required reading contract.
 
-| Host | Install |
+## 1. Preserve and verify the source
+
+Use a pinned checkout, or build a source bundle from the repository root:
+
+```bash
+python3 tools/build_bundle.py --skill infinityblade --output /tmp/infinityblade-source.zip
+```
+
+Multiple `--skill` arguments select entrypoints and the prerequisites to inspect; the archive still contains the complete repository source. The exporter retains the repository-relative source layout and includes a `BUNDLE-MANIFEST.json` with hashes and declared external prerequisites. Extract the archive into a stable authorized directory and keep that layout. `--require-runtime` refuses selections with unresolved declared runtime prerequisites; a successful source export alone is not a runtime-readiness claim.
+
+From the preserved repository or bundle root, run:
+
+```bash
+python3 tools/validate_repo.py
+python3 tools/check_prompt.py
+python3 tools/skill_router.py --list
+```
+
+Read each result and its scope. The validator checks local repository contracts; the prompt checker checks wording. Neither proves that a model follows the doctrine. Use the bundle manifest as its exact inventory. Exporting the files is not the same as reading and auditing them.
+
+## 2. Activate it in the host
+
+| Host | Activation |
 |---|---|
-| **Claude Code** | Copy the folder to `~/.claude/skills/infinityblade/` (all projects) or `.claude/skills/infinityblade/` (one repo). |
-| **Codex** | Copy the folder to `~/.codex/skills/infinityblade/`. Invoke with `Use $infinityblade …` or let it activate. |
-| **Other Agent Skills hosts** | Use the host's skills folder or importer. |
-| **Cursor** | Paste the prompt from the [README](README.md#use-it-in-30-seconds) into `.cursor/rules/infinityblade.mdc` (set it to always apply). |
-| **GitHub Copilot** | Paste the prompt into `.github/copilot-instructions.md`. |
-| **Repo instruction files** | Paste the prompt into `AGENTS.md`, `CLAUDE.md` or `GEMINI.md`, or keep this repo's [`AGENTS.md`](AGENTS.md) with the skill folder. |
-| **Any chat model / API** | Paste the prompt into the system prompt or custom instructions. |
+| **Claude Code** | Register the preserved source using the host's supported skills import/directory mechanism. Its conventional user path is `~/.claude/skills/infinityblade/`; project scope uses `.claude/skills/infinityblade/`. Preserve access to the primer and routed siblings when using either. |
+| **Codex** | Register the preserved source through the host's skill mechanism; a conventional directory is `~/.codex/skills/infinityblade/`. Invoke with `Use $infinityblade …` where supported. Check the active host's actual path and import behavior. |
+| **Other Agent Skills hosts** | Use the documented importer or skill directories and verify that dependency links remain accessible. |
+| **Cursor** | Put the [README prompt](README.md#use-it-in-30-seconds) in `.cursor/rules/infinityblade.mdc` with the host's supported always-apply metadata; include a locator to the preserved source. |
+| **GitHub Copilot** | Put the prompt in `.github/copilot-instructions.md`, with the source locator. |
+| **Repository instruction files** | Use `AGENTS.md`, `CLAUDE.md` or `GEMINI.md` as supported by the host; retain the core source location and scope. |
+| **Chat model / API** | Use the prompt plus the primer/core contents in the available instruction/context mechanism. Files the host cannot read do not count as loaded. |
 
-## Install a library skill
+If an importer accepts only one flattened folder, do not assume relative links survived. Supply the primer and routed files as additional resources, or use the source-locator/prompt route. A symlink may work in a host that follows links, but this is a host capability to verify, not a universal installation promise. The [portable host contract](docs/OPERATING-PATHS.md#establish-a-portable-host-contract) maps capabilities without inventing tools.
 
-The skills library (index: [`skills/INDEX.md`](skills/INDEX.md)) carries 19 complete skill folders beside the doctrine skill. Installing one means copying its folder into the same skills folder as `skills/infinityblade/`, by the same host rows above: the folder is complete as-is, with its full SKILL.md and every supporting file it needs, except the dependencies the index names in its Dependency column (two folders name theirs plainly). Where a library skill needs a credential, a path, or a document of yours, its SKILL.md names an environment variable or a placeholder; no credential file ships with any skill, and none should be added to one.
+## 3. Add library skills by task
 
-## Confirm it works
+The [index](skills/INDEX.md) contains 22 noncore skills; the [registry](skills/registry.json) is the machine-readable inventory. Source-complete means the folder's authored text/code is present. It does not mean every external engine, renderer, credential, host tool or policy dependency is bundled.
 
-Do not confirm an install by asking for a recital. A wording check proves the words arrived, not that behavior changed, and this doctrine distrusts wording checks in its own house first.
+```bash
+python3 tools/skill_router.py 'verify a saved export and a delegated completion claim'
+python3 tools/build_bundle.py --skill save-readback-verification --skill claim-verification-ledger --output /tmp/verification-source.zip
+```
 
-Run two cases from [eval-cases.md](skills/infinityblade/references/eval-cases.md), one repair case and one absence or verdict case, twice each: once with the skill installed and once without. The install is confirmed only if the with-skill runs score higher on the sheet in that file (scope stated before action, proof taken from the final artifact, verdict exact) and neither without-skill run does. Record the two scores beside the install date. Anything less is UNVERIFIED, and the honest report says so.
+The router gives lexical suggestions and dependencies, not semantic certainty. Read the chosen skill's trigger and negative boundary. Chart/stock analysis requires the chart engine and renderer; backtest cross-checking requires its pinned external oracle; REA teardown requires its external toolchain. Credentials, private memory and runtime state belong outside this public source tree.
+
+## Confirm installation and behavior separately
+
+**Installation:** prove the host discovers the intended version and can open its primer, core and routed dependencies. Record host, source revision, activation route and any missing capability. Read-back beats a model recital.
+
+**Local mechanisms:** run the matching package tests on temporary state. Record actual runner counts and final exit status, with the tested revision. This proves the tested contracts only.
+
+**Behavior:** use the [paired evaluation procedure](docs/BEHAVIOR-EVALUATION.md). Start with a repair case and an absence/verdict case from [eval-cases.md](skills/infinityblade/references/eval-cases.md), plus a near-miss case where the workflow should not activate. Compare candidate and baseline in fresh contexts, keep selection data separate from a held-out final set, and report costs and regressions. An already successful baseline is not a failed install; it means that case establishes no improvement. Do not claim a cross-model effect without actual model trials.
 
 ## Enforce it
 
-Instructions can be skipped; checks can't. In Claude Code, a Stop hook can refuse to end any turn whose reply lacks a `STATUS:` line. Copy [`hooks/require-status.sh`](hooks/require-status.sh) to `.claude/hooks/`, make it executable, and add to `.claude/settings.json`:
+Instructions can be skipped. A Claude Code Stop hook checks the report's shape at the end of a turn. Keep [hooks/require-status.sh](hooks/require-status.sh) inside the repository/bundle so it can load [tools/status_evidence_check.py](tools/status_evidence_check.py). If copying the hook elsewhere, set `INFINITYBLADE_ROOT` to the preserved source root; the hook is not a standalone single-file installation.
+
+For a repository containing the hook and tools, a project-level `.claude/settings.json` entry is:
 
 ```json
 {
   "hooks": {
-    "Stop": [{ "hooks": [{ "type": "command", "command": ".claude/hooks/require-status.sh" }] }]
+    "Stop": [{ "hooks": [{ "type": "command", "command": "bash hooks/require-status.sh" }] }]
   }
 }
 ```
 
-The hook reads the session transcript and, if the last assistant message has no `STATUS:` line, asks the agent to add one with its proof. Other hosts: add the same check to your CI or review step (look for `STATUS:` in the agent's final report).
+Resolve the command relative to the host's actual working directory. For another directory, use an absolute path and set `INFINITYBLADE_ROOT` in the host's environment. Run a fresh-session smoke test before calling the hook active; a configuration file alone is not enforcement proof.
 
-**What the hook actually checks (updated 3.1.0).** The shipped hook pattern-matches the label `STATUS:` and one of the four verdict words, and since 3.1.0 it also refuses a bare label: a STATUS line for work done must carry an evidence pointer (a path, a URL, or a quoted command result) after the verdict, or the hook blocks. It still cannot tell true evidence from a pointer to nothing; no wording-level check can. The paragraph below states the floor honestly. Treat it as a floor: it guarantees the report has a shape, never that the report is true. Any hook or checker implementation claiming this doctrine's enforcement standard must therefore require an evidence pointer after the label (the artifact, file, command output, or read-back the claim rests on) and must refuse a bare label. The same limit applies to any prompt checker: a checker that tests a fixed phrase list checks those phrases only; unless it derives its requirements from SKILL.md at run time, it does not check that a prompt matches the current skill.
+**What it checks:** the final assistant text carries a recognized `STATUS:` verdict with a supported evidence-pointer shape, or the exact no-change scope marker. A bare label is refused. A nonexistent or irrelevant locator can still pass a wording check; the hook does not verify evidence truth or grant completion. The active-hook guard prevents an endless stop loop. Input/configuration problems must be reported as such, never converted into successful proof.
 
-**Scope note (2026-11-02).** The hook demands the line on every reply, including casual conversation and pure explanation, which the skill itself skips. That breadth is the enforcement layer's deliberate choice, not the skill's activation scope. The governing statement is in SKILL.md (The non-skippable minimum): a skipped-category reply satisfies the hook with the single line `STATUS: GREEN, no change made`, which is a scope marker, not a completion claim.
+**Activation scope:** the core skips casual conversation and pure explanation. A host configured to demand a STATUS line on every reply uses `STATUS: GREEN, no change made` only for those skipped replies. It cannot excuse a result claim, performed work or a missing evidence row. Other hosts can apply the same shape checker at their own supported completion boundary; verify that integration independently.

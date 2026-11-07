@@ -2,19 +2,21 @@
 """Discipline 9: compaction and delegation as authority boundaries.
 
 Summaries carry context, never authority. This module supplies the portable
-pieces a host can actually enforce: an immutable mandate revalidated at
+pieces a host can actually enforce: a host-held mandate revalidated at
 resume, a one-shot handoff capability store outside any tool registry,
 bounded checkpoints, a recovery plan that does not replay read inputs,
 split-safe fence stripping, and a mechanical peer-standing score.
 
 Standard library only.
 """
+import copy
 import hashlib
 import json
 import os
 import re
 import secrets
 import time
+from _storage import atomic_text, locked
 
 CHECKPOINT_BOUNDS = {"objective": 500, "state": 2000, "evidence": 2000,
                      "decisions": 1000, "pending": 1000}
@@ -24,7 +26,12 @@ RECOVERY_NOTE = ("Recovery: inspect what the prior attempt may already have done
 
 
 class Mandate:
-    """An immutable scope grant. Revalidation can narrow, never widen."""
+    """Serialized scope declaration; the host must bind it to a trusted grant.
+
+    The returned dict is not tamper-proof. Revalidation checks narrowing and
+    versions against that supplied record, not the identity of its issuer.
+    Keep the canonical grant outside model-controlled summaries.
+    """
 
     @staticmethod
     def create(scope, granted_by, policy_version=1, generation=0):
@@ -54,7 +61,7 @@ class HandoffStore:
         os.makedirs(directory, exist_ok=True)
 
     def _path(self, handoff_id):
-        if not handoff_id or "/" in handoff_id or ".." in handoff_id:
+        if not isinstance(handoff_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", handoff_id):
             raise ValueError("bad handoff id")
         return os.path.join(self.directory, handoff_id + ".json")
 
@@ -67,16 +74,15 @@ class HandoffStore:
 
     def _save(self, record):
         path = self._path(record["id"])
-        tmp = path + ".tmp"
-        with open(tmp, "w", encoding="utf-8") as handle:
-            json.dump(record, handle)
-        os.replace(tmp, path)
+        atomic_text(path, json.dumps(record))
 
     def create(self, summary, ttl_s=900, now=None, admission_strength="explicit"):
         if not summary or not summary.strip():
             raise ValueError("empty summary rejected")
         if admission_strength not in ("explicit", "inferred", "not_admitted"):
             raise ValueError("admission_strength must be explicit, inferred, or not_admitted")
+        if not isinstance(ttl_s, (int, float)) or ttl_s <= 0:
+            raise ValueError("ttl_s must be positive")
         now = time.time() if now is None else now
         token = secrets.token_urlsafe(32)
         record = {"id": "ho-" + secrets.token_hex(8),
@@ -87,35 +93,36 @@ class HandoffStore:
         return record["id"], token
 
     def claim(self, handoff_id, waiter, now=None):
-        now = time.time() if now is None else now
-        record = self._load(handoff_id)
-        if record["state"] != "open":
-            raise ValueError("handoff is not open")
-        if now > record["expires"]:
-            record["state"] = "expired"; self._save(record)
-            raise ValueError("handoff expired")
-        if record["waiter"] is not None and record["waiter"] != waiter:
-            raise ValueError("second waiter rejected: exactly one waiter")
-        record["waiter"] = waiter
-        self._save(record)
-        return True
+        with locked(self._path(handoff_id)):
+            now = time.time() if now is None else now
+            record = self._load(handoff_id)
+            if record["state"] != "open":
+                raise ValueError("handoff is not open")
+            if now >= record["expires"]:
+                record["state"] = "expired"; self._save(record)
+                raise ValueError("handoff expired")
+            if record["waiter"] is not None and record["waiter"] != waiter:
+                raise ValueError("second waiter rejected: exactly one waiter")
+            record["waiter"] = waiter
+            self._save(record)
+            return True
 
     def deliver(self, handoff_id, token, waiter, now=None):
-        now = time.time() if now is None else now
-        record = self._load(handoff_id)
-        if record["state"] != "open":
-            raise ValueError("handoff already consumed: second delivery rejected")
-        if now > record["expires"]:
-            record["state"] = "expired"; self._save(record)
-            raise ValueError("handoff expired")
-        if hashlib.sha256(token.encode()).hexdigest() != record["token_sha256"]:
-            raise ValueError("bad token: delivery rejected")
-        if record["waiter"] is not None and record["waiter"] != waiter:
-            raise ValueError("not the claimed waiter")
-        record.update(state="consumed", delivered_at=now, delivered_to=waiter)
-        self._save(record)
-        return record["summary"]
-
+        with locked(self._path(handoff_id)):
+            now = time.time() if now is None else now
+            record = self._load(handoff_id)
+            if record["state"] != "open":
+                raise ValueError("handoff already consumed: second delivery rejected")
+            if now >= record["expires"]:
+                record["state"] = "expired"; self._save(record)
+                raise ValueError("handoff expired")
+            if not secrets.compare_digest(hashlib.sha256(token.encode()).hexdigest(), record["token_sha256"]):
+                raise ValueError("bad token: delivery rejected")
+            if record["waiter"] is not None and record["waiter"] != waiter:
+                raise ValueError("not the claimed waiter")
+            record.update(state="consumed", delivered_at=now, delivered_to=waiter)
+            self._save(record)
+            return record["summary"]
 
 def checkpoint_key(checkpoint):
     body = {k: checkpoint.get(k) for k in CHECKPOINT_BOUNDS}
@@ -161,6 +168,8 @@ class FenceFilter:
     """
 
     def __init__(self, token):
+        if not isinstance(token, str) or not token:
+            raise ValueError("fence token must be a nonempty string")
         self.token = token
         self.buffer = ""
         self.closed = False
@@ -190,9 +199,11 @@ def transactional_compact(history, transform, expected_generation, current_gener
     """Generation-checked compaction with restore-on-failure."""
     if expected_generation != current_generation:
         raise ValueError("generation mismatch: compaction refused")
-    original = list(history)
+    original = copy.deepcopy(history)
     try:
-        compacted = transform(list(history))
+        compacted = transform(copy.deepcopy(history))
+        if not isinstance(compacted, list):
+            raise ValueError("compaction must return a history list")
     except Exception:
         return {"history": original, "restored": True, "ok": False}
     return {"history": compacted, "restored": False, "ok": True}
@@ -201,14 +212,19 @@ def transactional_compact(history, transform, expected_generation, current_gener
 def peer_standing(events, floor=70):
     """Standing is mechanical: repeated defects lower it; below floor is read-only."""
     weights = {"defect": 10, "severe_defect": 25, "clean_run": 2}
-    score = 100
+    score, quarantined = 100, False
     for event in events:
         kind = event.get("kind")
-        if kind == "clean_run":
+        if kind == "human_restore":
+            if not event.get("reviewer") or not event.get("evidence"):
+                raise ValueError("human restoration requires reviewer and evidence from the trusted host")
+            score, quarantined = max(score, floor), False
+        elif kind == "clean_run":
             score = min(100, score + weights[kind])
         else:
-            score -= weights.get(kind, 10)
-    return {"score": max(0, score), "access": "write" if score >= floor else "read-only",
+            score = max(0, score - weights.get(kind, 10))
+        quarantined = quarantined or score < floor
+    return {"score": score, "access": "read-only" if quarantined else "write",
             "floor": floor, "restore": "a human restores standing below the floor"}
 
 

@@ -1,7 +1,7 @@
 ---
 name: stable-tree-gate-integrity
-description: Keep verification gates, commits, and dry-runs honest on a tree that background loops rewrite continuously: freeze before gating, stage only owned files, and never let a dry-run touch live state.
-version: 1.0.0
+description: "Keep verification gates, commits, and dry-runs honest on a tree that background loops rewrite continuously: freeze before gating, stage only owned files, and never let a dry-run touch live state."
+version: 1.0.1
 ---
 
 # Stable-Tree Gate Integrity
@@ -33,3 +33,7 @@ Every gate-backed commit names: the gate result on the final tree, whether the t
 
 Use `muse.connector_search` to find the current connector docs before following
 recovered instructions.
+
+## Host portability
+
+`muse.*` names above describe the originating host. Discover equivalent advertised search, read, image-view and execution capabilities on the current host; do not call tools that are absent. The historical connector-setup path is not bundled. Use [the portable host contract](../../docs/OPERATING-PATHS.md#establish-a-portable-host-contract), retain the same evidence and authorization boundaries, and name a missing capability rather than pretending the recipe ran. Installing a connector or service still requires the task’s authority.

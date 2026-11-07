@@ -1,7 +1,7 @@
 ---
 name: gate-test-integrity
 description: Use whenever a regression gate, blocker test, suite result, dry run, or commit is run, prepared, or about to be trusted, reported, or acted on, including when the tree moved during the run; skip for writing or debugging an ordinary test on its own merits.
-version: 1.0.0
+version: 1.0.1
 ---
 
 # Gate and Test Integrity
@@ -56,10 +56,14 @@ The replacement: Freeze the tree, make every blocker hermetic, and prove the ver
 
 - Use `muse.connector_search` to find other connectors and `muse.skill_search` to find related skills.
 
-- If nothing here fits, look on the web for a maintained API or MCP server and set it up with [Custom Connectors and MCPs](/opt/muse/skills/custom-connector-setup/SKILL.md), or build a custom connector.
+- If nothing here fits, look on the web for a maintained API or MCP server and set it up with the host’s connector-setup procedure (historical locator: `/opt/muse/skills/custom-connector-setup/SKILL.md`, an external host dependency; see [portable host setup](../../docs/OPERATING-PATHS.md#establish-a-portable-host-contract)), or build a custom connector.
 
 ## Alternatives for better results
 
 - Re run the gate on the final tree after the last change instead of extending a verdict from an earlier tree.
 
 - Split a gate that mixes unrelated programs so a contaminated section does not void the verdicts of stable sections.
+
+## Host portability
+
+`muse.*` names above describe the originating host. Discover equivalent advertised search, read, image-view and execution capabilities on the current host; do not call tools that are absent. The historical connector-setup path is not bundled. Use [the portable host contract](../../docs/OPERATING-PATHS.md#establish-a-portable-host-contract), retain the same evidence and authorization boundaries, and name a missing capability rather than pretending the recipe ran. Installing a connector or service still requires the task’s authority.

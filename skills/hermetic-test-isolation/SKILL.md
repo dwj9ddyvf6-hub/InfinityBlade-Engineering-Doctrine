@@ -1,7 +1,7 @@
 ---
 name: hermetic-test-isolation
 description: Make regression tests prove the same verdict alone, in the full suite, and in a clean export, with no live-state reads, no unrestored monkeypatches, and no import-frozen paths, before any gate result is trusted.
-version: 1.0.0
+version: 1.0.1
 ---
 
 # Hermetic Test Isolation
@@ -35,3 +35,7 @@ For each new or repaired blocker: the three run results (alone / full suite / cl
 
 Use `muse.connector_search` to find the current connector docs before following
 recovered instructions.
+
+## Host portability
+
+`muse.*` names above describe the originating host. Discover equivalent advertised search, read, image-view and execution capabilities on the current host; do not call tools that are absent. The historical connector-setup path is not bundled. Use [the portable host contract](../../docs/OPERATING-PATHS.md#establish-a-portable-host-contract), retain the same evidence and authorization boundaries, and name a missing capability rather than pretending the recipe ran. Installing a connector or service still requires the task’s authority.

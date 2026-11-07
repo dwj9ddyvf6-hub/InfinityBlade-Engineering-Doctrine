@@ -10,6 +10,8 @@ Standard library only.
 """
 import hashlib
 import json
+import math
+from _storage import locked
 import os
 import re
 import subprocess
@@ -85,7 +87,11 @@ def lint_skill_text(text):
 
 def skill_size(data):
     if isinstance(data, str):
-        size = len(data.encode("utf-8"))
+        try:
+            is_file = os.path.isfile(data)
+        except OSError:
+            is_file = False
+        size = os.path.getsize(data) if is_file else len(data.encode("utf-8"))
     elif isinstance(data, bytes):
         size = len(data)
     elif os.path.isfile(data):
@@ -121,7 +127,8 @@ def validate_eval_set(data):
     if not data.get("judge_unknown_exit"):
         errors.append("model judge needs an explicit Unknown exit")
     kinds = {case.get("kind") for case in data.get("cases", [])}
-    if kinds != {"should", "should-not"}:
+    cases = data.get("cases", [])
+    if kinds != {"should", "should-not"} or sum(c.get("kind") == "should" for c in cases) != sum(c.get("kind") == "should-not" for c in cases):
         errors.append("cases must be balanced should and should-not")
     return errors
 
@@ -130,6 +137,13 @@ def validate_trigger_dataset(cases, require_twenty=True):
     errors = []
     if require_twenty and len(cases) != 20:
         errors.append("trigger set must contain exactly 20 queries at vendor numbers")
+    if any(c.get("expect") not in ("trigger", "no-trigger") for c in cases):
+        errors.append("unknown trigger label")
+    if any(c.get("split") not in ("validation", "final") for c in cases):
+        errors.append("unknown dataset split")
+    queries = [c.get("query") for c in cases]
+    if any(not isinstance(q, str) or not q.strip() for q in queries) or len(set(queries)) != len(queries):
+        errors.append("queries must be nonempty and unique across splits")
     positives = sum(1 for c in cases if c.get("expect") == "trigger")
     negatives = sum(1 for c in cases if c.get("expect") == "no-trigger")
     if positives != negatives:
@@ -144,6 +158,10 @@ def validate_trigger_dataset(cases, require_twenty=True):
 
 
 def score_predictions(cases, predictions, split, runs=3, threshold=0.5):
+    if isinstance(runs, bool) or not isinstance(runs, int) or runs < 1:
+        raise ValueError("runs must be a positive integer")
+    if isinstance(threshold, bool) or not isinstance(threshold, (int, float)) or not math.isfinite(threshold) or not 0 <= threshold <= 1:
+        raise ValueError("threshold must be finite and between zero and one")
     selected = [c for c in cases if c.get("split") == split]
     if not selected:
         raise ValueError(f"no cases in split {split!r}")
@@ -152,7 +170,11 @@ def score_predictions(cases, predictions, split, runs=3, threshold=0.5):
         outcomes = predictions.get(split, {}).get(case["query"])
         if outcomes is None or len(outcomes) != runs:
             raise ValueError(f"prediction for {case['query']!r} must contain exactly {runs} runs")
-        fired = sum(bool(x) for x in outcomes) / runs >= threshold
+        if any(type(x) is not bool for x in outcomes):
+            raise ValueError("prediction outcomes must be booleans, not truthy values")
+        if case.get("expect") not in ("trigger", "no-trigger"):
+            raise ValueError("unknown expected trigger label")
+        fired = sum(outcomes) / runs >= threshold
         expected = case["expect"] == "trigger"
         if fired and expected:
             tp += 1
@@ -175,19 +197,19 @@ def dataset_hash(cases):
 
 def run_final_test(cases, predictions, candidate_id, ledger_path):
     """Run the untouched final set once per candidate and dataset hash."""
-    key = f"{dataset_hash(cases)}:{candidate_id}"
-    used = set()
-    if os.path.isfile(ledger_path):
-        with open(ledger_path, encoding="utf-8") as handle:
-            used = {json.loads(line)["key"] for line in handle if line.strip()}
-    if key in used:
-        raise ValueError("final test already run for this candidate and dataset: it is selection data now")
-    result = score_predictions(cases, predictions, "final")
-    os.makedirs(os.path.dirname(os.path.abspath(ledger_path)), exist_ok=True)
-    with open(ledger_path, "a", encoding="utf-8") as handle:
-        handle.write(json.dumps({"key": key, "candidate": candidate_id, "result": result}) + "\n")
-    return result
-
+    with locked(ledger_path):
+        key = f"{dataset_hash(cases)}:{candidate_id}"
+        used = set()
+        if os.path.isfile(ledger_path):
+            with open(ledger_path, encoding="utf-8") as handle:
+                used = {json.loads(line)["key"] for line in handle if line.strip()}
+        if key in used:
+            raise ValueError("final test already run for this candidate and dataset: it is selection data now")
+        result = score_predictions(cases, predictions, "final")
+        os.makedirs(os.path.dirname(os.path.abspath(ledger_path)), exist_ok=True)
+        with open(ledger_path, "a", encoding="utf-8") as handle:
+            handle.write(json.dumps({"key": key, "candidate": candidate_id, "result": result}) + "\n")
+        return result
 
 def select_candidate(candidates, cases, predictions_by_candidate):
     scored = []
@@ -202,6 +224,8 @@ def select_candidate(candidates, cases, predictions_by_candidate):
 
 
 def reliability(runs_by_task, k=3):
+    if isinstance(k, bool) or not isinstance(k, int) or k < 1:
+        raise ValueError("k must be a positive integer")
     if not runs_by_task:
         return {"pass_at_k": 0.0, "pass_pow_k": 0.0, "tasks": 0}
     pass_at = 0
@@ -210,6 +234,8 @@ def reliability(runs_by_task, k=3):
         if len(runs) < k:
             raise ValueError(f"reliability requires at least k={k} runs per task")
         window = runs[:k]
+        if any(type(value) is not bool for value in window):
+            raise ValueError("run outcomes must be booleans")
         pass_at += any(window)
         pass_all += all(window)
     n = len(runs_by_task)
@@ -225,13 +251,16 @@ def validate_trajectory(fixture):
         errors.append("trajectory fixture needs an ordered tool_sequence")
     calls = fixture.get("actual_calls", [])
     names = [call.get("tool") for call in calls]
-    if sequence and names[:len(sequence)] != sequence:
+    observed = names[:len(sequence)] if sequence and fixture.get("allow_extra_calls") else names
+    if sequence and observed != sequence:
         errors.append("actual tool sequence does not match the fixture order")
     forbidden = set(fixture.get("forbidden_tools", []))
     if forbidden & set(names):
         errors.append("forbidden tool appears in the trajectory")
     for check in fixture.get("arg_checks", []):
-        call = next((c for c in calls if c.get("tool") == check.get("tool")), None)
+        matched = [c for c in calls if c.get("tool") == check.get("tool")]
+        occurrence = check.get("occurrence", 0)
+        call = matched[occurrence] if isinstance(occurrence, int) and 0 <= occurrence < len(matched) else None
         if not call or call.get("args", {}).get(check.get("arg")) != check.get("equals"):
             errors.append(f"argument check failed for {check.get('tool')}.{check.get('arg')}")
     return errors
@@ -291,6 +320,10 @@ def adoption_scan(manifest, trust_scanner_config=False):
     """HCS-28-shaped scan. Missing universal components score zero."""
     if manifest.get("scanner_config_in_repo") and not trust_scanner_config:
         raise ValueError("scanner config inside the scanned repo needs an explicit trust flag")
+    for key in ADOPTION_WEIGHTS:
+        value = manifest.get(key, 0)
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or not 0 <= value <= 1:
+            raise ValueError(f"{key} must be a finite score in [0, 1]")
     emitted = {key: float(manifest.get(key, 0)) for key in UNIVERSAL_COMPONENTS}
     denominator = sum(ADOPTION_WEIGHTS[key] for key in UNIVERSAL_COMPONENTS)
     numerator = sum(ADOPTION_WEIGHTS[key] * emitted[key] for key in UNIVERSAL_COMPONENTS)
@@ -346,11 +379,12 @@ def fragment_lint(text, fragment_dir):
     return errors
 
 
-def f7_check(clean_dir, mutant_dir, command):
+def f7_check(clean_dir, mutant_dir, command, expected_failure=None, timeout=60):
     """Accept a strengthened test only if clean passes and mutant fails."""
-    clean = subprocess.run(command, cwd=clean_dir, capture_output=True, text=True)
-    mutant = subprocess.run(command, cwd=mutant_dir, capture_output=True, text=True)
-    accepted = clean.returncode == 0 and mutant.returncode != 0
+    clean = subprocess.run(command, cwd=clean_dir, capture_output=True, text=True, timeout=timeout)
+    mutant = subprocess.run(command, cwd=mutant_dir, capture_output=True, text=True, timeout=timeout)
+    matched = expected_failure is not None and re.search(expected_failure, mutant.stdout + mutant.stderr) is not None
+    accepted = clean.returncode == 0 and mutant.returncode != 0 and (matched if expected_failure is not None else True)
     if clean.returncode != 0 and mutant.returncode != 0:
         finding = "test fails both ways: itself a J6 finding"
     elif clean.returncode == 0 and mutant.returncode == 0:
@@ -358,9 +392,11 @@ def f7_check(clean_dir, mutant_dir, command):
     elif clean.returncode != 0:
         finding = "clean replica failed"
     else:
-        finding = "F7 contract satisfied"
+        finding = ("expected mutant failure observed" if matched else
+                   "mutant failure did not match the expected reason" if expected_failure is not None else
+                   "exit-code differential only; inspect failure reason before trusting F7")
     return {"clean_exit": clean.returncode, "mutant_exit": mutant.returncode,
-            "accepted": accepted, "finding": finding}
+            "accepted": accepted, "finding": finding, "failure_reason_verified": matched}
 
 
 def judge_output(value):

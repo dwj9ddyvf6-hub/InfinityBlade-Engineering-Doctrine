@@ -16,11 +16,8 @@ from datetime import date
 from urllib.parse import urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-try:
-    from operations import redact
-except Exception:  # pragma: no cover
-    def redact(value):
-        return value
+from operations import redact, deterministic_id
+from _storage import bounded_blocks
 
 MIN_CONFIDENCE = 0.7
 MIN_SUCCESS_RATE = 0.6
@@ -93,8 +90,12 @@ def extract_candidates(events):
     A new submission for the same trigger/action replaces the prior pending
     candidate in the returned set.
     """
-    groups = {}
+    groups, seen_ids = {}, set()
     for event in events:
+        if event.get("id") in seen_ids:
+            continue
+        if event.get("id"):
+            seen_ids.add(event["id"])
         trigger, action = event.get("trigger"), event.get("action")
         if not trigger or not action:
             continue
@@ -109,7 +110,7 @@ def extract_candidates(events):
     for (trigger, action, domain), group in groups.items():
         count = group["observations"]
         candidates.append({
-            "id": f"candidate-{len(candidates) + 1}", "trigger": trigger, "action": action,
+            "id": "candidate-" + deterministic_id([trigger, action, domain])[:16], "trigger": trigger, "action": action,
             "domain": domain, "confidence": confidence_for_count(count), "observations": count,
             "contexts": sorted(group["contexts"]), "evidence": group["evidence"],
             "scope": "project", "status": "pending", "success_rate": 0.0,
@@ -128,13 +129,15 @@ def _is_private_or_local_host(host):
         return host.endswith(".local")
 
 
-def import_instinct(payload, source_url, now="2026-01-01"):
+def import_instinct(payload, source_url, now=None):
     """Harden an external instinct before it can land as pending."""
     if len(payload) > MAX_IMPORT_BYTES:
         raise ValueError("import exceeds the size cap")
+    now = date.today().isoformat() if now is None else now
+    date.fromisoformat(now)
     parsed = urlparse(source_url)
     if parsed.scheme not in ("https", "http") or _is_private_or_local_host(parsed.hostname):
-        raise ValueError("import source is not a public remote: SSRF guard")
+        raise ValueError("import source fails the URL syntax screen (DNS and redirects are not checked)")
     unit = json.loads(payload.decode("utf-8"))
     if any(str(unit.get(f, "")).startswith(("/", "~")) for f in ("id", "trigger", "action")):
         raise ValueError("system-path shaped content is blocked")
@@ -160,7 +163,8 @@ def _age_days(created_on, now):
 def build_injection(units, stack=None, now=None, budget_chars=BUDGET_CHARS):
     """Select the units a session may see, with every omission accountable."""
     rejected, admitted = [], []
-    for unit in units:
+    for original in units:
+        unit = dict(original)
         errors = validate_instinct(unit)
         if errors:
             rejected.append({"id": unit.get("id"), "reason": "; ".join(errors)})
@@ -168,6 +172,8 @@ def build_injection(units, stack=None, now=None, budget_chars=BUDGET_CHARS):
             rejected.append({"id": unit["id"], "reason": "contradicted: frozen, excluded"})
         elif unit.get("status") == "pending" and _age_days(unit.get("created_on"), now) > PENDING_TTL_DAYS:
             rejected.append({"id": unit["id"], "reason": "pending unit expired after 30 days"})
+        elif unit.get("status") != "active":
+            rejected.append({"id": unit["id"], "reason": "not active: human review required before injection"})
         elif unit.get("confidence", 0) < MIN_CONFIDENCE:
             rejected.append({"id": unit["id"], "reason": f"confidence {unit.get('confidence')} < {MIN_CONFIDENCE}"})
         elif unit.get("success_rate", 0) < MIN_SUCCESS_RATE:
@@ -200,24 +206,19 @@ def build_injection(units, stack=None, now=None, budget_chars=BUDGET_CHARS):
             + (STACK_BOOST if stack and unit["domain"] == stack else 0)
     pool.sort(key=lambda u: -u["rank"])
     chosen = pool[:MAX_INJECT]
-    lines, used = [], 0
-    for unit in chosen:
-        block = f"[{unit['id']}] {unit['summary'][:SUMMARY_CHARS]}"
-        lines.append(block)
-        used += len(block) + 1
-    omitted = [u["id"] for u in pool[MAX_INJECT:]] + type_capped + merged
-    lines.append(f"[INJECTION OMISSIONS: {', '.join(omitted) if omitted else 'none'}; "
-                 f"budget {budget_chars} chars; included {len(chosen)} of {len(units)}]")
-    return {"text": "\n".join(lines), "injected": [u["id"] for u in chosen],
+    result = bounded_blocks([(unit["id"], f"[{unit['id']}] {unit['summary'][:SUMMARY_CHARS]}")
+                             for unit in chosen], budget_chars, total=len(units))
+    omitted = result["omitted"] + [u["id"] for u in pool[MAX_INJECT:]] + type_capped + merged
+    return {"text": result["text"], "injected": result["included"],
             "rejected": rejected, "merged": merged, "type_capped": type_capped,
-            "omitted": omitted, "used_chars": used}
+            "omitted": omitted, "used_chars": result["used_chars"]}
 
 
 def cluster_skill_candidates(units, min_units=1):
     """Propose mature clusters as skill drafts. A human gates promotion."""
     clusters = {}
     for unit in units:
-        if unit.get("confidence", 0) >= MIN_CONFIDENCE and not unit.get("contradicted"):
+        if unit.get("status") == "active" and unit.get("confidence", 0) >= MIN_CONFIDENCE and not unit.get("contradicted"):
             clusters.setdefault(unit["domain"], []).append(unit["id"])
     return [{"domain": domain, "units": ids, "status": "skill-draft-proposal",
              "human_gate_required": True}

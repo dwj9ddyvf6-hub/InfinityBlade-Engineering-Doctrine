@@ -53,6 +53,10 @@ def validate(args: argparse.Namespace) -> None:
     # slipped past the positivity check (NaN comparisons are False) and
     # was serialized into the payload as "nan" -> 422 at the API. Same
     # class as the 2026-10-10 alpaca_submit_order.py --qty fix.
+    if not args.position_intent.startswith(args.side + "_"):
+        fail("--side and --position-intent must agree")
+    if not isinstance(args.symbol, str) or not args.symbol.strip():
+        fail("--symbol must be nonempty")
     if args.qty <= 0:
         fail("--qty must be a positive whole number of contracts")
     if args.limit_price <= 0 or not math.isfinite(args.limit_price):

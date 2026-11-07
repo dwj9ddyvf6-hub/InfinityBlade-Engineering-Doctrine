@@ -1,7 +1,7 @@
 ---
 name: persisted-field-consumption-audit
 description: Use whenever a migration to a canonical source is about to be called complete, or a surface is built from persisted producer fields, even when a caller list looks complete; skip for greenfield builds with no predecessor route.
-version: 1.0.0
+version: 1.0.1
 ---
 
 # Consumer and Field Consumption Audit
@@ -84,10 +84,14 @@ The replacement: Audit every consumer of every persisted field before calling th
 
 - Use `muse.connector_search` to find other connectors and `muse.skill_search` to find related skills.
 
-- If nothing here fits, look on the web for a maintained API or MCP server and set it up with [Custom Connectors and MCPs](/opt/muse/skills/custom-connector-setup/SKILL.md), or build a custom connector.
+- If nothing here fits, look on the web for a maintained API or MCP server and set it up with the host’s connector-setup procedure (historical locator: `/opt/muse/skills/custom-connector-setup/SKILL.md`, an external host dependency; see [portable host setup](../../docs/OPERATING-PATHS.md#establish-a-portable-host-contract)), or build a custom connector.
 
 ## Alternatives for better results
 
 - Start with the fields a surface claims to show, then widen to every field the producer wrote for that surface, because the second pass is where unconsumed fields appear.
 
 - Run the consumer search and the field inventory in the same pass when a migration and a new surface land together, because each pass catches hits the other would miss.
+
+## Host portability
+
+`muse.*` names above describe the originating host. Discover equivalent advertised search, read, image-view and execution capabilities on the current host; do not call tools that are absent. The historical connector-setup path is not bundled. Use [the portable host contract](../../docs/OPERATING-PATHS.md#establish-a-portable-host-contract), retain the same evidence and authorization boundaries, and name a missing capability rather than pretending the recipe ran. Installing a connector or service still requires the task’s authority.

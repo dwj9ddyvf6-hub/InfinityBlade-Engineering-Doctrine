@@ -1,7 +1,7 @@
 ---
 name: agent-enhancement-systems
 description: Use when building, wiring, or auditing an agent's proactive lanes, instincts, memory, recall, skill tests, library gates, handoffs, rationale records, freshness, outbound sends, deterministic IDs, effect queues, routing, near-miss learning, or content-bound approvals. Do not use for ordinary one-off work that creates none of those systems.
-version: 1.0.0
+version: 1.0.1
 capabilities: read, write
 ---
 
@@ -21,7 +21,7 @@ The replacement: this folder ships the machinery. Import the module, wire it at 
    python3 tests/test_agent_enhancement.py
    ```
 
-   Expected final lines: `Ran 13 tests` and `OK`. If the run fails, fix the package or report UNVERIFIED. Do not work around a red package test by copying a module elsewhere.
+   Expected result: the runner reports the executed test count and `OK`, with exit status zero. Record the actual count and source revision; the count grows as regressions are added. If the run fails, fix the package or report UNVERIFIED. Do not work around a red package test by copying a module elsewhere.
 
 2. Read the discipline map below and choose the smallest module that owns the surface. Do not import all modules by default.
 
@@ -36,7 +36,7 @@ The replacement: this folder ships the machinery. Import the module, wire it at 
    - an approval check immediately before the irreversible act;
    - a memory write through the store transaction, never by editing its files casually.
 
-6. Run the package test again after wiring, then run one host-level smoke test with temporary state. A package pass proves the mechanism. A host smoke test proves the host calls it. Both are required before the host lane is called live.
+6. Run the package test again after wiring, then run one host-level smoke test with temporary state. A package pass proves the named contracts covered by those tests. A temporary-state host smoke test proves that tested integration; a live claim additionally needs an authorized real-path effect or authoritative receipt. Keep these evidence boundaries separate.
 
 7. Record the decision and the losing route with `bin/why.py` when the integration closes a design path.
 
@@ -63,7 +63,7 @@ The replacement: this folder ships the machinery. Import the module, wire it at 
 | 17. Near-miss ledger | `bin/operations.py` | `NearMissLedger.record` at a gate rejection |
 | 18. Content-bound approvals | `bin/operations.py` | `ApprovalStore.check` immediately before the act |
 
-Disciplines 3 and 8 are owned by the existing mechanism-shipped skills `gate-test-integrity`, `hermetic-test-isolation`, `proof-before-green`, and `claim-verification-ledger`. This folder does not duplicate them.
+Disciplines 3 and 8 are owned by the existing procedure skills `gate-test-integrity`, `hermetic-test-isolation`, `proof-before-green`, and `claim-verification-ledger`. This folder does not duplicate them.
 
 ## Non-negotiable wiring rules
 
@@ -94,4 +94,4 @@ Discipline 10 is a writing and review practice. Its value is a task-specific hid
 
 ## Proof standard for this folder
 
-The package proof is `tests/test_agent_enhancement.py`: 13 tests covering every shipped module, using only temporary state and the Python standard library. A change to any module re-runs the whole file. A test that passes on a clean replica and fails on a mutant is handled by `skill_lab.f7_check`; use it for strengthened tests.
+The package proof is `tests/test_agent_enhancement.py`: the current regression cases covering the shipped modules, using only temporary state and the Python standard library. A change to any module re-runs the whole file. A test that passes on a clean replica and fails on a mutant is handled by `skill_lab.f7_check`; use it for strengthened tests.

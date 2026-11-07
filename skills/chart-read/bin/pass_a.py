@@ -150,10 +150,10 @@ def reset_candidate(bars, clusters, atr_series, atr, up_streak):
             "dist_to_support_atr": round(at_support, 2) if at_support is not None else None,
             "compressed": bool(compressed),
             "improving_closes": bool(improving),
-            "candidate": bool(decline_atr >= 2.0 and (at_support or 99) <= 0.5
+            "candidate": bool(decline_atr >= 2.0 and at_support is not None and at_support <= 0.5
                               and compressed and improving)}
 
-def data_status(n_bars, has_volume, provisional, ema200_ok, last_t):
+def data_status(n_bars, has_volume, provisional, ema200_ok, last_t, reference_date=None):
     """Formal data-quality status (thesis 4.10 output contract).
     VERIFIED / PARTIAL / STALE / CONFLICT / NO_VIEW.
     """
@@ -161,14 +161,17 @@ def data_status(n_bars, has_volume, provisional, ema200_ok, last_t):
         return "NO_VIEW"
     try:
         from zoneinfo import ZoneInfo
-        today = datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
-        stale = last_t[:10] < today and (datetime.strptime(today, "%Y-%m-%d")
-               - datetime.strptime(last_t[:10], "%Y-%m-%d")).days > 3
-    except Exception:
-        stale = False
+        today = reference_date or datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
+        observed = datetime.strptime(last_t[:10], "%Y-%m-%d")
+        reference = datetime.strptime(today, "%Y-%m-%d")
+        stale = (reference - observed).days > 3
+    except (ValueError, TypeError, ImportError):
+        return "PARTIAL"
+    if last_t[:10] > today:
+        return "CONFLICT"
     if stale:
         return "STALE"
-    if not has_volume or provisional or not ema200_ok:
+    if not has_volume or provisional is not False or not ema200_ok:
         return "PARTIAL"
     return "VERIFIED"
 
@@ -176,13 +179,10 @@ def data_status(n_bars, has_volume, provisional, ema200_ok, last_t):
 def bar_payload_hash(*bar_lists):
     """Provenance: sha256 over the raw bar payloads (thesis 4.10 versions block)."""
     import hashlib
-    h = hashlib.sha256()
-    for bars in bar_lists:
-        for b in bars:
-            h.update(f"{b['t']}{b['o']}{b['h']}{b['l']}{b['c']}{b.get('v')}".encode())
-    return h.hexdigest()[:16]
+    payload = json.dumps(bar_lists, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
 
-PASS_A_VERSION = "2.4.0"
+PASS_A_VERSION = "2.5.0"
 
 def last_bar_provisional(last_t):
     """Thesis 2.8: label open-bar observations provisional, separate from

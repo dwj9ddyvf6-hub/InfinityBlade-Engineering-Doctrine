@@ -8,7 +8,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from alpaca_lib import (AlpacaError, api_request, emit, fail, quote_path,
-                        require_live_confirmation, trading_base)
+                        require_live_confirmation, trading_base, operation_acknowledgement)
 
 
 def validate(args: argparse.Namespace) -> None:
@@ -82,7 +82,7 @@ def main() -> None:
         print("Unexpected close response shape (non-object body)",
               file=sys.stderr)
         sys.exit(2)
-    emit(result if result else {"closed": True, "symbol": args.symbol.upper()})
+    emit(operation_acknowledgement("close_position", args.symbol.upper(), result))
 
 
 if __name__ == "__main__":

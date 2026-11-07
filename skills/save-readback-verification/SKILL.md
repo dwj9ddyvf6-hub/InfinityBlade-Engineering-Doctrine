@@ -1,7 +1,7 @@
 ---
 name: save-readback-verification
 description: Use whenever a save, backup, push, export, or deletion is about to be reported done, and whenever a delegated, background, or subagent result is about to be repeated as fact, even when the save looks small; skip for live execution proof or absence proof.
-version: 1.0.0
+version: 1.0.1
 ---
 
 # Verified Saves and Claim Checks
@@ -56,7 +56,7 @@ The replacement: A save is proven at the destination, by read-back against the s
 
 - Use `muse.connector_search` to find other connectors and `muse.skill_search` to find related skills.
 
-- If nothing here fits, look on the web for a maintained API or MCP server and set it up with [Custom Connectors and MCPs](/opt/muse/skills/custom-connector-setup/SKILL.md), or build a custom connector.
+- If nothing here fits, look on the web for a maintained API or MCP server and set it up with the host’s connector-setup procedure (historical locator: `/opt/muse/skills/custom-connector-setup/SKILL.md`, an external host dependency; see [portable host setup](../../docs/OPERATING-PATHS.md#establish-a-portable-host-contract)), or build a custom connector.
 
 ## Alternatives for better results
 
@@ -67,3 +67,7 @@ The replacement: A save is proven at the destination, by read-back against the s
 ## Relations
 
 claim-verification-ledger is the wider ledger that cites this skill's read-back method for saves; this file is the canonical home of the save half.
+
+## Host portability
+
+`muse.*` names above describe the originating host. Discover equivalent advertised search, read, image-view and execution capabilities on the current host; do not call tools that are absent. The historical connector-setup path is not bundled. Use [the portable host contract](../../docs/OPERATING-PATHS.md#establish-a-portable-host-contract), retain the same evidence and authorization boundaries, and name a missing capability rather than pretending the recipe ran. Installing a connector or service still requires the task’s authority.

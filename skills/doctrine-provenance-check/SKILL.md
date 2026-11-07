@@ -1,7 +1,7 @@
 ---
 name: doctrine-provenance-check
 description: Audit every veto, filter, and gate, in code and in spoken framing, against stored doctrine and its provenance before calling a signal invalid or shipping a gate change.
-version: 1.0.0
+version: 1.0.1
 ---
 
 # Doctrine Provenance Check
@@ -35,3 +35,7 @@ A table with one row per item: name, where it lives, provenance, doctrine citati
 
 Use `muse.connector_search` to find the current connector docs before following
 recovered instructions.
+
+## Host portability
+
+`muse.*` names above describe the originating host. Discover equivalent advertised search, read, image-view and execution capabilities on the current host; do not call tools that are absent. The historical connector-setup path is not bundled. Use [the portable host contract](../../docs/OPERATING-PATHS.md#establish-a-portable-host-contract), retain the same evidence and authorization boundaries, and name a missing capability rather than pretending the recipe ran. Installing a connector or service still requires the task’s authority.

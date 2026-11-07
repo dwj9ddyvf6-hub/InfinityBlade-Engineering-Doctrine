@@ -1,7 +1,7 @@
 ---
 name: conviction-surface-definition
 description: Define what a requested ranking, board, or summary surface is and where its conviction is formed before building it, and source it only from that formation point.
-version: 1.0.0
+version: 1.0.1
 ---
 
 # Conviction Surface Definition
@@ -18,8 +18,8 @@ Never compose a ranking, board, or summary from whatever fields happen to be lyi
 ## Workflow
 1. Before building, write one sentence answering the user's actual goal: what decision or proof is this surface for, and for whom (including whether it is public-facing)?
 2. Identify the formation point: where does conviction for an item on this surface get created (for example staging plus a PASS chart-gate read, a scored prospective log, a signed decision)? If an item has not passed that point, it cannot appear — no exceptions for 'fresh' or 'high-scoring' raw fields.
-3. List what each displayed item must carry from the formation point: the thesis in words, entry zone, stop/invalidation, target, the gate's own read text, regime/structure context, and lifecycle state. A score or an order receipt ('buy N @ price, filled') is not a thesis.
-4. Exclude non-conviction items explicitly (hedges, housekeeping fills, unscored experiments) and say why each class is excluded.
+3. List the decision-relevant fields from the formation point: rationale, supporting evidence, decision boundary, conditions that invalidate it, intended outcome and lifecycle state. In the trading profile, preserve the full original contract: thesis in words, entry zone, stop/invalidation, target, the gate’s own read text and regime/structure context. A score or an order receipt ('buy N @ price, filled') is not a thesis. Do not impose trading-only fields on unrelated rankings.
+4. Exclude items outside the declared decision surface and say why each class is excluded. For the trading-conviction profile, preserve the exclusions for hedges, housekeeping fills and unscored experiments; other domains define their own classes from the user’s outcome.
 5. Check the failure twin: name the nearest past incident where a surface ranked something the underlying process had not actually judged, and state what in this design prevents the repeat.
 6. Only then build. If the formation point does not yet exist as data, build that first and ship the surface empty rather than filling it from raw fields.
 
@@ -34,3 +34,7 @@ The build ships with: the one-sentence definition, the formation-point source fo
 
 Use `muse.connector_search` to find the current connector docs before following
 recovered instructions.
+
+## Host portability
+
+`muse.*` names above describe the originating host. Discover equivalent advertised search, read, image-view and execution capabilities on the current host; do not call tools that are absent. The historical connector-setup path is not bundled. Use [the portable host contract](../../docs/OPERATING-PATHS.md#establish-a-portable-host-contract), retain the same evidence and authorization boundaries, and name a missing capability rather than pretending the recipe ran. Installing a connector or service still requires the task’s authority.

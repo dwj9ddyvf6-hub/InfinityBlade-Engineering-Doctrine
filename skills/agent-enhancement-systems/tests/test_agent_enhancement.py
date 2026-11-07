@@ -352,7 +352,8 @@ class OperationsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             gate = operations.OutboundGate(os.path.join(td, "receipts.jsonl"),
                                            caps={"short": {"words": 5, "chars": 40}},
-                                           open_question="Approve?")
+                                           open_question="Approve?",
+                                           transport=lambda **kwargs: {"id": "fixture-ack"})
             receipt = gate.send("short", "Ready now.", "result", "evt-1", "owner",
                                 {"outcome_status": "completed"})
             self.assertTrue(receipt["sent"])

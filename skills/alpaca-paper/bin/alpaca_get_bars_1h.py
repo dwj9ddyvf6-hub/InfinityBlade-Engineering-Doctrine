@@ -15,7 +15,7 @@ import sys
 from datetime import datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from alpaca_lib import api_request, data_base, emit, fail, quote_path
+from alpaca_lib import AlpacaError, api_request, data_base, emit, fail, quote_path
 
 
 def default_start(timeframe, limit):
@@ -47,6 +47,9 @@ def fetch_bars(symbol, timeframe, params, max_pages, max_windows, end=None):
     max_windows, and a no-progress window breaks the loop, so total
     requests stay bounded.
     """
+    if max_pages < 1 or max_windows < 1:
+        raise ValueError("max_pages and max_windows must be positive")
+    params = dict(params)
     bars_all = []
     seen = set()
     windows = 0
@@ -95,12 +98,14 @@ def fetch_bars(symbol, timeframe, params, max_pages, max_windows, end=None):
             if not page_token or pages >= max_pages:
                 truncated = bool(page_token)
                 break
-        if not truncated or end is not None or windows >= max_windows:
+        if not truncated:
             break
+        if windows >= max_windows:
+            raise AlpacaError("Bar coverage incomplete: pagination budget exhausted with a continuation token; increase explicit limits")
         if len(bars_all) == n_before or not bars_all:
-            break  # no progress -- do not spin on a stuck token
+            raise AlpacaError("Bar coverage incomplete: pagination made no progress")
         # Slide the window forward: resume from the newest bar fetched.
-        params["start"] = bars_all[-1].get("t")
+        params["start"] = max(b["t"] for b in bars_all)
     bars_all.sort(key=lambda b: b.get("t") or "")
     return bars_all
 

@@ -1,7 +1,7 @@
 ---
 name: single-door-consumer-audit
 description: Enumerate every consumer of a canonical source, engine, or feed by exhaustive search, never by caller list, and prove each one rerouted, exempt, or off-engine before declaring a single-door migration complete.
-version: 1.0.0
+version: 1.0.1
 ---
 
 # Single-Door Consumer Audit
@@ -36,3 +36,7 @@ A coverage ledger (searched / excluded / unavailable), a classification table (o
 
 Use `muse.connector_search` to find the current connector docs before following
 recovered instructions.
+
+## Host portability
+
+`muse.*` names above describe the originating host. Discover equivalent advertised search, read, image-view and execution capabilities on the current host; do not call tools that are absent. The historical connector-setup path is not bundled. Use [the portable host contract](../../docs/OPERATING-PATHS.md#establish-a-portable-host-contract), retain the same evidence and authorization boundaries, and name a missing capability rather than pretending the recipe ran. Installing a connector or service still requires the task’s authority.

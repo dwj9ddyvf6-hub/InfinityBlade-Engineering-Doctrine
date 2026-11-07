@@ -1,10 +1,39 @@
-name: check
+name: offline-source-and-behavior-checks
 on: [push, pull_request]
+permissions:
+  contents: read
 jobs:
-  prompt:
+  offline:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.12']
     steps:
       - uses: actions/checkout@v4
-      - run: python3 tools/check_prompt.py
-      - run: python3 -m py_compile tools/check_prompt.py tools/status_evidence_check.py tools/priced_initiative_score.py tools/eval_score.py
-      - run: printf 'STATUS: GREEN, no change made\n' | python3 tools/status_evidence_check.py
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Validate source, local links, syntax and registry
+        run: python tools/validate_repo.py
+      - name: Check prompt contract
+        run: python tools/check_prompt.py
+      - name: Run local mechanism and adversarial tests
+        run: python -m unittest discover -s skills/agent-enhancement-systems/tests -v
+      - name: Run repository, retrieval, transport-double and bundle tests
+        run: python -m unittest discover -s tools/tests -v
+      - name: Export and independently read back the source bundle
+        run: |
+          python tools/build_bundle.py --skill infinityblade --output "${{ runner.temp }}/doctrine.zip"
+          python tools/build_bundle.py --verify "${{ runner.temp }}/doctrine.zip"
+          python -m zipfile -e "${{ runner.temp }}/doctrine.zip" "${{ runner.temp }}/doctrine-export"
+      - name: Repeat behavioral checks from the clean source export
+        working-directory: ${{ runner.temp }}/doctrine-export
+        run: |
+          python tools/validate_repo.py
+          python -m unittest discover -s skills/agent-enhancement-systems/tests -v
+          python -m unittest discover -s tools/tests -v
+      - name: State the external-runtime boundary
+        run: >-
+          python -c "print('Offline gates cover local mechanisms and transport doubles only.
+          The chart indicator parity suite requires externally supplied core.ta_battery;
+          broker identity, entitlements, fills, host hooks and delivery remain separately unverified.')"

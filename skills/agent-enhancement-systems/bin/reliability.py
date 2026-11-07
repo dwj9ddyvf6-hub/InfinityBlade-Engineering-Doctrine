@@ -10,6 +10,8 @@ Standard library only.
 import hashlib
 import json
 import os
+from datetime import datetime, timezone
+from _storage import locked
 
 CLASSES = ("SE0", "SE1", "SE2", "SE3", "SE4")
 REPLAYABLE = ("SE0", "SE1", "SE2")
@@ -35,20 +37,25 @@ class EvidenceCapsules:
             raise ValueError(f"effect_class must be one of {CLASSES}")
         if effect_class == "SE4" and not allow_se4:
             raise ValueError("SE4 is forbidden in record mode unless a trusted caller allows it")
-        rows = self._read()
-        capsule = {"seq": len(rows) + 1, "ts": ts, "actor": actor, "action": action,
-                   "effect_class": effect_class, "target": target, "detail": detail or {},
-                   "prev": rows[-1]["hash"] if rows else "GENESIS"}
-        capsule["hash"] = _hash(capsule)
-        os.makedirs(os.path.dirname(os.path.abspath(self.path)), exist_ok=True)
-        with open(self.path, "a", encoding="utf-8") as handle:
-            handle.write(json.dumps(capsule, sort_keys=True) + "\n")
-        return capsule
+        with locked(self.path):
+            rows = self._read()
+            if not self._verify_rows(rows)["ok"]:
+                raise ValueError("cannot append to an invalid capsule chain")
+            capsule = {"seq": len(rows) + 1, "ts": ts if ts is not None else datetime.now(timezone.utc).isoformat(), "actor": actor, "action": action,
+                       "effect_class": effect_class, "target": target, "detail": detail or {},
+                       "prev": rows[-1]["hash"] if rows else "GENESIS"}
+            capsule["hash"] = _hash(capsule)
+            os.makedirs(os.path.dirname(os.path.abspath(self.path)), exist_ok=True)
+            with open(self.path, "a", encoding="utf-8") as handle:
+                handle.write(json.dumps(capsule, sort_keys=True) + "\n")
+            return capsule
 
-    def verify(self):
-        rows = self._read()
+    @staticmethod
+    def _verify_rows(rows):
         previous = "GENESIS"
         for i, capsule in enumerate(rows, 1):
+            if not isinstance(capsule, dict):
+                return {"ok": False, "entries": len(rows), "error": {"seq": i, "code": "BAD_RECORD"}}
             if capsule.get("effect_class") not in CLASSES:
                 return {"ok": False, "entries": len(rows), "error": {"seq": i, "code": "BAD_CLASS"}}
             if capsule.get("seq") != i:
@@ -61,11 +68,18 @@ class EvidenceCapsules:
             previous = capsule["hash"]
         return {"ok": True, "entries": len(rows), "error": None}
 
+    def verify(self):
+        try:
+            rows = self._read()
+        except (ValueError, OSError):
+            return {"ok": False, "entries": None, "error": {"code": "UNREADABLE_CHAIN"}}
+        return self._verify_rows(rows)
+
     def replay_plan(self):
-        result = self.verify()
+        rows = self._read()
+        result = self._verify_rows(rows)
         if not result["ok"]:
             raise ValueError(f"replay fails closed: {result['error']}")
-        rows = self._read()
         return {"replayable": [c for c in rows if c["effect_class"] in REPLAYABLE],
                 "refused": [{"seq": c["seq"], "effect_class": c["effect_class"],
                              "reason": "SE3 and above are refused in replay"}

@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "example_only": true,
+  "task_id": "replace-with-stable-task-id",
+  "requested_outcome": "Replace with the user's observable outcome.",
+  "authority": {
+    "canonical_record": "Replace with the authorized request locator; exclude private content from public exports.",
+    "allowed_surfaces": [],
+    "protected_state": [],
+    "external_effects_authorized": []
+  },
+  "acceptance": [
+    {
+      "id": "outcome-1",
+      "outcome": "Replace with one independently assessable requested result.",
+      "subject": "Replace with exact artifact or service identity.",
+      "boundary": "local-artifact",
+      "status": "UNVERIFIED",
+      "evidence_ids": [],
+      "open_reason": "No evidence recorded yet."
+    }
+  ],
+  "routes": [
+    {"id": "route-a", "approach": "Replace", "failure_mode": "Replace"},
+    {"id": "route-b", "approach": "Replace", "failure_mode": "Replace"}
+  ],
+  "decision": {
+    "discriminator": "Replace with the cheapest useful observation.",
+    "selected_route": null,
+    "reason": null,
+    "revisit_when": null
+  },
+  "evidence": [],
+  "evidence_record_shape": {
+    "id": "example-shape-only",
+    "subject": "Exact identity",
+    "revision_or_observation_time": "Commit, content hash or observed UTC time",
+    "inputs": "Fixture/hash/query/environment identity",
+    "boundary": "The exact boundary observed",
+    "expected": "Expected state",
+    "observed": "Observed state",
+    "locator": "Read-back artifact or saved runner output",
+    "limitations": "Uncovered behavior and access limits",
+    "provenance": "measured-this-run | historical | source-inspected | delegated-unverified"
+  },
+  "coverage": {"corpus": null, "revision": null, "read": [], "unavailable": [], "excluded_with_reason": []},
+  "handoff": {"owner": null, "next_action": null, "open_obligations": ["outcome-1"]},
+  "overall_status": "UNVERIFIED"
+}

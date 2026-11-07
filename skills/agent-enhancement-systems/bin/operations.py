@@ -7,6 +7,8 @@ code at the boundary where the act happens, not described in a prompt.
 
 Standard library only.
 """
+from functools import wraps
+from itertools import islice
 import hashlib
 import json
 import os
@@ -15,6 +17,7 @@ import sqlite3
 import sys
 import tempfile
 import time
+from _storage import atomic_text, locked
 
 
 # ---------------------------------------------------------------- IDs (14)
@@ -65,22 +68,28 @@ def _key_sensitive(key):
 
 
 def redact(obj, _depth=0, _seen=None):
-    """Redact at capture time, recursively, before diagnostics are stored."""
-    if _seen is None:
-        _seen = set()
-    if isinstance(obj, (dict, list)) and id(obj) in _seen:
-        return "REDACTED_CIRCULAR_REFERENCE"
+    """Key-based diagnostic redaction; not a general personal-data detector."""
+    ancestors = set() if _seen is None else _seen
     if _depth > MAX_DEPTH:
         return "REDACTED_TOO_DEEP"
-    if isinstance(obj, dict):
-        _seen.add(id(obj))
-        return {k: ("REDACTED" if _key_sensitive(k) else redact(v, _depth + 1, _seen))
-                for k, v in obj.items()}
-    if isinstance(obj, list):
-        _seen.add(id(obj))
-        return [redact(value, _depth + 1, _seen) for value in obj]
+    if isinstance(obj, (dict, list, tuple)):
+        if id(obj) in ancestors:
+            return "REDACTED_CIRCULAR_REFERENCE"
+        ancestors = ancestors | {id(obj)}
+        if isinstance(obj, dict):
+            return {k: ("REDACTED" if _key_sensitive(k) else redact(v, _depth + 1, ancestors))
+                    for k, v in obj.items()}
+        return [redact(value, _depth + 1, ancestors) for value in obj]
     return obj
 
+
+def _synchronized(method):
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        with locked(self.path):
+            self._reload()
+            return method(self, *args, **kwargs)
+    return wrapper
 
 # ------------------------------------------------------------ outbound (13)
 
@@ -97,10 +106,11 @@ class OutboundGate:
     returns duplicate_suppressed without writing a second send receipt.
     """
 
-    def __init__(self, receipts_path, caps=None, open_question=None):
+    def __init__(self, receipts_path, caps=None, open_question=None, transport=None):
         self.path = receipts_path
         self.caps = caps or DEFAULT_CAPS
         self.open_question = open_question
+        self.transport = transport
 
     def _receipts(self):
         if not os.path.isfile(self.path):
@@ -138,10 +148,6 @@ class OutboundGate:
         if not text or not text.strip():
             raise ValueError("empty text")
         self._check_purpose(purpose, context)
-        prior = [r for r in self._receipts() if r.get("origin_event") == origin_event and r.get("sent")]
-        if prior:
-            return {"sent": False, "status": "duplicate_suppressed", "receipt_id": prior[0]["id"],
-                    "reason": "one acknowledgement per origin event; first text wins"}
         words = len(text.split())
         if words > self.caps[surface]["words"]:
             raise ValueError(f"word cap exceeded on {surface}: {words} > {self.caps[surface]['words']}")
@@ -149,10 +155,31 @@ class OutboundGate:
             raise ValueError(f"character cap exceeded on {surface}: {len(text)} > {self.caps[surface]['chars']}")
         receipt = {"id": deterministic_id(["send", surface, origin_event, recipient, text]),
                    "surface": surface, "purpose": purpose, "origin_event": origin_event,
-                   "recipient": recipient, "words": words, "sent": True,
+                   "recipient": recipient, "words": words, "sent": False,
                    "text_sha256": hashlib.sha256(text.encode()).hexdigest()}
-        self._append(receipt)
-        return {**receipt, "status": "sent"}
+        if self.transport is None:
+            return {**receipt, "status": "ready", "reason": "validated only; no transport configured"}
+        with locked(self.path):
+            prior = [r for r in self._receipts() if r.get("origin_event") == origin_event
+                     and (r.get("sent") or r.get("status") in ("in_flight", "outcome_unknown"))]
+            if prior:
+                return {"sent": False, "status": "duplicate_suppressed", "receipt_id": prior[0]["id"],
+                        "reason": "origin already acknowledged or unresolved; reconcile before retrying"}
+            self._append({**receipt, "status": "in_flight"})
+        try:
+            acknowledgement = self.transport(surface=surface, text=text, recipient=recipient,
+                                             idempotency_key=receipt["id"])
+            if not isinstance(acknowledgement, dict) or not (acknowledgement.get("id") or acknowledgement.get("receipt_id")):
+                raise ValueError("transport must return an acknowledgement ID")
+        except Exception as exc:
+            result = {**receipt, "status": "outcome_unknown", "error_type": type(exc).__name__,
+                      "reason": "transport may have acted; reconcile against its receipt before retrying"}
+        else:
+            result = {**receipt, "sent": True, "status": "sent",
+                      "transport_receipt": redact(acknowledgement)}
+        with locked(self.path):
+            self._append(result)
+        return result
 
 
 # --------------------------------------------------------- effect queue (15)
@@ -164,6 +191,10 @@ QUEUE_SCHEMA = """CREATE TABLE IF NOT EXISTS effects(
  revision INTEGER NOT NULL DEFAULT 0, queued_at REAL NOT NULL DEFAULT 0,
  next_at REAL NOT NULL DEFAULT 0, updated_at REAL NOT NULL DEFAULT 0,
  receipt TEXT, last_error TEXT, PRIMARY KEY(kind, key))"""
+
+
+class RetryableEffectError(Exception):
+    """Host confirms no uncertain external effect; retry is safe for this failure."""
 
 
 class EffectQueue:
@@ -180,36 +211,39 @@ class EffectQueue:
 
     def enqueue(self, kind, key, payload=None, revision=None):
         now = time.time()
-        row = self.db.execute("SELECT generation, revision, queued_at FROM effects WHERE kind=? AND key=?",
-                              (kind, key)).fetchone()
-        if row and revision is not None and revision <= row[1]:
-            return "stale"
-        generation = (row[0] + 1) if row else 1
-        queued_at = row[2] if row else now
-        self.db.execute(
-            "INSERT INTO effects(kind,key,payload,generation,state,attempts,infra_errors,revision,queued_at,next_at,updated_at,receipt) "
-            "VALUES(?,?,?,?,'pending',0,0,?,?,?,?,'') ON CONFLICT(kind,key) DO UPDATE SET "
-            "payload=excluded.payload,generation=excluded.generation,state='pending',revision=excluded.revision,"
-            "updated_at=excluded.updated_at,receipt=''",
-            (kind, key, json.dumps(payload or {}), generation, revision or 0, queued_at, now, now))
-        self.db.commit()
+        with self.db:
+            self.db.execute("BEGIN IMMEDIATE")
+            row = self.db.execute("SELECT generation, revision, queued_at FROM effects WHERE kind=? AND key=?",
+                                  (kind, key)).fetchone()
+            if row and revision is not None and revision <= row[1]:
+                return "stale"
+            generation = (row[0] + 1) if row else 1
+            queued_at = row[2] if row else now
+            self.db.execute(
+                "INSERT INTO effects(kind,key,payload,generation,state,attempts,infra_errors,revision,queued_at,next_at,updated_at,receipt) "
+                "VALUES(?,?,?,?,'pending',0,0,?,?,?,?,'') ON CONFLICT(kind,key) DO UPDATE SET "
+                "payload=excluded.payload,generation=excluded.generation,state='pending',revision=excluded.revision,"
+                "attempts=0,infra_errors=0,next_at=excluded.next_at,last_error=NULL,updated_at=excluded.updated_at,receipt=''",
+                (kind, key, json.dumps(payload or {}), generation, revision or 0, queued_at, now, now))
         return generation
 
     def get(self, kind, key):
         row = self.db.execute(
-            "SELECT kind,key,payload,generation,state,attempts,infra_errors,revision,queued_at,receipt "
+            "SELECT kind,key,payload,generation,state,attempts,infra_errors,revision,queued_at,receipt,next_at,last_error "
             "FROM effects WHERE kind=? AND key=?", (kind, key)).fetchone()
         if not row:
             return None
         return {"kind": row[0], "key": row[1], "payload": json.loads(row[2]), "generation": row[3],
                 "state": row[4], "attempts": row[5], "infra_errors": row[6], "revision": row[7],
-                "queued_at": row[8], "receipt": row[9]}
+                "queued_at": row[8], "receipt": row[9], "next_at": row[10], "last_error": row[11]}
 
     def issue_receipt(self, kind, key, generation):
         receipt = f"rcpt-{kind}-{key}-{generation}"
-        self.db.execute("UPDATE effects SET receipt=? WHERE kind=? AND key=? AND generation=?",
+        cursor = self.db.execute("UPDATE effects SET receipt=? WHERE kind=? AND key=? AND generation=?",
                         (receipt, kind, key, generation))
         self.db.commit()
+        if cursor.rowcount != 1:
+            raise ValueError("cannot issue receipt for an absent or stale generation")
         return receipt
 
     def complete(self, kind, key, generation, receipt=None):
@@ -230,14 +264,20 @@ class EffectQueue:
         return cursor.rowcount == 1
 
     def fail(self, kind, key, generation, error="", max_attempts=3):
-        row = self.get(kind, key)
-        cursor = self.db.execute(
-            "UPDATE effects SET state='failed',attempts=attempts+1,last_error=?,updated_at=? "
-            "WHERE kind=? AND key=? AND generation=?", (str(error), time.time(), kind, key, generation))
-        self.db.commit()
-        if row and row["attempts"] + 1 >= max_attempts:
+        """Explicit host declaration that a known failure is safe to retry."""
+        if isinstance(max_attempts, bool) or not isinstance(max_attempts, int) or max_attempts < 1:
+            raise ValueError("max_attempts must be a positive integer")
+        with self.db:
+            self.db.execute("BEGIN IMMEDIATE")
+            cursor = self.db.execute(
+                "UPDATE effects SET state=CASE WHEN attempts+1>=? THEN 'failed' ELSE 'pending' END,"
+                "attempts=attempts+1,last_error=?,next_at=?,updated_at=? "
+                "WHERE kind=? AND key=? AND generation=?",
+                (max_attempts, str(error), time.time(), time.time(), kind, key, generation))
+            row = self.get(kind, key)
+        if cursor.rowcount and row["state"] == "failed":
             self.skipped.append({"kind": kind, "key": key, "last_error": str(error),
-                                  "state": "skipped", "terminal": True})
+                                 "state": "skipped", "terminal": True})
         return cursor.rowcount == 1
 
     def record_rate_limited(self, kind, key, generation, retry_after=None, base=2.0, cap=300.0):
@@ -246,27 +286,48 @@ class EffectQueue:
         if retry_after is not None:
             pause = max(pause, retry_after)
         cursor = self.db.execute(
-            "UPDATE effects SET infra_errors=infra_errors+1,next_at=?,updated_at=? "
+            "UPDATE effects SET state='later',infra_errors=infra_errors+1,next_at=?,updated_at=? "
             "WHERE kind=? AND key=? AND generation=?", (time.time() + pause, time.time(), kind, key, generation))
         self.db.commit()
         return cursor.rowcount == 1
 
     def run_next(self, handler):
+        """Atomically claim due work. The handler must explicitly complete/defer it.
+
+        Unacknowledged running work stays reserved after a crash; the host must
+        reconcile its external outcome. It is never blindly replayed.
+        """
         self.ran = True
-        row = self.db.execute("SELECT kind,key,generation FROM effects WHERE state IN ('pending','later') "
-                              "ORDER BY queued_at LIMIT 1").fetchone()
-        if not row:
-            return None
-        kind, key, generation = row
+        with self.db:
+            self.db.execute("BEGIN IMMEDIATE")
+            row = self.db.execute("SELECT kind,key,generation FROM effects WHERE state IN ('pending','later') "
+                                  "AND next_at<=? ORDER BY queued_at,kind,key LIMIT 1", (time.time(),)).fetchone()
+            if not row:
+                return None
+            kind, key, generation = row
+            self.db.execute("UPDATE effects SET state='running',updated_at=? WHERE kind=? AND key=? AND generation=?",
+                            (time.time(), kind, key, generation))
+            item = self.get(kind, key)
         try:
-            handler(self.get(kind, key))
-        except Exception as exc:
+            handler(item)
+        except RetryableEffectError as exc:
             self.fail(kind, key, generation, error=repr(exc))
             return "failed:" + key
+        except Exception as exc:
+            # The handler may have acted before losing its acknowledgement.
+            # Ordinary exceptions cannot establish that replay is safe.
+            self.db.execute("UPDATE effects SET state='outcome_unknown',last_error=?,updated_at=? "
+                            "WHERE kind=? AND key=? AND generation=?",
+                            (type(exc).__name__, time.time(), kind, key, generation))
+            self.db.commit()
+            return "outcome_unknown:" + key
         return "ok:" + key
 
     def stop(self):
-        return "completed" if self.ran else None
+        if not self.ran:
+            return None
+        remaining = self.db.execute("SELECT COUNT(*) FROM effects").fetchone()[0]
+        return "partial" if remaining else "completed"
 
     def close(self):
         self.db.close()
@@ -309,17 +370,18 @@ class SlotGuard:
         self.path = state_path
         self.worker_cap = worker_cap
         self.state = {"workers": [], "human_slot_used_by": None}
-        if os.path.isfile(state_path):
-            with open(state_path, encoding="utf-8") as handle:
+        self._reload()
+
+    def _reload(self):
+        self.state = {"workers": [], "human_slot_used_by": None}
+        if os.path.isfile(self.path):
+            with open(self.path, encoding="utf-8") as handle:
                 self.state = json.load(handle)
 
     def _save(self):
-        os.makedirs(os.path.dirname(os.path.abspath(self.path)), exist_ok=True)
-        tmp = self.path + ".tmp"
-        with open(tmp, "w", encoding="utf-8") as handle:
-            json.dump(self.state, handle)
-        os.replace(tmp, self.path)
+        atomic_text(self.path, json.dumps(self.state))
 
+    @_synchronized
     def reserve_worker(self, job_id):
         if job_id in self.state["workers"]:
             return True
@@ -329,6 +391,7 @@ class SlotGuard:
         self._save()
         return True
 
+    @_synchronized
     def reserve_human(self, request_id):
         if self.state["human_slot_used_by"] not in (None, request_id):
             raise ValueError("human slot already in use: the plus-one is exactly one")
@@ -336,6 +399,7 @@ class SlotGuard:
         self._save()
         return True
 
+    @_synchronized
     def release(self, job_id):
         if job_id in self.state["workers"]:
             self.state["workers"].remove(job_id)
@@ -370,10 +434,14 @@ class NearMissLedger:
     def load(self):
         if os.path.exists(self.path):
             with open(self.path, encoding="utf-8") as handle:
-                self.rows = [json.loads(line) for line in handle
-                             if line.strip()][:MAX_LAWS]
+                self.rows = [json.loads(line) for line in islice((line for line in handle if line.strip()), MAX_LAWS)]
         return self
 
+    def _reload(self):
+        self.rows = []
+        self.load()
+
+    @_synchronized
     def record(self, law_id, gate, premise):
         if gate not in GATES:
             raise ValueError(f"gate must be a coarse class in {sorted(GATES)}")
@@ -408,20 +476,22 @@ class ApprovalStore:
         self.path = path
         self.generation = generation
         self.rows = []
-        if os.path.exists(path):
-            with open(path, encoding="utf-8") as handle:
+        self._reload()
+
+    def _reload(self):
+        self.rows = []
+        if os.path.exists(self.path):
+            with open(self.path, encoding="utf-8") as handle:
                 self.rows = [json.loads(line) for line in handle if line.strip()]
 
     def _save(self):
-        os.makedirs(os.path.dirname(os.path.abspath(self.path)), exist_ok=True)
-        with open(self.path, "w", encoding="utf-8") as handle:
-            for row in self.rows:
-                handle.write(json.dumps(row, sort_keys=True) + "\n")
+        atomic_text(self.path, "".join(json.dumps(row, sort_keys=True) + "\n" for row in self.rows))
 
     @staticmethod
     def content_hash(data):
         return hashlib.sha256(data).hexdigest()
 
+    @_synchronized
     def record(self, action, target, content, ttl_days=30, now=None):
         now = time.time() if now is None else now
         row = {"action": action, "target": target, "hash": self.content_hash(content),
@@ -431,12 +501,14 @@ class ApprovalStore:
         self._save()
         return row
 
+    @_synchronized
     def revoke(self, action, target):
         for row in self.rows:
             if row["action"] == action and row["target"] == target:
                 row["revoked"] = True
         self._save()
 
+    @_synchronized
     def check(self, action, candidates, content, now=None):
         now = time.time() if now is None else now
         matches = [r for r in self.rows if r["action"] == action and r["target"] in candidates]
@@ -447,12 +519,29 @@ class ApprovalStore:
         if not valid:
             return "authorization_invalid"
         distinct_targets = {json.dumps(c, sort_keys=True) for c in candidates}
-        if len(distinct_targets) > 1 and len(valid) > 1:
+        valid_targets = {json.dumps(r["target"], sort_keys=True) for r in valid}
+        if len(distinct_targets) > 1 and len(valid_targets) > 1:
             return "requires_selection"
-        if valid[0]["hash"] != self.content_hash(content):
+        if not any(r["hash"] == self.content_hash(content) for r in valid):
             return "drifted"
         return "authorized_unique"
 
+    @_synchronized
+    def authorize_and_consume(self, action, candidates, content, now=None):
+        verdict = ApprovalStore.check.__wrapped__(self, action, candidates, content, now=now)
+        if verdict != "authorized_unique":
+            return verdict
+        now = time.time() if now is None else now
+        for row in self.rows:
+            if (row["action"] == action and row["target"] in candidates
+                    and row["hash"] == self.content_hash(content) and not row["revoked"]
+                    and not row["used"] and row["expires"] > now and row["generation"] == self.generation):
+                row["used"] = True
+                self._save()
+                return verdict
+        raise RuntimeError("approval changed inside transaction")
+
+    @_synchronized
     def consume(self, action, target):
         for row in self.rows:
             if row["action"] == action and row["target"] == target and not row["used"]:

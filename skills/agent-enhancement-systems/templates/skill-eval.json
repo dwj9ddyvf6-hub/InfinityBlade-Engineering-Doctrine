@@ -1,1 +1,43 @@
-{"cases":[{"id":"should-1","input":"replace with a case that must pass","kind":"should"},{"id":"should-not-1","input":"replace with a near-miss case that must not pass","kind":"should-not"}],"fixture_set_version":"1.0.0","isolated_trials":true,"judge_unknown_exit":true,"reference_solution":"replace with the known-good result that proves the task is solvable","skill":"replace-with-skill-name","trigger_cases":[{"expect":"trigger","query":"replace with a should-trigger query","split":"validation"},{"expect":"no-trigger","query":"replace with a should-not-trigger query","split":"validation"},{"expect":"trigger","query":"replace with an untouched final should-trigger query","split":"final"},{"expect":"no-trigger","query":"replace with an untouched final should-not-trigger query","split":"final"}]}
+{
+  "cases": [
+    {
+      "id": "should-1",
+      "input": "replace with a case that must pass",
+      "kind": "should"
+    },
+    {
+      "id": "should-not-1",
+      "input": "replace with a near-miss case that must not pass",
+      "kind": "should-not"
+    }
+  ],
+  "fixture_set_version": "1.0.0",
+  "isolated_trials": true,
+  "judge_unknown_exit": true,
+  "reference_solution": "replace with the known-good result that proves the task is solvable",
+  "skill": "replace-with-skill-name",
+  "trigger_cases": [
+    {
+      "expect": "trigger",
+      "query": "replace with a should-trigger query",
+      "split": "validation"
+    },
+    {
+      "expect": "no-trigger",
+      "query": "replace with a should-not-trigger query",
+      "split": "validation"
+    },
+    {
+      "expect": "trigger",
+      "query": "replace with an untouched final should-trigger query",
+      "split": "final"
+    },
+    {
+      "expect": "no-trigger",
+      "query": "replace with an untouched final should-not-trigger query",
+      "split": "final"
+    }
+  ],
+  "example_only": true,
+  "usage_note": "Shape seed only. Replace placeholders and expand into balanced selection/validation and untouched final cases before reporting behavior results."
+}

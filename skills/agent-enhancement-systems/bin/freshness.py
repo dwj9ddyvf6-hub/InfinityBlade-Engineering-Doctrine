@@ -34,23 +34,39 @@ def validate_fact(fact):
             errors.append("pointer needs an as-of date for its last-observed value")
     if kind == "timeless" and fact.get("as_of"):
         errors.append("timeless fact should not carry a decaying stamp")
+    if fact.get("as_of"):
+        try:
+            date.fromisoformat(fact["as_of"])
+        except (TypeError, ValueError):
+            errors.append("as_of must be a valid ISO calendar date")
     return errors
 
 
 def lint_text(text, reference_date=None, window_days=DEFAULT_WINDOW_DAYS):
     reference = date.fromisoformat(reference_date) if reference_date else date.today()
+    if isinstance(window_days, bool) or not isinstance(window_days, int) or window_days < 0:
+        raise ValueError("window_days must be a nonnegative integer")
     findings = []
+    containers = []
     in_dated_container = False
     for number, line in enumerate(text.splitlines(), 1):
-        if line.startswith("#"):
-            in_dated_container = bool(DATE_RE.search(line))
+        heading = re.match(r"^(#{1,6})\s", line)
+        if heading:
+            level = len(heading.group(1))
+            containers = [(depth, dated) for depth, dated in containers if depth < level]
+            containers.append((level, bool(DATE_RE.search(line))))
+            in_dated_container = any(dated for _, dated in containers)
         stamp = DATE_RE.search(line)
         if NUMBER.search(line) and VOLATILE.search(line):
             if not stamp and "as of" not in line.lower() and not in_dated_container:
                 findings.append({"code": "FRESH-1", "line": number,
                                  "message": "unstamped quantitative present-tense claim about a volatile noun"})
             elif stamp:
-                age = (reference - date.fromisoformat(stamp.group(1))).days
+                try:
+                    age = (reference - date.fromisoformat(stamp.group(1))).days
+                except ValueError:
+                    findings.append({"code": "FRESH-4", "line": number, "message": "invalid calendar date"})
+                    continue
                 if age > window_days:
                     findings.append({"code": "FRESH-2", "line": number, "age_days": age,
                                      "message": "stamp older than the freshness window",
@@ -61,14 +77,15 @@ def lint_text(text, reference_date=None, window_days=DEFAULT_WINDOW_DAYS):
 
 
 def aged_disposition(line):
-    match = re.search(r"freshness-action:\s*(re-observe|convert-to-pointer|retire)", line)
-    if not match:
+    matches = re.findall(r"freshness-action:\s*(re-observe|convert-to-pointer|retire)\b", line)
+    if len(matches) != 1:
         raise ValueError("an aged line needs exactly one disposition: re-observe, convert-to-pointer, or retire")
-    return match.group(1)
+    return matches[0]
 
 
 def refresh_on_read(fact, still_true, on_date, contract_declared=False):
     """Refresh a stamp only where the store contract declares refresh-on-read."""
+    date.fromisoformat(on_date)
     result = dict(fact)
     if contract_declared and still_true and fact.get("kind") in ("dated", "pointer"):
         result["as_of"] = on_date

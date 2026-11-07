@@ -2,7 +2,7 @@
 
 name: proof-before-green
 description: Use whenever a regression gate, blocker test, suite result, dry run, or commit is about to be trusted or reported, and whenever a system is about to be called working, live, or proven, with the verdict proven on the final tree and the final live state.
-version: 1.0.0
+version: 1.0.1
 ---
 
 # Proof Before Green
@@ -18,7 +18,7 @@ The replacement: this skill owns one discipline only, the verdict. Gate mechanic
 - A verdict is a claim about a specific final state: a named tree, a named commit, a named live window. A verdict with no state named is a rumor.
 - Evidence must come after the last change to that state. Any later change reopens the verdict to the extent it could affect the proof.
 - A gate verdict from a tree that moved during the run is UNVERIFIED, never a pass and never a fail.
-- GREEN requires every acceptance row proven on the final state. One row proven by a unit test, a fixture, or a neighboring surface caps the whole verdict at PARTIAL, with that row named.
+- GREEN requires every acceptance row proven on the final state at the boundary that row claims. A discriminating unit test can prove a function-level contract; it cannot prove deployment, persistence or a real external effect. Fixtures can prove deterministic behavior under their stated inputs, not unobserved production behavior. If a required row has only adjacent proof, name the missing boundary and keep the whole verdict PARTIAL (or UNVERIFIED when no requested outcome is proven).
 - Report the verdict with its evidence pointer: the artifact, the command output, or the read-back a second reader can open. A bare label proves nothing, including when a hook accepts it.
 - When proof is missing, the verdict is UNVERIFIED and the missing proof is named. UNVERIFIED is a work item, not a confession.
 

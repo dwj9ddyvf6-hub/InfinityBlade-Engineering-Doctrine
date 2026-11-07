@@ -21,14 +21,8 @@ import sys
 from datetime import date
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-try:
-    from operations import NearMissLedger, deterministic_id
-except Exception:  # pragma: no cover - package tests load operations first
-    NearMissLedger = None
-
-    def deterministic_id(parts):
-        canon = json.dumps(parts, sort_keys=True, separators=(",", ":"))
-        return hashlib.sha256(canon.encode()).hexdigest()[:32]
+from operations import NearMissLedger, deterministic_id
+from _storage import atomic_text, bounded_blocks
 
 TOK = re.compile(r"[a-z0-9]+")
 EDGES = ("updates", "extends", "derives")
@@ -110,10 +104,7 @@ class MemoryStore:
 
     @staticmethod
     def _write_json(path, data):
-        tmp = path + ".tmp"
-        with open(tmp, "w", encoding="utf-8") as handle:
-            json.dump(data, handle, indent=1, sort_keys=True)
-        os.replace(tmp, path)
+        atomic_text(path, json.dumps(data, indent=1, sort_keys=True))
 
     def _read_facts(self):
         if not os.path.isfile(self.facts_path):
@@ -125,11 +116,7 @@ class MemoryStore:
         errors = self._validate_facts(facts)
         if errors:
             raise ValueError(f"memory transaction blocked: {errors}")
-        tmp = self.facts_path + ".tmp"
-        with open(tmp, "w", encoding="utf-8") as handle:
-            for fact in facts:
-                handle.write(json.dumps(fact, sort_keys=True) + "\n")
-        os.replace(tmp, self.facts_path)
+        atomic_text(self.facts_path, "".join(json.dumps(f, sort_keys=True) + "\n" for f in facts))
 
     @staticmethod
     def _validate_facts(facts):
@@ -187,10 +174,12 @@ class MemoryStore:
         return self.add_fact(fact)
 
     @classmethod
-    def migrate_from(cls, source_root, target_root):
+    def migrate_from(cls, source_root, target_root, replace=False):
         """Copy a prior-format store, validate it, and prove retrievability."""
         source = cls(source_root)
         target = cls(target_root).initialize()
+        if not replace and (target._read_facts() or any(target.profile().values())):
+            raise ValueError("target store is nonempty; explicit replace=True is required")
         facts = source._read_facts()
         target._write_facts(facts)
         profile = source.profile()
@@ -203,6 +192,8 @@ class MemoryStore:
                 "errors": target.validate_store()}
 
     def add_fact(self, fact):
+        if fact.get("id") in self._tombstones():
+            raise ValueError("forgotten fact id cannot be resurrected")
         facts = self._read_facts()
         if any(existing["id"] == fact.get("id") for existing in facts):
             raise ValueError(f"fact id {fact.get('id')} already exists")
@@ -217,6 +208,8 @@ class MemoryStore:
         return {fact["id"]: fact for fact in (facts if facts is not None else self._read_facts())}
 
     def apply_edge(self, new_id, target_id, edge, on_date):
+        if new_id == target_id:
+            raise ValueError("a fact cannot supersede itself")
         if edge not in EDGES:
             raise ValueError(f"edge must be one of {EDGES}")
         facts = self._read_facts()
@@ -290,6 +283,8 @@ class MemoryStore:
         target = by_id.get(successor.get("supersedes"))
         if not target:
             raise ValueError("correction target not found")
+        if target.get("status") == "superseded":
+            raise ValueError("correction target is already superseded")
         successor.update(status="current", valid_from=on_date)
         target.update(status="superseded", valid_until=target.get("valid_until") or on_date)
         self._write_facts(facts)
@@ -332,10 +327,10 @@ class MemoryStore:
             if depth >= 3:
                 continue
             for link in by_id[fid].get("links", []):
-                if link in by_id and link not in seen and by_id[link].get("status") not in ("proposed", "superseded"):
+                if link in by_id and link not in seen and by_id[link].get("status") not in ("proposed", "superseded") and not by_id[link].get("opt_out_search"):
                     seen.add(link)
                     ranked.append({"id": link, "score": 0.0, "via": "thread", "thread_depth": depth + 1,
-                                   "inferred": bool(by_id[link].get("inferred")), "text": by_id[link]["text"]})
+                                   "inferred": bool(by_id[link].get("inferred") and by_id[link].get("review") != "approved"), "text": by_id[link]["text"]})
                     frontier.append((link, depth + 1))
         return ranked
 
@@ -363,16 +358,7 @@ class MemoryStore:
 
     def build_context(self, query, budget_chars=8000):
         hits = self.search(query)
-        included, omitted, lines, used = [], [], [], 0
-        for hit in hits:
-            block = f"[{hit['id']}]\n{hit['text']}"
-            if used + len(block) + 1 <= budget_chars:
-                lines.append(block); included.append(hit["id"]); used += len(block) + 1
-            else:
-                omitted.append(hit["id"])
-        lines.append(f"[INJECTION OMISSIONS: {', '.join(omitted) if omitted else 'none'}; "
-                     f"budget {budget_chars} chars; included {len(included)} of {len(hits)}]")
-        return {"text": "\n".join(lines), "included": included, "omitted": omitted}
+        return bounded_blocks([(hit["id"], f"[{hit['id']}]\n{hit['text']}") for hit in hits], budget_chars)
 
     def record_retrieval(self, ids, on_date):
         with open(self.retrievals_path, "a", encoding="utf-8") as handle:
@@ -417,16 +403,19 @@ class MemoryStore:
             else:
                 results[fid] = "not_found"
         if removed:
-            self._write_facts([f for f in facts if f["id"] not in removed])
             index_cleaned = []
+            kept = None
             if index_path and os.path.isfile(index_path):
                 with open(index_path, encoding="utf-8") as handle:
                     index = json.load(handle)
+                if not isinstance(index, dict) or any(not isinstance(v, str) for v in index.values()):
+                    raise ValueError("erasure index must be an object mapping strings to fact IDs")
                 removed_ids = set(removed)
                 kept = {k: v for k, v in index.items() if k not in removed_ids and v not in removed_ids}
                 index_cleaned = sorted(set(index) - set(kept))
-                with open(index_path, "w", encoding="utf-8") as handle:
-                    json.dump(kept, handle, indent=1, sort_keys=True)
+            self._write_facts([f for f in facts if f["id"] not in removed])
+            if kept is not None:
+                self._write_json(index_path, kept)
             erasure = os.path.join(self.root, "erasure")
             os.makedirs(erasure, exist_ok=True)
             receipt = {"date": on_date, "results": {fid: results[fid] for fid in removed},

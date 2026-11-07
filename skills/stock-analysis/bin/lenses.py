@@ -19,6 +19,7 @@ Usage: python3 lenses.py --symbol PLTR
 Output: JSON.
 """
 import argparse, json
+from datetime import datetime, timezone
 from pathlib import Path
 
 DESK = Path(os.environ.get("STOCK_ANALYSIS_PROJECT_DIR", "."))
@@ -29,24 +30,22 @@ def basket_universe():
     # raises TypeError on the unhashable dicts, a bare except swallows
     # it, and the lens then reports EVERY symbol as "not in basket".
     # Parse each entry defensively, as below.
-    try:
-        b = json.loads((DESK / "basket.json").read_text())
-        out = set()
-        for e in b["symbols"]:
-            s = e.get("symbol") if isinstance(e, dict) else e
-            if s:
-                out.add(str(s).upper())
-        return out
-    except Exception:
-        return set()
+    b = json.loads((DESK / "basket.json").read_text(encoding="utf-8"))
+    if not isinstance(b, dict) or not isinstance(b.get("symbols"), list):
+        raise ValueError("basket must contain a symbols list")
+    out = set()
+    for entry in b["symbols"]:
+        symbol = entry.get("symbol") if isinstance(entry, dict) else entry
+        if not isinstance(symbol, str) or not symbol.strip():
+            raise ValueError("basket contains an invalid symbol")
+        out.add(symbol.strip().upper())
+    return out
+
 
 def file_list_universe():
-    try:
-        return {l.strip().upper() for l in
-                (DESK / "example_universe.txt").read_text().splitlines()
-                if l.strip() and not l.startswith("#")}
-    except Exception:
-        return set()
+    return {line.strip().upper() for line in
+            (DESK / "example_universe.txt").read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.lstrip().startswith("#")}
 
 # Example roster. Replace every entry with your own strategies: the
 # key, the ledger file that strategy writes, its edge class from your
@@ -75,36 +74,47 @@ KEY_FIELDS = ("ts", "episode", "decision", "event", "confidence", "phenotype",
 
 def latest_signal(ledger_path, symbol):
     """Latest ledger entry for the symbol (by ts), trimmed to key fields."""
-    best, best_ts = None, ""
-    try:
-        with open(ledger_path) as f:
-            for line in f:
-                try:
-                    e = json.loads(line)
-                except Exception:
-                    continue
-                if str(e.get("symbol", "")).upper() != symbol:
-                    continue
-                ts = str(e.get("ts", ""))
-                if ts >= best_ts:
-                    best, best_ts = e, ts
-    except FileNotFoundError:
-        return None
-    if not best:
-        return None
-    return {k: best.get(k) for k in KEY_FIELDS if best.get(k) is not None}
+    best, best_ts = None, None
+    with open(ledger_path, encoding="utf-8") as handle:
+        for number, line in enumerate(handle, 1):
+            if not line.strip():
+                continue
+            entry = json.loads(line)
+            if not isinstance(entry, dict):
+                raise ValueError(f"ledger line {number} is not an object")
+            if str(entry.get("symbol", "")).upper() != symbol.upper():
+                continue
+            stamp = datetime.fromisoformat(str(entry.get("ts", "")).replace("Z", "+00:00"))
+            if stamp.tzinfo is None:
+                raise ValueError(f"ledger line {number} timestamp needs a timezone")
+            stamp = stamp.astimezone(timezone.utc)
+            if best_ts is None or stamp >= best_ts:
+                best, best_ts = entry, stamp
+    return None if best is None else {k: best[k] for k in KEY_FIELDS if best.get(k) is not None}
 
 def main():
+    global DESK
     ap = argparse.ArgumentParser(); ap.add_argument("--symbol", required=True)
-    sym = ap.parse_args().symbol.upper()
+    ap.add_argument("--project-dir", type=Path, default=DESK)
+    args = ap.parse_args()
+    DESK, sym = args.project_dir, args.symbol.upper()
     lenses = []
     for s in SLEEVES:
+        if isinstance(EXCLUDED, (list, tuple, set)) and s["key"] in EXCLUDED:
+            continue
         lens = {"sleeve": s["key"], "edge": s["edge"], "edge_note": s["edge_note"]}
         # applicability
         if s["universe"]:
             name, check = s["universe"]
-            uni = s["universe_data"]()
-            ok = check(sym, uni)
+            try:
+                uni = s["universe_data"]()
+                ok = check(sym, uni)
+            except (OSError, ValueError, TypeError) as exc:
+                lens.update(applies=None, applicability="unknown: universe unavailable or invalid",
+                            source_status="unavailable" if isinstance(exc, FileNotFoundError) else "invalid",
+                            error_type=type(exc).__name__)
+                lenses.append(lens)
+                continue
             lens["applies"] = ok
             lens["applicability"] = (f"in {name}" if ok
                                      else f"not in {name} — lens does not apply")
@@ -113,10 +123,16 @@ def main():
         else:
             lens["applies"] = True
             lens["applicability"] = "no universe gate"
-        sig = latest_signal(DESK / s["ledger"], sym)
-        lens["signal"] = sig if sig else "no signal on record"
+        try:
+            sig = latest_signal(DESK / s["ledger"], sym)
+            lens["signal"] = sig if sig else "no signal on record"
+            lens["source_status"] = "read_complete"
+        except (OSError, ValueError, TypeError) as exc:
+            lens.update(signal=None, source_status="unavailable" if isinstance(exc, FileNotFoundError) else "invalid",
+                        error_type=type(exc).__name__)
         lenses.append(lens)
-    print(json.dumps({"symbol": sym, "excluded_sleeves": EXCLUDED,
+    print(json.dumps({"symbol": sym, "example_only": all(s["key"].startswith("example_") for s in SLEEVES),
+                      "excluded_sleeves": EXCLUDED,
                       "lenses": lenses}, indent=1))
 
 if __name__ == "__main__":

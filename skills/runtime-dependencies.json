@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "purpose": "Explicit runtime prerequisites; source completeness is distinct from host readiness. Checks are offline and never import external source, read secrets, install packages, connect to services, or submit orders.",
+  "skills": {
+    "alpaca-paper": {
+      "required": [
+        {"id": "requests", "kind": "python-distribution", "distribution": "requests", "required_for": "HTTP transport", "verification": "installed distribution metadata only"},
+        {"id": "alpaca-key-id", "kind": "environment", "environment": "ALPACA_KEY_ID", "required_for": "credentialed API calls", "verification": "presence only; no account identity or entitlement proof"},
+        {"id": "alpaca-secret", "kind": "environment", "environment": "ALPACA_API_SECRET_KEY", "required_for": "credentialed API calls", "verification": "presence only; value never emitted"}
+      ],
+      "optional": []
+    },
+    "chart-read": {
+      "required": [
+        {"id": "shared-ta-battery", "kind": "external-source", "environment": "CHART_READ_TA_REPO", "relative_path": "core/ta_battery.py", "required_for": "Pass A indicators and independent parity suite", "verification": "declared file presence and syntax only; not imported or bundled without source/license provenance"},
+        {"id": "alpaca-bars", "kind": "local-file", "path": "skills/alpaca-paper/bin/alpaca_get_bars_1h.py", "required_for": "stock bar fetching", "verification": "included source; Alpaca runtime prerequisites remain separate"}
+      ],
+      "requires_skills": ["alpaca-paper"],
+      "optional": [
+        {"id": "kraken-bars", "kind": "external-source", "environment": "CHART_READ_KRAKEN_BARS", "required_for": "crypto bar route", "verification": "declared file presence and syntax only; no network call"}
+      ]
+    },
+    "stock-analysis": {
+      "required": [],
+      "optional": [
+        {"id": "project-lenses", "kind": "external-directory", "environment": "STOCK_ANALYSIS_PROJECT_DIR", "required_for": "host-specific sleeves and signal ledgers", "verification": "configured directory presence only; example roster is not a production portfolio"}
+      ],
+      "requires_skills": ["chart-read"]
+    },
+    "backtest-crosscheck": {
+      "required": [
+        {"id": "independent-backtest-oracle", "kind": "host-capability", "required_for": "independent-engine cross-check", "verification": "must be established by the adopting host; no oracle implementation is included"}
+      ],
+      "optional": []
+    }
+  }
+}

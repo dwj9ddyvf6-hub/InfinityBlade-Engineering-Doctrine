@@ -86,23 +86,19 @@ def main() -> None:
             fail("leg %d: side must be buy or sell" % i)
         if leg["position_intent"] not in VALID_INTENTS:
             fail("leg %d: invalid position_intent" % i)
-        # 3x-daily bugcheck 2026-10-07: ratio_qty is integer-typed on the
-        # mleg API -- a JSON 1.0 serialized as "1.0" risks a 422. Whole
-        # numbers serialize as ints; fractions keep theirs.
-        _rq = leg.get("ratio_qty", 1)
+        if not leg["position_intent"].startswith(leg["side"] + "_"):
+            fail("leg %d: side and position_intent must agree" % i)
+        ratio = leg.get("ratio_qty", 1)
         try:
-            _rqf = float(_rq)
-            leg["ratio_qty"] = (str(int(_rqf)) if _rqf == int(_rqf)
-                                else str(_rq))
-        # 3x-daily bugcheck 2026-10-08 (LOW): int(inf) raises
-        # OverflowError, not ValueError -- a malformed ratio_qty like
-        # "1e999" crashed with a traceback instead of the str() fallback.
-        except (TypeError, ValueError, OverflowError):
-            leg["ratio_qty"] = str(_rq)
-        # 3x-daily bugcheck 2026-10-08 (LOW): a non-string symbol crashed
-        # .upper(). Coerce so malformed legs fail on the API's 422, not
-        # on an AttributeError traceback.
-        leg["symbol"] = str(leg["symbol"]).upper()
+            value = float(ratio)
+        except (ValueError, TypeError):
+            fail("leg %d: ratio_qty must be a positive whole number" % i)
+        if isinstance(ratio, bool) or not math.isfinite(value) or value <= 0 or not value.is_integer():
+            fail("leg %d: ratio_qty must be a positive whole number" % i)
+        leg["ratio_qty"] = str(int(value))
+        if not isinstance(leg["symbol"], str) or not leg["symbol"].strip():
+            fail("leg %d: symbol must be a nonempty string" % i)
+        leg["symbol"] = leg["symbol"].strip().upper()
     order = {
         "order_class": "mleg",
         "qty": str(args.qty),

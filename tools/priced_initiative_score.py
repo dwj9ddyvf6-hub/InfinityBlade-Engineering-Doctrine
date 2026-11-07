@@ -1,20 +1,31 @@
-"""Starter for discipline 1: score a proactive lane against a logged timeline.
+"""Score a proactive timeline with an explicitly chosen interruption price.
 
-Input: a JSON file with windows: [{"label": "MUST"|"MAY"|"MUST-NOT"|"OTHER",
-"fires": int}]. Benefit: MUST 4, MAY 2, credited once per window. Cost: 4 per
-fire on a MUST-NOT window, 1 per fire on any other fired window, charged per
-fire. Prints benefit minus lambda times cost for lambda in {0.25,0.5,1,2,4}
-and the deploy verdict at the lambda the caller names with --lambda.
-A lane that cannot state its lambda has not priced its interruption.
+Benefit: MUST=4, MAY=2 once per window. Cost: every fire=1, plus 4 for each
+MUST-NOT fire. The canonical implementation also powers the host lane.
 """
-import argparse, json
-BENEFIT = {"MUST": 4, "MAY": 2}
-ap = argparse.ArgumentParser(); ap.add_argument("timeline"); ap.add_argument("--lambda", dest="lam", type=float, default=1.0)
-a = ap.parse_args()
-windows = json.load(open(a.timeline, encoding="utf-8"))["windows"]
-benefit = sum(BENEFIT.get(w["label"], 0) for w in windows if w.get("fires", 0) > 0)
-cost = sum((4 if w["label"] == "MUST-NOT" else 1) * w.get("fires", 0) for w in windows if w.get("fires", 0) > 0)
-for lam in (0.25, 0.5, 1, 2, 4):
-    print(f"lambda={lam}: benefit={benefit} cost={cost} net={benefit - lam*cost}")
-net = benefit - a.lam * cost
-print(f"verdict at lambda={a.lam}: {'DEPLOY' if net > 0 else 'SILENCE'} (net {net})")
+import argparse
+import json
+from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "skills/agent-enhancement-systems/bin"))
+from proactive import DEFAULT_LAMBDAS, score_timeline
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("timeline")
+    parser.add_argument("--lambda", dest="lam", type=float, required=True)
+    args = parser.parse_args(argv)
+    try:
+        windows = json.loads(Path(args.timeline).read_text(encoding="utf-8"))["windows"]
+        result = score_timeline(windows, lambdas=(*DEFAULT_LAMBDAS, args.lam))
+    except (ValueError, TypeError, KeyError, OSError) as exc:
+        parser.error(str(exc))
+    for lam in DEFAULT_LAMBDAS:
+        print(f"lambda={lam}: benefit={result['benefit']} cost={result['cost']} net={result['nets'][str(lam)]}")
+    print(f"verdict at lambda={args.lam}: {result['verdict_at'](args.lam)} (net {result['nets'][str(args.lam)]})")
+
+
+if __name__ == "__main__":
+    main()
