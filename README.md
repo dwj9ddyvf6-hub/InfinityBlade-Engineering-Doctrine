@@ -14,7 +14,7 @@
 
 Works with Claude, GPT/Codex, Gemini, Cursor, Copilot, or any agent that accepts instructions. One core skill file (skills/infinityblade/SKILL.md, 189 lines at 3.1.0), with depth loaded only when a task needs it.
 
-[Primer](PRIMER.md) · [The skill](skills/infinityblade/SKILL.md) · [Install](INSTALL.md) · [Skills library](skills/INDEX.md) · [Lessons](skills/infinityblade/references/lessons-from-the-field.md) · [Tests](skills/infinityblade/references/eval-cases.md) · [Enhancement](skills/infinityblade/references/agent-enhancement.md) · [Changelog](CHANGELOG.md)
+[Primer](PRIMER.md) · [The skill](skills/infinityblade/SKILL.md) · [Install](INSTALL.md) · [Skills library](skills/INDEX.md) · [Lessons](skills/infinityblade/references/lessons-from-the-field.md) · [Tests](skills/infinityblade/references/eval-cases.md) · [Enhancement](skills/infinityblade/references/agent-enhancement.md) · [Memory](skills/memory-recall-systems/SKILL.md) · [Changelog](CHANGELOG.md)
 
 **Reading order:** start with the [Primer](PRIMER.md). It converts the defaults you arrived with before the depth can help you, and it takes one pass. Then the skill, then the references as the skill routes you to them. The entry contract above governs: the primer plus the skill authorize work; the full read is required before citing, teaching, or extending the doctrine.
 
@@ -134,13 +134,14 @@ access needed.
 | [`references/eval-cases.md`](skills/infinityblade/references/eval-cases.md) | Prompts to test that the skill changes behavior. |
 | [`references/agent-enhancement.md`](skills/infinityblade/references/agent-enhancement.md) | Memory, initiative, skill-craft and self-grading disciplines for the systems around the work. |
 | [`PRIMER.md`](PRIMER.md) | The front door: the defaults that produce bad engineering reports, named and replaced, in one pass. |
-| [`skills/INDEX.md`](skills/INDEX.md) | The skills library index: 19 complete, installable skill folders. Take any folder as-is; it is complete. |
+| [`skills/INDEX.md`](skills/INDEX.md) | The skills library index: 22 complete, installable skill folders. Take any folder as-is; it is complete. |
+| [`skills/memory-recall-systems/`](skills/memory-recall-systems/) | The memory and recall layer as one installable folder: the disciplines, a standard-library recall index with a canary eval, and the full research report they distil. |
 
 The skill loads the references only when a task needs them, so everyday cost stays small.
 
 ## Agent enhancement
 
-The core governs a task. A second layer governs the agent across tasks: priced initiative, honest memory, rationale memory, freshness, gates on the gates, authority hygiene, and skill craft, eighteen disciplines in all in [agent-enhancement.md](skills/infinityblade/references/agent-enhancement.md). Most are specification-only and say so in place: reading a specification installs nothing. Two starter mechanisms ship in 3.1.0: a priced-initiative scorer and an evidence-pointer STATUS checker (see the reference). Deferred and refused designs live in the companion registers file, so a rejected design stays rejected instead of being re-proposed.
+The core governs a task. A second layer governs the agent across tasks: priced initiative, honest memory, rationale memory, freshness, gates on the gates, authority hygiene, and skill craft, eighteen disciplines in all in [agent-enhancement.md](skills/infinityblade/references/agent-enhancement.md). Most are specification-only and say so in place: reading a specification installs nothing. Two starter mechanisms ship in 3.1.0: a priced-initiative scorer and an evidence-pointer STATUS checker (see the reference). Deferred and refused designs live in the companion registers file, so a rejected design stays rejected instead of being re-proposed. The memory and recall disciplines have their own installable skill, [memory-recall-systems](skills/memory-recall-systems/SKILL.md): the measured evidence for how an agent's memory actually fails, the recall harness (an index over the markdown estate plus a canary eval graded on the agent's own history), and the resource bounds that keep long jobs from dying silently.
 
 ## What it is not
 

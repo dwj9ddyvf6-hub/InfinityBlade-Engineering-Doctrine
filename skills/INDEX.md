@@ -2,13 +2,13 @@
 
 This folder carries installable craft beside the doctrine skill: complete skill folders, taken as they are used, not descriptions of them.
 
-**Install contract, stated honestly:** take any folder as-is. Seventeen folders are complete: full SKILL.md text and every supporting file the skill needs to run. Two folders carry named external dependencies, stated in their rows and in their own text: chart-read invokes a render script and a synthesis document that live with the adopter, and its bin/pass_a.py imports `core.ta_battery` from the checkout named by `CHART_READ_TA_REPO` (not bundled), and stock-analysis runs its Pass A from the chart-read folder, so those two install together. A contract that claims completeness its own folders falsify would fail this library's own read-back test, so the exceptions are named here, at the promise, not buried in the folders. Where a skill needs a credential, a path, or a document of yours, it names an environment variable or a placeholder, never a value.
+**Install contract, stated honestly:** take any folder as-is. Twenty folders are complete: full SKILL.md text and every supporting file the skill needs to run. Two folders carry named external dependencies, stated in their rows and in their own text: chart-read invokes a render script and a synthesis document that live with the adopter, and its bin/pass_a.py imports `core.ta_battery` from the checkout named by `CHART_READ_TA_REPO` (not bundled), and stock-analysis runs its Pass A from the chart-read folder, so those two install together. A contract that claims completeness its own folders falsify would fail this library's own read-back test, so the exceptions are named here, at the promise, not buried in the folders. Where a skill needs a credential, a path, or a document of yours, it names an environment variable or a placeholder, never a value.
 
 **Start with these three.** proof-before-green (the verdict discipline every other skill reports under), gate-test-integrity (the gate honesty the verdict depends on), and claim-verification-ledger (the ledger that keeps delegated and saved claims honest). Install those first; add the rest when a task names their surface.
 
 The doctrine skill itself lives at [infinityblade/](infinityblade/) and is not part of this index; it is the rule source the library operates under.
 
-## The library: 19 skills, 40 files
+## The library: 22 skills, 65 files
 
 | Skill folder | Files | Purpose | Disposition |
 |---|---|---|---|
@@ -31,6 +31,9 @@ The doctrine skill itself lives at [infinityblade/](infinityblade/) and is not p
 | [persisted-field-consumption-audit/](persisted-field-consumption-audit/) | 1 | Audit every consumer of persisted producer fields before calling a migration to a canonical source complete. | Complete |
 | [proof-before-green/](proof-before-green/) | 1 | Prove gate verdicts and live claims on the final tree and the final live state before reporting green. | Complete |
 | [save-readback-verification/](save-readback-verification/) | 1 | Verify saves, backups, pushes, exports, and deletions by reading them back at the destination. | Complete |
+| [efficiency-breakthroughs/](efficiency-breakthroughs/) | 1 | Pipeline mechanics for complete reads, bulk transport, rate limits, caches, watchdogs, seam validation, freshness, and reconciliation, each distilled from an incident where it was learned at cost. | Complete |
+| [agent-enhancement-systems/](agent-enhancement-systems/) | 20 | Runnable mechanisms for the agent-enhancement disciplines: proactive pricing and gates, instincts, profile-plus-graph memory with honest recall, the skill laboratory and evidence capsules, authority handoffs, rationale records, freshness, outbound gating, deterministic IDs, a durable effect queue, owner routing, near-miss learning, and content-bound approvals, with templates and a package test. | Complete: Python standard library only; host state lives outside the folder |
+| [memory-recall-systems/](memory-recall-systems/) | 4 | Design, repair, or audit an agent's memory, recall, context discipline, and long-job resource bounds: hybrid search over the markdown estate under a forced search rule, a canary eval on the agent's own history, masking over summarising, delta-only summaries, invalidate-never-delete, decay-ranked forgetting with write-gating, and checkpointed, memory-bounded long jobs, with the research report the skill distils. | Complete: Python standard library only; the full research report ships in the folder |
 
 Every landed SKILL.md carries the same frontmatter shape: name (its folder name), a one-sentence description, and version 1.0.0, the library's first public version. Host metadata files from the source library do not land; their names and descriptions are folded into that frontmatter. Runtime artifacts (lock files, bytecode caches) never land.
 
@@ -42,6 +45,7 @@ Overlap is resolved by precedence, never by carrying the same law twice and hopi
 - judgment-provenance-check is the routing checklist for its cluster; conviction-surface-definition governs surface definition, doctrine-provenance-check governs veto audits. Precedence is stated inside judgment-provenance-check.
 - absence-proof-coverage-ledger is canonical for absence claims; claim-verification-ledger governs the wider claim set and routes absence claims to it. save-readback-verification is canonical for the save half of that ledger.
 - single-door-consumer-audit and persisted-field-consumption-audit share the consumer-audit core and both land whole: the first governs doors (canonical sources), the second governs fields (persisted producer output); a task touching both runs both.
+- memory-recall-systems and agent-enhancement-systems overlap on recall and both land whole: the systems package owns the runnable mechanisms for the wider enhancement disciplines; memory-recall-systems owns the memory architecture evidence and its canary contract governs how recall is measured. A task touching recall runs both.
 
 ## Excluded, with reasons
 

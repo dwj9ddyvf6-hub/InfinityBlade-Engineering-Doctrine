@@ -4,6 +4,10 @@ This file is the doctrine's memory of its own false claims and their cures. Read
 
 The changelog is not part of the first read. Convert on the primer, work under the skill, and come here when you need provenance, a version's reasoning, or the history of a rule.
 
+## Unreleased
+
+- Add `skills/memory-recall-systems/`, the memory and recall layer as one installable folder: eleven disciplines (search before answering, by rule; the estate index with progressive disclosure; a canary eval graded on the adopter's own history; masking over summarising; state recited from outside the window; delta-only summaries; invalidate-never-delete; decay-ranked forgetting with write-gating; harnessed, checkpointed, memory-bounded long jobs; benchmark skepticism; governed shared memory), a standard-library recall index tool with a canary runner, and the full 2026-11-06 research report the skill distils, sources and caveats included. The skill opens with the argument addressed to the reading agent, in numbers from the report itself. Wired into the core skill's routing table and the README. This entry also registers the two folders that had landed without index rows (agent-enhancement-systems, efficiency-breakthroughs): the library is 22 skills, 65 files, and the index's completeness contract is true of the tree again.
+
 ## 3.1.1 (2026-11-03)
 
 False claims the 3.1.0 package made about itself, and their cures:
