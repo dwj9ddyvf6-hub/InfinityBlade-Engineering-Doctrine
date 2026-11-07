@@ -17,8 +17,9 @@ from pathlib import Path
 import stat
 import tempfile
 import zipfile
+from urllib.parse import unquote, urlsplit
 
-from validate_repo import source_files, validate, runtime_dependencies
+from validate_repo import source_files, validate, runtime_dependencies, markdown_links
 
 MANIFEST = "BUNDLE-MANIFEST.json"
 SKIP_SUFFIXES = {".pyc", ".pyo", ".sqlite", ".sqlite3", ".db", ".zip"}
@@ -112,6 +113,19 @@ def build_bundle(root, selected, output, require_runtime=False):
     if not result["passed"]:
         raise ValueError("source validation failed: " + json.dumps(result["errors"], sort_keys=True))
     declaration = read_dependencies(root)
+    # A valid on-disk target is still missing if export policy omitted it.
+    # Never advertise dependency closure merely because the source checkout has it.
+    for relative in sources:
+        if Path(relative).suffix.lower() == ".md":
+            links, _ = markdown_links(root, root / relative)
+            for link in links:
+                target = ((root / relative).parent / unquote(urlsplit(link["target"]).path)).resolve()
+                if target.is_file() and target.relative_to(root).as_posix() not in sources:
+                    raise ValueError("referenced local asset excluded from bundle: " + target.relative_to(root).as_posix())
+    for spec in declaration["skills"].values():
+        for dependency in spec["required"] + spec["optional"]:
+            if dependency["kind"] == "local-file" and dependency["path"] not in sources:
+                raise ValueError("declared local dependency missing from bundle: " + dependency["path"])
     runtime = runtime_report(root, selected, declaration)
     unresolved = [row for row in runtime if row["required"] and not row["available"]]
     if require_runtime and unresolved:

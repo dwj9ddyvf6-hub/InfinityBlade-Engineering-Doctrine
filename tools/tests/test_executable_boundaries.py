@@ -289,6 +289,12 @@ class BundleBoundaries(unittest.TestCase):
                 bundle.verify_bundle(changed)
             with patch.dict(os.environ, {}, clear=True), self.assertRaisesRegex(ValueError, "unresolved runtime"):
                 bundle.build_bundle(export, ["chart-read"], base / "runtime.zip", require_runtime=True)
+            (export / "fixture.db").write_bytes(b"source asset fixture")
+            with (export / "README.md").open("a") as handle:
+                handle.write("\n[Required local fixture](fixture.db)\n")
+            with self.assertRaisesRegex(ValueError, "referenced local asset excluded"):
+                bundle.build_bundle(export, ["infinityblade"], base / "missing-asset.zip")
+
 
     def test_source_symlinks_and_archive_path_escapes_are_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
