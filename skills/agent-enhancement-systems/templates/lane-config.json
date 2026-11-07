@@ -1,0 +1,1 @@
+{"C_FA":2.0,"C_FN":8.0,"ask":"replace with the explicit ask outcome, distinct from silence and from error","class":"vertical","lambda":1.0,"lane":"replace-with-lane-name","margin":0.05,"max_fires_per_window":3,"min_interval":3600,"mode":"observe","window_s":3600}
