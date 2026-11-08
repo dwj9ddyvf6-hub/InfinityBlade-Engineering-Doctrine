@@ -130,6 +130,32 @@ class RepositoryToolsTests(unittest.TestCase):
         self.assertIn("python_syntax", kinds)
         self.assertIn("runtime_dependency_declaration", kinds)
 
+    def write_index(self, overrides=None, omit=()):
+        data = validator.discover(self.root)
+        rows = []
+        for item in data["skills"]:
+            name = item["name"]
+            if name == "infinityblade" or name in omit:
+                continue
+            count = (overrides or {}).get(name, len(item["files"]))
+            rows.append(f"| [{name}/]({name}/) | {count} | Fixture | Fixture |")
+        (self.root / "skills/INDEX.md").write_text(
+            "# Skills Library Index\n\n| Skill folder | Files | Purpose | Disposition |\n"
+            "|---|---|---|---|\n" + "\n".join(rows) + "\n")
+
+    def test_skills_index_counts_and_rows_are_validated(self):
+        self.write_index(overrides={"example": 99})
+        result = validator.validate(self.root)
+        self.assertFalse(result["passed"])
+        self.assertIn("skills_index_count", {e["kind"] for e in result["errors"]})
+        self.write_index(omit={"example"})
+        result = validator.validate(self.root)
+        self.assertFalse(result["passed"])
+        self.assertIn("skills_index_rows", {e["kind"] for e in result["errors"]})
+        self.write_index()
+        result = validator.validate(self.root)
+        self.assertTrue(result["passed"], result)
+
     def test_empty_skill_repository_fails(self):
         empty = Path(self.temp.name) / "empty"
         empty.mkdir()
