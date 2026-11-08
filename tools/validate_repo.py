@@ -216,26 +216,51 @@ def without_fences(text):
     return "\n".join(lines)
 
 
+def heading_slugs(path):
+    """GitHub-style heading anchors for one Markdown file, deduplicated."""
+    slugs, seen = set(), {}
+    for line in without_fences(path.read_text(encoding="utf-8")).splitlines():
+        heading = re.match(r"^#{1,6}\s+(.*?)\s*#*\s*$", line)
+        if not heading:
+            continue
+        text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", heading.group(1))
+        slug = re.sub(r"[^a-z0-9 _-]", "", text.lower()).replace(" ", "-")
+        count = seen.get(slug, 0)
+        seen[slug] = count + 1
+        slugs.add(slug if count == 0 else f"{slug}-{count}")
+    return slugs
+
+
 def markdown_links(root, path):
-    """File-target checks, not a complete Markdown parser or remote-link check."""
+    """File and fragment checks, not a complete Markdown parser or remote-link check."""
     text = without_fences(path.read_text(encoding="utf-8"))
     links, errors = [], []
+    slug_cache = {}
     pattern = re.compile(r"(?<!!)\[[^\]\n]*\]\((<[^>]+>|[^\s)]+)(?:\s+[^)]*)?\)")
     for match in pattern.finditer(text):
         target = match.group(1).strip("<>")
         parsed = urlsplit(target)
-        if parsed.scheme or parsed.netloc or not parsed.path:
+        if parsed.scheme or parsed.netloc:
             continue
-        relative = unquote(parsed.path)
-        resolved = (path.parent / relative).resolve()
         line = text.count("\n", 0, match.start()) + 1
         row = {"source": path.relative_to(root).as_posix(), "line": line, "target": target}
-        if not resolved.is_relative_to(root):
-            errors.append({**row, "reason": "local link escapes repository"})
-        elif not resolved.exists():
-            errors.append({**row, "reason": "missing local target"})
+        if not parsed.path:
+            resolved = path
         else:
-            links.append(row)
+            resolved = (path.parent / unquote(parsed.path)).resolve()
+            if not resolved.is_relative_to(root):
+                errors.append({**row, "reason": "local link escapes repository"})
+                continue
+            if not resolved.exists():
+                errors.append({**row, "reason": "missing local target"})
+                continue
+        links.append(row)
+        if parsed.fragment and resolved.suffix.lower() == ".md":
+            if resolved not in slug_cache:
+                slug_cache[resolved] = heading_slugs(resolved)
+            if unquote(parsed.fragment) not in slug_cache[resolved]:
+                errors.append({"kind": "local_markdown_fragment", **row,
+                               "reason": "fragment matches no heading in target"})
     return links, errors
 
 
@@ -275,6 +300,35 @@ def index_count_errors(root, expected):
     return errors
 
 
+ENTRY_CONTRACT_DOORS = ("skills/infinityblade/SKILL.md", "PRIMER.md", "README.md", "INSTALL.md")
+ENTRY_CONTRACT_VERBS = ("teaching", "summarizing", "extending", "editing")
+
+
+def entry_contract_errors(root):
+    """Every door that states the full-read trigger must state it in full.
+
+    The entry contract is repeated in the core, the primer, the README and
+    the install guide because each is an entry point. A door that truncates
+    the trigger list (citing, teaching, summarizing, extending, editing)
+    quietly narrows when the deep read is required, and hand-synced copies
+    drift exactly there. Any sentence invoking the trigger is checked;
+    doors that do not state it are silent.
+    """
+    errors = []
+    for relative in ENTRY_CONTRACT_DOORS:
+        path = root / relative
+        if not path.exists():
+            continue
+        text = regular_text(path)
+        for match in re.finditer(r"[^.]*\bciting\b[^.]*\.", text):
+            sentence = match.group(0)
+            missing = [verb for verb in ENTRY_CONTRACT_VERBS if verb not in sentence]
+            if missing:
+                errors.append({"kind": "entry_contract_triggers", "path": relative,
+                               "missing": missing})
+    return errors
+
+
 def validate(root, check_registry=True):
     root = Path(root).resolve()
     errors, local_links, parsed_python, markdown_files = [], 0, 0, 0
@@ -290,6 +344,10 @@ def validate(root, check_registry=True):
         errors.extend(index_count_errors(root, expected))
     except (OSError, ValueError) as error:
         errors.append({"kind": "skills_index", "reason": str(error)})
+    try:
+        errors.extend(entry_contract_errors(root))
+    except (OSError, ValueError) as error:
+        errors.append({"kind": "entry_contract", "reason": str(error)})
     for path in source_files(root):
         rel = path.relative_to(root).as_posix()
         if path.is_symlink():
@@ -322,7 +380,7 @@ def validate(root, check_registry=True):
     return {"passed": not errors, "skill_count": expected["skill_count"],
             "markdown_files_checked": markdown_files, "local_file_links_checked": local_links,
             "python_files_parsed_without_execution": parsed_python, "errors": errors,
-            "limits": ["Local file targets only; Markdown fragments and remote URL availability are not tested.",
+            "limits": ["Local file targets and heading fragments only; remote URL availability is not tested.",
                        "Metadata validation supports the repository's string-scalar frontmatter subset, not arbitrary YAML.",
                        "Syntax and metadata checks are not behavior, host installation, runtime or trading proof."]}
 
