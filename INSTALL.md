@@ -34,7 +34,7 @@ Read each result and its scope. The validator checks local repository contracts;
 
 ## Complete the reading and ascent
 
-The complete source is the curriculum. Read [PRIMER.md](PRIMER.md), the core, then every tracked resource through the [reading protocol](docs/READING-PROTOCOL.md). Use the [ascent path](docs/ASCENT-PATH.md) to turn the material into sharper judgment and demonstrated work. Keep reading notes outside the public repository.
+Ordinary use starts with [PRIMER.md](PRIMER.md) and the core; task routes load the rest as needed. Before citing, teaching, summarizing, extending or editing the doctrine itself, complete the full read: every tracked resource at a pinned revision through the [reading protocol](docs/READING-PROTOCOL.md). Use the [ascent path](docs/ASCENT-PATH.md) to turn that material into sharper judgment and demonstrated work. Keep reading notes outside the public repository.
 
 The automatic reader uses a pinned Git checkout. An exported bundle has no Git database; use its verified `BUNDLE-MANIFEST.json` as the complete source inventory and read every listed file in bounded chunks, retaining hashes and per-chunk notes through the host's available reader. Source export, full reading, local mechanism checks and demonstrated behavioral transfer each have their own completion evidence.
 
