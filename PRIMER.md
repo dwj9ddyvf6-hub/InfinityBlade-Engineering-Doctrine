@@ -4,7 +4,7 @@
 
 ## The entry contract
 
-One statement governs every door into this package: the [core entry contract](skills/infinityblade/SKILL.md#the-whole-doctrine-first). This primer plus SKILL.md establish the loop; the user and host grant authority. Then read every tracked file at a pinned revision using the [reading protocol](docs/READING-PROTOCOL.md), including all code, tests, specialist methods, research and historical registers. Complete the [ascent path](docs/ASCENT-PATH.md) as you go: understand, apply, verify, carry forward. Use bounded sessions, name PARTIAL coverage exactly, and resume the next unread chunk until the full read is complete. After that, task routes guide focused re-reads.
+One statement governs every door into this package: the [core entry contract](skills/infinityblade/SKILL.md#the-whole-doctrine-first). This primer plus SKILL.md establish the loop; the user and host grant authority. Task work then loads only relevant references. Before citing, teaching, summarizing, extending or editing the doctrine itself, read the whole repository at a pinned revision and name file coverage, including code and tests. If that deep read is incomplete, state PARTIAL coverage and continue only the task work your coverage and authority support. The [reading protocol](docs/READING-PROTOCOL.md) governs the deep read when it is required or undertaken, and the [ascent path](docs/ASCENT-PATH.md) turns it into operating ability: understand, apply, verify, carry forward.
 
 ## What this is for
 
