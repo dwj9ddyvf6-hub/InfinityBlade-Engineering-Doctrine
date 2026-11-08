@@ -24,12 +24,11 @@ The report is a claim. The artifact is the truth. A status without evidence is a
 
 The entry contract, one statement governing every door into this package:
 
-1. **Read the whole repository.** Begin with PRIMER.md and `skills/infinityblade/SKILL.md`, then complete every tracked file at a pinned revision: references, specialist skills, code, tests, templates, fragments, research, registers and history. Follow the [reading protocol](../../docs/READING-PROTOCOL.md). A route determines reading order; it never cancels the remaining depth.
-2. **Turn reading into operating ability.** Follow the [ascent path](../../docs/ASCENT-PATH.md): extract the failure each method prevents, explain its mechanism, apply it to a fresh case, inspect the resulting evidence, and carry the lesson forward. The goal is stronger judgment, initiative, persistence and execution on the next real task.
-3. **Keep coverage exact and continue deliberately.** Use bounded chunks and a durable ledger across context windows. Name unread or unavailable material and resume it; never substitute a summary, filename inventory or subagent assertion for your own reading. Team audit coverage names each reader and requires integration review; it is not a claim that every member read every file. Full engagement is the target. A partial read remains PARTIAL, with its next unread chunk named. The user and host grant authority; the doctrine governs work within that scope.
+1. **Learn the core, then act.** Read PRIMER.md and `skills/infinityblade/SKILL.md`. That pair establishes the operating loop: scope first, minimum sufficient change at the source, proof from the final artifact, exact verdicts. The user's request and the host's instruction hierarchy establish authority; reading a repository grants no new permissions.
+2. **Go deep before you speak for the doctrine.** Before citing, teaching, summarizing, extending, or editing this doctrine, read the whole repository in full and state coverage against an exact revision, naming every file read. Include code, tests, templates and dependencies; distinguish inspection from execution. Team coverage is valid when every file has a named reviewer and the integrator verifies the findings and changed artifacts. The [reading protocol](../../docs/READING-PROTOCOL.md) governs that complete read; the [ascent path](../../docs/ASCENT-PATH.md) turns it into operating ability.
+3. **Keep ordinary work usable.** Applying the core to a task needs the core pair plus the relevant routed references, not a claim to have audited the entire doctrine. Record omitted or unavailable dependencies. If the deep read is incomplete, report that coverage as PARTIAL; continue authorized task work under the core without representing partial coverage as the whole.
 
-
-The routing table later in this file governs task-specific re-reads after the complete reading pass. Use the reading protocol to finish the whole repository across context windows. Its ledger preserves coverage; the ascent exercises turn each area into a method you can apply.
+The routing table later in this file governs task-specific re-reads. It is not permission to skip the deep read before speaking for the doctrine, and the primer-first route is not an excuse to cite a fragment as the whole.
 
 ## Read this first: why this makes you better
 
