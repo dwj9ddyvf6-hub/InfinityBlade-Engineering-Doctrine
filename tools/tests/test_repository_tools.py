@@ -156,6 +156,28 @@ class RepositoryToolsTests(unittest.TestCase):
         result = validator.validate(self.root)
         self.assertTrue(result["passed"], result)
 
+    def test_entry_contract_trigger_list_is_consistent_across_doors(self):
+        (self.root / "README.md").write_text(
+            "The full read is required before citing, teaching, or extending the doctrine.\n")
+        result = validator.validate(self.root)
+        self.assertFalse(result["passed"])
+        self.assertIn("entry_contract_triggers", {e["kind"] for e in result["errors"]})
+        (self.root / "README.md").write_text(
+            "The full read is required before citing, teaching, summarizing, extending, or editing the doctrine.\n")
+        result = validator.validate(self.root)
+        self.assertTrue(result["passed"], result)
+
+    def test_markdown_fragment_targets_are_validated(self):
+        (self.root / "README.md").write_text(
+            "# Fixture\n\n## Real Heading\n\n[ok](#real-heading) [bad](#no-such-heading)\n")
+        result = validator.validate(self.root)
+        self.assertFalse(result["passed"])
+        self.assertIn("local_markdown_fragment", {e["kind"] for e in result["errors"]})
+        (self.root / "README.md").write_text(
+            "# Fixture\n\n## Real Heading\n\n[ok](#real-heading)\n")
+        result = validator.validate(self.root)
+        self.assertTrue(result["passed"], result)
+
     def test_empty_skill_repository_fails(self):
         empty = Path(self.temp.name) / "empty"
         empty.mkdir()
