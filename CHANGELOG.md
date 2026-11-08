@@ -4,6 +4,13 @@ This file is the doctrine's memory of its own false claims and their cures. Read
 
 Begin with the primer and core, then include this entire changelog in the complete reading pass. It preserves provenance, a version's reasoning and the history of each corrected rule. Historical entries describe their own versions; the current core entry contract governs the present reading obligation.
 
+## Unreleased
+
+Corrections on review of the 3.3.0 landing, recorded the same day; the 3.3.0 entry below stands as the historical record of what that release claimed.
+
+- Correct a false completeness claim the 3.3.0 release introduced: the skills index stated 22 files for `agent-enhancement-systems` while the tree held 23 (the persistence test module landed without the count being updated). The index now states 23, the library total is 68 files, and `tools/validate_repo.py` compares every index table count and row against the discovered registry, with regression tests, so a wrong count fails the gate instead of passing silently.
+- Supersede the 3.3.0 entry-contract escalation. That release made a complete read of every tracked file the standing prerequisite for any use of the doctrine, reversing the proportionality the 3.2.0 release had deliberately settled. The settled contract is restored in the core, the primer, the README and the install guide: the primer plus the core establish the loop and authorize ordinary task work with routed references; the complete pinned read remains required before citing, teaching, summarizing, extending or editing the doctrine itself, and the reading protocol and ascent path remain the governed route for that full engagement. Nothing else in 3.3.0 is withdrawn: the registry, router, validator, bundle tooling, ascent curriculum, artifact evaluator, eval cases 23-30 and the mechanism hardening all stand.
+
 ## 3.3.0 (2026-11-07)
 
 A deeper, additive release centered on the doctrine's formative purpose: stronger judgment, initiative, persistence and execution. The four pillars, five-step loop, full creed, eighteen enhancement disciplines, thirty-three incident patterns, thirty-four efficiency mechanisms, specialist methods, complete fragments, research and historical registers remain.
