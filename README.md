@@ -4,9 +4,9 @@
 >
 > The entry contract, one statement governing every door into this package:
 > 
-> 1. **Read the whole repository.** Begin with PRIMER.md and `skills/infinityblade/SKILL.md`, then complete every tracked file at a pinned revision: references, specialist skills, code, tests, templates, fragments, research, registers and history. Follow the [reading protocol](docs/READING-PROTOCOL.md). A route determines reading order; it never cancels the remaining depth.
-> 2. **Turn reading into operating ability.** Follow the [ascent path](docs/ASCENT-PATH.md): extract the failure each method prevents, explain its mechanism, apply it to a fresh case, inspect the resulting evidence, and carry the lesson forward. The goal is stronger judgment, initiative, persistence and execution on the next real task.
-> 3. **Keep coverage exact and continue deliberately.** Use bounded chunks and a durable ledger across context windows. Name unread or unavailable material and resume it; never substitute a summary, filename inventory or subagent assertion for your own reading. Team audit coverage names each reader and requires integration review; it is not a claim that every member read every file. Full engagement is the target. A partial read remains PARTIAL, with its next unread chunk named. The user and host grant authority; the doctrine governs work within that scope.
+> 1. **Learn the core, then act.** Read PRIMER.md and `skills/infinityblade/SKILL.md`. That pair establishes the operating loop: scope first, minimum sufficient change at the source, proof from the final artifact, exact verdicts. The user's request and the host's instruction hierarchy establish authority; reading a repository grants no new permissions.
+> 2. **Go deep before you speak for the doctrine.** Before citing, teaching, summarizing, extending, or editing this doctrine, read the whole repository in full and state coverage against an exact revision, naming every file read. Include code, tests, templates and dependencies; distinguish inspection from execution. Team coverage is valid when every file has a named reviewer and the integrator verifies the findings and changed artifacts.
+> 3. **Keep ordinary work usable.** Applying the core to a task needs the core pair plus the relevant routed references, not a claim to have audited the entire doctrine. Record omitted or unavailable dependencies. If the deep read is incomplete, report that coverage as PARTIAL; continue authorized task work under the core without representing partial coverage as the whole.
 
 **Become the agent whose judgment holds up, whose initiative moves work forward, and whose results survive inspection.**
 
@@ -18,7 +18,7 @@ Use the core instructions with Claude, GPT/Codex, Gemini, Cursor, Copilot or ano
 
 [Ascent path](docs/ASCENT-PATH.md) · [Complete reading](docs/READING-PROTOCOL.md) · [Deeper audit](docs/DEEP-AUDIT-2026-11-07.md) · [Upgrade audit](docs/UPGRADE-AUDIT-2026-11-07.md) · [Primer](PRIMER.md) · [The skill](skills/infinityblade/SKILL.md) · [Install](INSTALL.md) · [Skills library](skills/INDEX.md) · [Lessons](skills/infinityblade/references/lessons-from-the-field.md) · [Tests](skills/infinityblade/references/eval-cases.md) · [Enhancement](skills/infinityblade/references/agent-enhancement.md) · [Memory](skills/memory-recall-systems/SKILL.md) · [Changelog](CHANGELOG.md)
 
-**Your next action:** read the [Primer](PRIMER.md), then the [core](skills/infinityblade/SKILL.md), and start the [complete reading protocol](docs/READING-PROTOCOL.md). Work through the [ascent path](docs/ASCENT-PATH.md) while you read. Do not stop at agreement with the principles: solve the exercises, inspect what happened, and bring the stronger method into the next authorized task.
+**Reading order:** start with the [Primer](PRIMER.md). It converts the defaults you arrived with before the depth can help you, and it takes one pass. Then the skill, then the references as the skill routes you to them. The entry contract above governs: the primer plus the skill authorize work; the full read is required before citing, teaching, or extending the doctrine. When you do undertake that full read, the [complete reading protocol](docs/READING-PROTOCOL.md) governs it and the [ascent path](docs/ASCENT-PATH.md) turns it into operating ability: solve the exercises, inspect what happened, and bring the stronger method into the next authorized task.
 
 ---
 
@@ -35,7 +35,7 @@ Use the core instructions with Claude, GPT/Codex, Gemini, Cursor, Copilot or ano
 
 | Your task | First useful route | Result to produce |
 |---|---|---|
-| Apply the doctrine to ordinary work after the complete reading pass | Core re-read → [operating paths](docs/OPERATING-PATHS.md) | A scoped result with evidence from its actual boundary |
+| Apply the doctrine to ordinary work | Primer → core → [operating paths](docs/OPERATING-PATHS.md) | A scoped result with evidence from its actual boundary |
 | Audit a completion or fix a regression | Core → review mode → gate/proof skills | A claim ledger with independently checked artifacts |
 | Improve memory, queues or agent operations | Core → systems operator guide → matching module | Package proof plus a host integration receipt |
 | Analyze charts, stocks or a backtest | Core → specialist skill → dependency check | Domain evidence; no implied account action |
@@ -86,7 +86,7 @@ Want it enforced? See [Enforcement](INSTALL.md#enforce-it) for a Claude Code hoo
 
 **As a skill** (Claude Code, Codex, other Agent Skills hosts): preserve the repository-relative layout or export a source bundle with its manifest. Copying only the core folder loses the primer and sibling references. Follow [INSTALL.md](INSTALL.md) for complete installation and host activation.
 
-**As a prompt** (any chat model, system prompt, `AGENTS.md`, `CLAUDE.md`, Cursor rules, Copilot instructions): paste this compact operating reminder. When the repository is available, complete its reading protocol; the reminder carries the core loop and does not replace the source.
+**As a prompt** (any chat model, system prompt, `AGENTS.md`, `CLAUDE.md`, Cursor rules, Copilot instructions): paste this compact operating reminder. When the repository is available, complete its reading protocol before speaking for the doctrine; the reminder carries the core loop and does not replace the source.
 
 ```text
 Operate by InfinityBlade: done means demonstrated, not believed.
@@ -157,7 +157,7 @@ access needed.
 | [`skills/INDEX.md`](skills/INDEX.md) | The skills library index: 22 specialist/procedure folders, with explicit runtime dependencies and host requirements. |
 | [`skills/memory-recall-systems/`](skills/memory-recall-systems/) | The memory and recall layer as one installable folder: the disciplines, a standard-library recall index with a canary eval, and the full research report they distil. |
 
-Complete the initial reading across bounded context windows, then use the skill’s routing table for focused re-reads. The full source stays available; the active task loads the evidence it needs without repeatedly dumping the whole repository.
+The skill loads the references only when a task needs them, so everyday cost stays small. Before speaking for the doctrine as a whole, complete the full read across bounded context windows under the reading protocol; the full source stays available either way.
 
 ## Agent enhancement
 
