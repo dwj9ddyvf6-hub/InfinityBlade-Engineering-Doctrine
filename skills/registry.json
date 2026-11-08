@@ -261,7 +261,7 @@
       "description": "Operating discipline for finishing real work correctly, efficiently and honestly. Use for any task that changes something or claims a result — code, debugging, deployment, automation, data work, research with sources, documents built from facts, or reviewing whether work is done. Skip for casual conversation and pure explanation.",
       "version": "3.3.0",
       "entrypoint": "skills/infinityblade/SKILL.md",
-      "source_sha256": "60043254d71c18831d3bea121e29cc1cc29ebe4ffc36054822077748875eedf7",
+      "source_sha256": "4484e7521ca56567afa719cc12b24836fb7f0b9197c9462e861e9d5114cf9ca7",
       "kind": "core-operating-doctrine",
       "evidence_boundary": "Procedure and local source-checking helpers; no automatic host installation.",
       "related_skills": [
