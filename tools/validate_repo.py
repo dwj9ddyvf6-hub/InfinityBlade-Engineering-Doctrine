@@ -239,6 +239,42 @@ def markdown_links(root, path):
     return links, errors
 
 
+def index_count_errors(root, expected):
+    """The skills index table must state each folder's true file count.
+
+    The registry is derived from the tree, so it is the authority here: a
+    hand-maintained count in INDEX.md that disagrees with the discovered
+    files is a false completeness claim, and a missing or extra row breaks
+    the index's contract that every library skill is listed exactly once.
+    The core skill is governed by the doctrine itself and is not a library
+    row. When no index exists the check is silent: minimal fixture trees
+    are not required to carry one.
+    """
+    path = root / "skills/INDEX.md"
+    if not path.exists():
+        return []
+    text = regular_text(path)
+    counts = {row["name"]: len(row["files"]) for row in expected["skills"]}
+    seen = {}
+    errors = []
+    for name, count in re.findall(r"\|\s*\[([a-z0-9-]+)/\]\(\1/\)\s*\|\s*(\d+)\s*\|", text):
+        if name in seen:
+            errors.append({"kind": "skills_index_rows", "skill": name, "reason": "duplicate index row"})
+            continue
+        seen[name] = int(count)
+        if name not in counts:
+            errors.append({"kind": "skills_index_rows", "skill": name, "reason": "index row names an unknown skill"})
+        elif seen[name] != counts[name]:
+            errors.append({"kind": "skills_index_count", "skill": name,
+                           "index_count": seen[name], "actual_count": counts[name]})
+    expected_rows = set(counts) - {"infinityblade"}
+    if set(seen) != expected_rows:
+        errors.append({"kind": "skills_index_rows",
+                       "missing": sorted(expected_rows - set(seen)),
+                       "extra": sorted(set(seen) - expected_rows)})
+    return errors
+
+
 def validate(root, check_registry=True):
     root = Path(root).resolve()
     errors, local_links, parsed_python, markdown_files = [], 0, 0, 0
@@ -250,6 +286,10 @@ def validate(root, check_registry=True):
         runtime_dependencies(root, {s["name"] for s in expected["skills"]})
     except (OSError, ValueError) as error:
         errors.append({"kind": "runtime_dependency_declaration", "reason": str(error)})
+    try:
+        errors.extend(index_count_errors(root, expected))
+    except (OSError, ValueError) as error:
+        errors.append({"kind": "skills_index", "reason": str(error)})
     for path in source_files(root):
         rel = path.relative_to(root).as_posix()
         if path.is_symlink():
