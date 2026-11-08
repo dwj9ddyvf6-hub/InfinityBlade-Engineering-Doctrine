@@ -4,7 +4,16 @@ This file is the doctrine's memory of its own false claims and their cures. Read
 
 Begin with the primer and core, then include this entire changelog in the complete reading pass. It preserves provenance, a version's reasoning and the history of each corrected rule. Historical entries describe their own versions; the current core entry contract governs the present reading obligation.
 
-## Unreleased
+## 3.4.0 (2026-11-08): best of both lines
+
+The owner ruled on 2026-11-08: "Keep both and use the good parts from both." Two lines existed: LOCAL (3.1.1 plus `skills/memory-recall-systems/`, commit deefb0d, kept on branch `backup-pre-astra-1108`) and ASTRA (3.3.0 and its same-day corrections, through commit 67ce9c5). Neither is deleted; history is not rewritten. The full rule-by-rule decision table is `docs/MERGE-2026-11-08.md`.
+
+- From ASTRA (kept whole): the reading protocol and coverage ledger, the ascent path, operating paths and task-record template, the artifact evaluator and paired-evaluation record, verified source bundles, the skill registry and router, the repository validator, eval cases 23-30, the 3.2.0 ship-status matrix, boundary-typed proof (unit proof closes a unit contract), the proportionate entry contract, the operational self-check in place of a public renunciation, and every mechanism and test added since deefb0d.
+- From LOCAL (restored): the short-core discipline, now a stated, checkable bound in AGENTS.md (core at or under 220 lines; 203 at this release). Everything else LOCAL carried is an ancestor of ASTRA and is present: deefb0d is the merge base, no LOCAL file was deleted, and each LOCAL rule ASTRA reworded was checked and found kept or deliberately strengthened (see the table).
+- New in the core (owner proposals to Midna, adopted): **Invariants, not introspection** and **Lessons become checks**, in one un-numbered section plus a tripwire row and a routing row; the lesson record format (ID, invariant, runnable check, fail-direction proof, where it runs, repeat counter, escalation, append-only history) lives in `lessons-from-the-field.md#lessons-carry-checks`. Eval cases 31-32 test them. Their behavioral effect is UNVERIFIED until the paired evaluation is rerun on named models.
+- Not run for this release: the repository validator, prompt checker and test suites were not executed in the merging session (execution was refused there). The registry entry for the core was updated by hand (version and source hash); run `python3 tools/validate_repo.py` and `python3 tools/check_prompt.py` before merging.
+
+## Corrections on review of the 3.3.0 landing (2026-11-07; released in 3.4.0)
 
 Corrections on review of the 3.3.0 landing, recorded the same day; the 3.3.0 entry below stands as the historical record of what that release claimed.
 

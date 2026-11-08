@@ -288,6 +288,28 @@ Use this loop whenever the same class of failure returns, or whenever a workflow
 
 If no action can be named that will either solve the problem or distinguish competing explanations, pause and re-scope before touching more state.
 
+## Lessons carry checks
+
+Added 3.4.0 (2026-11-08). Step 6 of the loop above is mandatory, not optional, and a lesson is not finished until it has this record:
+
+~~~text
+Lesson ID:            stable, never reused (e.g. L-2026-11-08-01)
+Rule (one line):
+Invariant:            the observable condition that must hold
+Check:                the runnable command, test or query that evaluates it
+Fail-direction proof: the check was run against the old/defective state and failed
+Where it runs:        CI / stop hook / scheduled job / pre-commit; a check nothing runs is a note
+Repeat counter:       n, with the date of each recurrence
+Escalation:           what stronger mechanism is adopted at the next recurrence
+~~~
+
+Rules:
+
+1. **Invariants, not introspection.** A neglect failure (a job that silently stopped, a fact that went stale, a promise nobody kept) is cured by a condition that is checked on a schedule and alarms when false, never by a resolution to be more careful. "I will remember" is not a mechanism; an age bound with an alarm is.
+2. **Recurrence escalates the mechanism.** First occurrence: rule plus check. Second: the check moves to a boundary that cannot be skipped (gate, hook, scheduled job). Third: the design that allows the failure is questioned. Rewording the lesson never counts as escalation.
+3. **History is append-only.** A lesson that turns out wrong is marked superseded with its date and replacement, never deleted; the counter and its recurrence dates stay.
+4. **Counters are evidence, not scores.** They rank where to invest mechanism; they never rank agents or justify skipping a check.
+
 ## Compact incident receipt
 
 ~~~text

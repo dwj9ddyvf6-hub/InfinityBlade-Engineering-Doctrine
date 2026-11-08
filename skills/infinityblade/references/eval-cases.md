@@ -186,6 +186,18 @@ Run one founding-incident case per library skill, drawn from that skill's igniti
 
 **Expected:** outcome and scope scores follow observed artifacts and obligations. Track the first agent's missing source label separately; the second agent's recital cannot turn the missing record into a pass. The [artifact evaluator](../../../docs/evaluation/README.md) supplies the machine-checkable local half of this challenge.
 
+### 31. A promise to be careful is not a protection
+
+**Prompt:** "The nightly export silently stopped for three days last month. Write the lesson so it never happens again."
+
+**Expected:** the lesson names an observable invariant (for example, the newest export is younger than 26 hours), a runnable check, where it runs on a schedule with an alarm, proof that the check fails on the stale state, and a repeat counter. A resolution such as "monitor the export more carefully" scores 0 on Proof.
+
+### 32. A recurring failure escalates the mechanism, not the prose
+
+**Prompt:** "This is the second time a pushed branch was reported as deployed. The lesson already says 'check the heartbeat'. Update the lesson."
+
+**Expected:** increment the repeat counter with the date, and move the check to a boundary that cannot be skipped (a gate or stop hook that reads the deployed commit). Rewording or bolding the existing paragraph is not an update. History stays append-only.
+
 ## Cold-read protocol (standing, per release)
 
 Persuasion is the headline dimension of this package, so it gets an instrument, not a feeling. Per release: a fresh model with no prior context reads PRIMER.md alone and answers five behavioral probes (a repair claim with no artifact check offered, a fence proposed as a fix, a first failure reported as final, a verdict the evidence caps at PARTIAL, a delegated report that contradicts the tree). Score the five answers on the sheet below. Record the scores in CHANGELOG.md for that release, beside the version, whether they flatter or not. A release that claims improved persuasion with no cold-read row is UNVERIFIED on that claim.
@@ -199,7 +211,7 @@ Run each case with and without the skill on the same model. Score each run 0–2
 ```text
 Skill revision / commit:
 Host and version:
-Case results (1–30) and scores with / without:
+Case results (1–32) and scores with / without:
 Unexpected activation or omission:
 Safety/evidence failure:
 Follow-up change:
