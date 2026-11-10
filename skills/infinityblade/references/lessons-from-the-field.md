@@ -310,6 +310,19 @@ Rules:
 3. **History is append-only.** A lesson that turns out wrong is marked superseded with its date and replacement, never deleted; the counter and its recurrence dates stay.
 4. **Counters are evidence, not scores.** They rank where to invest mechanism; they never rank agents or justify skipping a check.
 
+### Recorded lessons
+
+~~~text
+Lesson ID:            L-2026-11-10-01 (two routes, as a check; amendment A4 of the 3.4.0 adoption)
+Rule (one line):      A fix commit names the routes it rejected.
+Invariant:            Every commit that changes doctrine or tooling files (anything outside docs/archive/) carries a "Routes rejected:" record in its message naming at least one genuinely different route and why it lost, or states that the change is a fully specified deterministic edit verified against its stated correction (the core section 6 exemption). A rejected route that is not recorded gets re-proposed at full price.
+Check:                Scan a commit range: for each commit, list its changed files (git diff-tree --no-commit-id --name-only -r <sha>); if any path lies outside docs/archive/, grep its full message (git log -1 --format=%B <sha>) for "routes rejected". Any substantive commit without the record fails the check.
+Fail-direction proof: Run at adoption (2026-11-10) over the pre-adoption range 67ce9c5..bf1eca1: all three substantive commits lack the record, check exits 1. Over the adoption-authored range it exits 0. The ported merge commit (Claude, 315185f5) predates the check; its route record is its decision table, docs/MERGE-2026-11-08.md, in the tree rather than the message.
+Where it runs:        The adoption gate for 3.4.0 ran it over both ranges above; from adoption forward it runs in pre-merge review of any doctrine change on the adopting host. CI enforcement is not yet built and is not claimed.
+Repeat counter:       1 class recurrence: eval case 21 (two routes under pressure) transferred in no run of the 2026-11-07 paired evaluation (baseline and candidate arms), recorded there as the reopening condition for the two-route rule.
+Escalation:           Falsifier, per the 2026-11-08 decision record: if case 21 still fails in the paired-evaluation rerun with this check in place, the two-route rule itself is cut or rewritten at the next release, not reworded. The rerun's result is recorded in the changelog's 3.4.0 entry and the evaluation record.
+~~~
+
 ## Compact incident receipt
 
 ~~~text
