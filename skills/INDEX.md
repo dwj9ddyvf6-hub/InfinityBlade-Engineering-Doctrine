@@ -47,7 +47,7 @@ The doctrine skill itself lives at [infinityblade/](infinityblade/) and is not p
 
 Every landed SKILL.md carries a name (its folder name), trigger description and explicit version. Library patch versions advance when their contract is corrected; the registry records actual versions and declared capabilities. Host metadata files from the source library do not land; their names and descriptions are folded into that frontmatter. Runtime artifacts (lock files, bytecode caches) never land.
 
-## Recorded overlaps, with precedence (3.1.0)
+## Recorded overlaps, with precedence
 
 Overlap is resolved by precedence, never by carrying the same law twice and hoping the copies agree.
 

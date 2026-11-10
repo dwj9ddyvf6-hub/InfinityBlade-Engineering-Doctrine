@@ -17,19 +17,19 @@ The audit began at revision `7ac8d4f4411a08beebe9d20138d5960a0c1b36ba`, containi
 | Memory's “never delete” rule conflicted with authorized privacy erasure. | Ordinary supersession preserves history; erasure removes sensitive content across controlled derived copies and retains a non-sensitive receipt. |
 | Preparation, queue state and imported claims could be mistaken for completed effects. | Runtime contracts distinguish ready, sent, unknown, pending and failed states; receipts and reconciliation determine the stronger claim. |
 
-The [changelog](../CHANGELOG.md) records additional corrections, including concurrent-write preservation, HTTP retry classification, credential handling and historical provenance.
+The [changelog](../../../CHANGELOG.md) records additional corrections, including concurrent-write preservation, HTTP retry classification, credential handling and historical provenance.
 
 ## New usable capabilities
 
-- [Operating paths](OPERATING-PATHS.md) turn the core into four worked execution routes, a portable host contract and a five-level evidence model.
-- The [task-record template](TASK-RECORD.template.json) preserves acceptance rows, authority, alternatives, evidence and unfinished obligations across delegation and compaction.
-- The [skill registry](../skills/registry.json), [router](../tools/skill_router.py) and [validator](../tools/validate_repo.py) make source discovery and structural consistency inspectable. Lexical matching is a navigation aid, not semantic confidence or permission.
-- The [source exporter](../tools/build_bundle.py) and [runtime declarations](../skills/runtime-dependencies.json) distinguish a complete source distribution from an operational host installation.
-- The [systems operator guide](../skills/agent-enhancement-systems/references/operator-guide.md) ties memory, authority, outbound transport and durable queues to actual entry points and the evidence needed at their boundaries.
+- [Operating paths](../../OPERATING-PATHS.md) turn the core into four worked execution routes, a portable host contract and a five-level evidence model.
+- The [task-record template](../../TASK-RECORD.template.json) preserves acceptance rows, authority, alternatives, evidence and unfinished obligations across delegation and compaction.
+- The [skill registry](../../../skills/registry.json), [router](../../../tools/skill_router.py) and [validator](../../../tools/validate_repo.py) make source discovery and structural consistency inspectable. Lexical matching is a navigation aid, not semantic confidence or permission.
+- The [source exporter](../../../tools/build_bundle.py) and [runtime declarations](../../../skills/runtime-dependencies.json) distinguish a complete source distribution from an operational host installation.
+- The [systems operator guide](../../../skills/agent-enhancement-systems/references/operator-guide.md) ties memory, authority, outbound transport and durable queues to actual entry points and the evidence needed at their boundaries.
 
 ## Evidence and limits
 
-The new [research report](research/2026-11-07-agent-repository-design.md) and [source ledger](research/2026-11-07-sources.json) record fifteen source groups and code inspected at exact commits in five external repositories. They support design choices; they do not prove universal improvement from reading this repository. The [behavioral evaluation protocol](BEHAVIOR-EVALUATION.md) supplies the missing experimental bridge through paired trials, independent outcome criteria and untouched final cases.
+The new [research report](research/2026-11-07-agent-repository-design.md) and [source ledger](research/2026-11-07-sources.json) record fifteen source groups and code inspected at exact commits in five external repositories. They support design choices; they do not prove universal improvement from reading this repository. The [behavioral evaluation protocol](../../BEHAVIOR-EVALUATION.md) supplies the missing experimental bridge through paired trials, independent outcome criteria and untouched final cases.
 
 An independent review also caught incomplete runtime-dependency validation and dependency details missing from router output. The revised validator rejects malformed records, unknown required skills and redirected or non-regular metadata; the router exposes the actual prerequisite declarations. At the documentation checkpoint, the structural validator reported 23 skills, 46 Markdown files, 159 valid local targets and 40 Python files parsed without execution, with no errors. The bounded seven-section prompt contract passed, and all twelve isolated repository-tool regressions passed via `python3 -m unittest discover -s tools/tests -p test_repository_tools.py -v`. These are checkpoint observations, not a substitute for the final release gate.
 

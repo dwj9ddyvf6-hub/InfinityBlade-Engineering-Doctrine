@@ -159,3 +159,7 @@ outside the checked artifact root so the receipt does not alter the inventory
 it is measuring. Hashes bind bytes; they do not authenticate a producer. For
 signed build provenance or live service effects, use the stronger verification
 appropriate to that boundary.
+
+## Dated records
+
+The dated evaluation records live in the archive, contents unchanged: the [paired behavioral evaluation record](../archive/2026-11-07/evaluation/PAIRED-EVAL-2026-11-07.md) with its three score files (`paired-eval-2026-11-07-baseline.json`, `paired-eval-2026-11-07-candidate.json`, `paired-eval-2026-11-07-coldread.json`) and the [cold-reader probe](../archive/2026-11-07/evaluation/COLD-READER-PROBE-2026-11-07.md).

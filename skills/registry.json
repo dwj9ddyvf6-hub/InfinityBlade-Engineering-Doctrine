@@ -348,7 +348,7 @@
       "description": "Use whenever an agent's memory, recall, context discipline, or long-job resource bounds are being designed, repaired, or audited: hybrid search over the markdown estate under a forced search rule, a canary eval on the agent's own history, masking over summarising, delta-only summaries, invalidate-never-delete, decay-ranked forgetting with write-gating, and checkpointed, memory-bounded long jobs, each grounded in the measured evidence of the 2026-11-06 research report shipped in this folder.",
       "version": "1.0.2",
       "entrypoint": "skills/memory-recall-systems/SKILL.md",
-      "source_sha256": "ca5bb12e6105343c38c52b4ac96a619b5d26850c9571594460f16257495f156c",
+      "source_sha256": "6b171dccb260df097bd91726a38e24095198ca9cfbc14d23fc3c2fc33cd47286",
       "kind": "local-retrieval-mechanism",
       "evidence_boundary": "Local index/search/evaluation over explicitly supplied documents; not access to a host's internal memory.",
       "related_skills": [],

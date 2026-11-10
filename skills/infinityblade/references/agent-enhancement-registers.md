@@ -197,3 +197,85 @@ Each row carries its reason.
 | Superseded: a recovered-notes archive treated as a knowledge source | Replaced by verified skills: unverified recovered notes are an archive to compare against, never a source to act from. |
 | Superseded: retired standalone skills as the carriers of their techniques | Replaced by the consolidated skills in this repository's library, each complete and installable as-is. |
 | Superseded: reporting a failed route as an absent thing, as a live failure pattern | Replaced by its own codification: route failure is never impossibility, and absence is proven separately with a coverage ledger, in the core skill and in the absence-proof skill in this library. The pattern survives only as the founding example of the cure. |
+
+## Ship-status history (moved from agent-enhancement.md, 2026-11-10)
+
+Recorded, not current. The dated ship-status stamps that [agent-enhancement.md](agent-enhancement.md) carried are preserved here verbatim: the governing update first, then the per-discipline stamps in discipline order. The governing ship-status record is the matrix in agent-enhancement.md; nothing in this section overrides it, and the stamps' own text defers to that matrix.
+
+### Governing update, as carried in agent-enhancement.md
+
+**Ship status (governing update, 3.2.0).** Distinguish three things: a written procedure, a runnable local implementation, and an integrated host capability. This repository ships procedures and local code, and specifies host integration contracts; no local file establishes that an adopter’s host is wired or live. The previous 3.1.1 summary called fifteen disciplines specification-only and called procedure-only folders “mechanism-shipped”; that inventory is superseded by the exact matrix below. The full specifications, historical source limits and stronger host contracts remain intact. A local implementation covers only the named tested contract, not every design requirement described in its discipline.
+
+### Per-discipline stamps, as carried in agent-enhancement.md
+
+**1. Price every proactive lane**
+
+**Ship status (3.2.0):** bin/proactive.py and the top-level priced-initiative scorer. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
+
+**2. Keep instincts: a confidence-scored procedural memory**
+
+**Ship status (3.2.0):** bin/instincts.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
+
+**3. Audit the gates for false greens**
+
+**Ship status (3.2.0):** written gate-audit/isolation procedures and the `skill_lab.f7_check` helper. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
+
+**4. Run memory as a profile plus a graph**
+
+**Ship status (3.2.0):** bin/memory_core.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
+
+**5. Make recall honest and maintenance governed**
+
+**Ship status (3.2.0):** bin/memory_core.py plus the memory-recall search/canary tool. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
+
+**6. Test skills the way blockers test code**
+
+**Ship status (3.2.0):** bin/skill_lab.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
+
+**7. Gate what enters the library, and grade reliability**
+
+**Ship status (3.2.0):** bin/skill_lab.py and bin/reliability.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
+
+**8. Mechanise the completion claim**
+
+**Ship status (3.2.0):** written proof/claim procedures, tools/status_evidence_check.py and hooks/require-status.sh. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
+
+**9. Treat compaction and delegation as authority boundaries**
+
+**Ship status (3.2.0):** bin/authority.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
+
+**10. Run a bounded hidden-rubric pass on ungated prose**
+
+**Ship status (3.2.0):** the bounded prose-review procedure; no automatic quality scorer. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
+
+**11. Record the why, not just the what**
+
+**Ship status (3.2.0):** bin/why.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
+
+**12. Keep every fact timeless, dated, or a pointer**
+
+**Ship status (3.2.0):** bin/freshness.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
+
+**13. Gate outbound messages by purpose, receipt, and hard cap**
+
+**Ship status (3.2.0):** bin/operations.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
+
+**14. Give every event, decision, and delivery a deterministic ID**
+
+**Ship status (3.2.0):** bin/operations.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
+
+**15. Queue side effects durably, and never confuse waiting with failure**
+
+**Ship status (3.2.0):** bin/operations.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
+
+**16. Route follow-ups to their owner, and reserve slots by discipline**
+
+**Ship status (3.2.0):** bin/operations.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
+
+**17. Keep a near-miss ledger**
+
+**Ship status (3.2.0):** bin/operations.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
+
+**18. Approvals are content-bound, expiring, and generation-scoped**
+
+**Ship status (3.2.0):** bin/operations.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.

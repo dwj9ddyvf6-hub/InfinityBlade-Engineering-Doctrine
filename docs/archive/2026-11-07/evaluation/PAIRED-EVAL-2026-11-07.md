@@ -1,6 +1,6 @@
 # Paired behavioral evaluation, 2026-11-07: first measured run
 
-This record closes the gap this repository has carried since 3.2: the doctrine's behavior claim was specified but never measured. It follows the [paired behavioral protocol](../BEHAVIOR-EVALUATION.md) and the scoring sheet in [eval-cases.md](../../skills/infinityblade/references/eval-cases.md). It is a bounded first measurement, not a universal uplift claim, and its limits are stated in the open.
+This record closes the gap this repository has carried since 3.2: the doctrine's behavior claim was specified but never measured. It follows the [paired behavioral protocol](../../../BEHAVIOR-EVALUATION.md) and the scoring sheet in [eval-cases.md](../../../../skills/infinityblade/references/eval-cases.md). It is a bounded first measurement, not a universal uplift claim, and its limits are stated in the open.
 
 ## Configuration
 

@@ -2,7 +2,7 @@
 
 The second audit began at `76bdad529f08be6f1351b5c28c4573835c35e15e`. Its purpose is to make the doctrine more effective at changing how an agent thinks and works: understand the full material, connect its methods, choose better actions, persist through failure and prove the requested result.
 
-The [ascent path](ASCENT-PATH.md) now composes the existing disciplines into one capability loop with seven practical abilities and fresh transfer challenges. The [reading protocol](READING-PROTOCOL.md) makes the complete repository an explicit, resumable obligation. Neither addition replaces the core pillars, specialist depth or historical record.
+The [ascent path](../../ASCENT-PATH.md) now composes the existing disciplines into one capability loop with seven practical abilities and fresh transfer challenges. The [reading protocol](../../READING-PROTOCOL.md) makes the complete repository an explicit, resumable obligation. Neither addition replaces the core pillars, specialist depth or historical record.
 
 ## What the deeper inspection found
 
@@ -23,7 +23,7 @@ The [ascent path](ASCENT-PATH.md) now composes the existing disciplines into one
 | Historical memory benchmark results were sometimes phrased as the present reader's measured failure rate. | Preserve every numerical observation while attaching its evaluated task/harness and requiring local canaries for local claims. | Current and historical evidence remain distinct; the argument still demands measured recall, validity and durable recovery. |
 | A STATUS-only skip form could be read as permission to suppress a conversational answer. | Identify the legacy parser limit and require the host's explicit skipped-category adapter instead of replacing the answer. | Core activation remains separate from host integration; a marker is not the user's requested answer. |
 
-The [artifact evaluator](evaluation/README.md) adds a practical bridge from declared acceptance conditions to actual local outputs. It checks exact JSON values, protected hashes, absent paths and inventory; binds task-record rows to their subjects and boundaries; and compares predeclared pairs without hiding missing trials or regressions. Its complete-save/partial-save example is synthetic instrument evidence, not a model trial.
+The [artifact evaluator](../../evaluation/README.md) adds a practical bridge from declared acceptance conditions to actual local outputs. It checks exact JSON values, protected hashes, absent paths and inventory; binds task-record rows to their subjects and boundaries; and compares predeclared pairs without hiding missing trials or regressions. Its complete-save/partial-save example is synthetic instrument evidence, not a model trial.
 
 The systems operator guide and runtime-specific documentation carry the corresponding implementation contracts: serialized memory operations, recoverable erasure, temporal recall, generation-bound effect reconciliation, receiver acknowledgement and client data completeness. Their code and tests remain separate evidence from this prose audit. Read the implementation and its final test receipt before claiming the mechanism worked on a particular host.
 
@@ -47,6 +47,6 @@ The [fresh-reader probe](evaluation/COLD-READER-PROBE-2026-11-07.md) separately 
 
 ## Use the result
 
-Start at the [primer](../PRIMER.md), complete the [reading protocol](READING-PROTOCOL.md), and work through the [ascent path](ASCENT-PATH.md). Run the [artifact example](evaluation/README.md), inspect the failure as carefully as the pass, and apply the resulting method on a fresh authorized task. Keep the four claims distinct: source read, method understood through application, mechanism tested, and agent improvement measured on a declared comparison.
+Start at the [primer](../../../PRIMER.md), complete the [reading protocol](../../READING-PROTOCOL.md), and work through the [ascent path](../../ASCENT-PATH.md). Run the [artifact example](../../evaluation/README.md), inspect the failure as carefully as the pass, and apply the resulting method on a fresh authorized task. Keep the four claims distinct: source read, method understood through application, mechanism tested, and agent improvement measured on a declared comparison.
 
 Release validation belongs to the exact delivered tree. Structural checks, local regressions, crash/concurrency cases and exported-bundle readback establish their named contracts. A universal model gain, external delivery or live account result requires its own evidence. The doctrine stays demanding because each claim must survive the boundary it names.

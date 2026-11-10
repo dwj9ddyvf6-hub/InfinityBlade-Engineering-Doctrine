@@ -2,7 +2,7 @@
 
 Research date: 2026-11-07 UTC. This second-pass study adds five primary web
 sources and four pinned source-file inspections across three external
-repositories to the earlier [repository-design research](../research/2026-11-07-agent-repository-design.md).
+repositories to the earlier [repository-design research](../archive/2026-11-07/research/2026-11-07-agent-repository-design.md).
 The exact inspected portions, source revisions and byte hashes are in
 [SOURCES.json](SOURCES.json). No external framework was installed, no external
 code was copied into the implementation, and no model trial was run.

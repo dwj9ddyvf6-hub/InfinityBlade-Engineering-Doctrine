@@ -105,11 +105,11 @@ Compare the prior and candidate versions on matched tasks with controlled budget
 
 ## Adoption and proof obligations
 
-The [status evidence checker](../../tools/status_evidence_check.py) is a concrete
+The [status evidence checker](../../../../tools/status_evidence_check.py) is a concrete
 implementation surface for the syntax-versus-truth distinction: its contract
 explicitly limits it to the final verdict and evidence-pointer presence. Review
-it together with the [core skill](../../skills/infinityblade/SKILL.md) and
-[installation guide](../../INSTALL.md). A passing wording check remains a
+it together with the [core skill](../../../../skills/infinityblade/SKILL.md) and
+[installation guide](../../../../INSTALL.md). A passing wording check remains a
 structural result; task-specific evidence must establish the outcome itself.
 
 1. Preserve the current principles and detailed reference material.

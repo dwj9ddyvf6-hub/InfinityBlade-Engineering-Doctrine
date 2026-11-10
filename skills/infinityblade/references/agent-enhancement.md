@@ -33,11 +33,11 @@ the Backlog. Round-4 provenance is stated per discipline.
 
 ## How to read this file
 
-Read the eighteen disciplines in order. Each opens with what it buys you in two lines, then its ship status, then its rule. The pass-by-pass provenance that used to precede them is recorded in the changelog and the companion registers file; a cold reader should meet the first discipline within a page, not after the archaeology.
+Read the eighteen disciplines in order. Each opens with what it buys you in two lines, then its rule; ship status for all eighteen is stated once, in the matrix below. The pass-by-pass provenance that used to precede them is recorded in the changelog and the companion registers file; a cold reader should meet the first discipline within a page, not after the archaeology.
 
 ## The eighteen disciplines
 
-**Ship status (governing update, 3.2.0).** Distinguish three things: a written procedure, a runnable local implementation, and an integrated host capability. This repository ships procedures and local code, and specifies host integration contracts; no local file establishes that an adopter’s host is wired or live. The previous 3.1.1 summary called fifteen disciplines specification-only and called procedure-only folders “mechanism-shipped”; that inventory is superseded by the exact matrix below. The full specifications, historical source limits and stronger host contracts remain intact. A local implementation covers only the named tested contract, not every design requirement described in its discipline.
+**Ship status.** The matrix below is the governing ship-status record for all eighteen disciplines: it names each discipline's shipped artifact and the boundary still requiring proof. Distinguish three things: a written procedure, a runnable local implementation, and an integrated host capability. This repository ships procedures and local code, and specifies host integration contracts; no local file establishes that an adopter’s host is wired or live. A local implementation covers only the named tested contract, not every design requirement described in its discipline. The dated ship-status stamps this file previously carried after each discipline, and the superseded inventory narrative of the governing update they deferred to, are preserved verbatim in the companion file [agent-enhancement-registers.md](agent-enhancement-registers.md), under Ship-status history.
 
 | Discipline | Shipped artifact | Boundary still requiring proof |
 |---|---|---|
@@ -65,8 +65,6 @@ Read the eighteen disciplines in order. Each opens with what it buys you in two 
 ### 1. Price every proactive lane
 
 *What this buys you:* Unasked work that earns its interruption, and silence everywhere else. A lane that cannot pay its price never speaks.
-
-**Ship status (3.2.0):** bin/proactive.py and the top-level priced-initiative scorer. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 **Rule:** nothing interrupts for free, and the price is proven before the
 lane speaks. Every scheduled job, hook, or monitor that can surface unasked
@@ -169,8 +167,6 @@ and the gate needs a local holdout before any lane relies on it.*
 
 *What this buys you:* Corrections and repeated workflows compound instead of evaporating at session end. The agent gets better at your work, measurably.
 
-**Ship status (3.2.0):** bin/instincts.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
-
 **Rule:** corrections, error resolutions, and repeated workflows are raw
 material, not noise. Distil them into atomic trigger-to-action units
 ("instincts"), each with a domain tag, evidence links, and a confidence
@@ -235,8 +231,6 @@ must not drift toward the automatic form.*
 ### 3. Audit the gates for false greens
 
 *What this buys you:* Gates that cannot certify what they never judged. False green becomes a defect class with a name, a test, and a graveyard.
-
-**Ship status (3.2.0):** written gate-audit/isolation procedures and the `skill_lab.f7_check` helper. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 **Rule:** a passing test is a claim, and claims need independent expected
 values. Periodically audit gate-wired tests with a six-judgement protocol:
@@ -319,8 +313,6 @@ unacceptable.*
 ### 4. Run memory as a profile plus a graph
 
 *What this buys you:* Memory that distinguishes what is always true of a person from what was true once, and can prove which is which.
-
-**Ship status (3.2.0):** bin/memory_core.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 **Rule:** split memory into a small static profile and a dynamic recent
 layer, type every relationship between facts, and govern how facts enter,
@@ -429,8 +421,6 @@ reduces to a single published Recall@15 figure.*
 
 *What this buys you:* Recall that reports its own tier, supported, closest only, or not present, so memory never launders a guess into a fact.
 
-**Ship status (3.2.0):** bin/memory_core.py plus the memory-recall search/canary tool. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
-
 **Rule:** a memory lookup reports what it actually found, and a deletion
 is not done until every derived copy is clean.
 
@@ -524,8 +514,6 @@ recall accuracy, so a recall-only eval overstates profile quality.*
 ### 6. Test skills the way blockers test code
 
 *What this buys you:* Skills pressure-tested against the rationalizations that will actually be used to skip them, before they ship.
-
-**Ship status (3.2.0):** bin/skill_lab.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 **Rule:** a playbook that has never been pressure-tested is a draft, and
 its guidance must be written in the form its failures take.
@@ -650,8 +638,6 @@ qualification is the narrowed description rule above.*
 ### 7. Gate what enters the library, and grade reliability
 
 *What this buys you:* A library where nothing enters ungraded and nothing unreliable keeps a trusted name.
-
-**Ship status (3.2.0):** bin/skill_lab.py and bin/reliability.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 **Rule:** third-party skills, plugins, and connectors are untrusted input
 until scanned, and a revised playbook ships only after it passes its eval
@@ -806,8 +792,6 @@ measured-versus-replayed provenance.*
 
 *What this buys you:* Completion claims checked by mechanism, not by the claimant's confidence. The cheapest trust machine in the set.
 
-**Ship status (3.2.0):** written proof/claim procedures, tools/status_evidence_check.py and hooks/require-status.sh. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
-
 **Rule:** convert proof-before-GREEN from a habit into a mechanism that
 fires when the habit slips.
 
@@ -959,8 +943,6 @@ capture does not.*
 
 *What this buys you:* Delegation and compaction that carry context without smuggling authority across the boundary.
 
-**Ship status (3.2.0):** bin/authority.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
-
 **Rule:** summaries carry context, never authority.
 
 1. Capability is minted per turn and expires with it. Internal handles are
@@ -1025,8 +1007,6 @@ bounds blockers in point 5, rather than trust in the pattern.*
 
 *What this buys you:* A bounded quality pass over the prose no gate covers, so ungated does not mean unexamined.
 
-**Ship status (3.2.0):** the bounded prose-review procedure; no automatic quality scorer. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
-
 **Rule:** deliverables no gate covers (reads, syntheses, recommendations,
 reports) get one internal quality pass before they ship.
 
@@ -1064,8 +1044,6 @@ untested by the pass, not upgraded to a confirmation.*
 ### 11. Record the why, not just the what
 
 *What this buys you:* Decisions that arrive with the alternatives they beat, so the next agent does not re-litigate settled ground at full price.
-
-**Ship status (3.2.0):** bin/why.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 **Rule:** every decision that closes a path is stored with the path it
 closed. A rationale entry records the decision, the rejected alternatives
@@ -1128,8 +1106,6 @@ context limits is adjacent practice, a weak confirmation only.*
 
 *What this buys you:* Facts that carry their own expiry, so stale knowledge announces itself instead of posing as current.
 
-**Ship status (3.2.0):** bin/freshness.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
-
 **Rule:** every stored fact must be timeless, dated, or a pointer.
 Nothing may claim to be current without a stamp.
 
@@ -1177,8 +1153,6 @@ lightly evidenced.*
 
 *What this buys you:* Outbound messages that exist for a stated purpose, leave a permanent receipt, and stop at a hard cap code enforces.
 
-**Ship status (3.2.0):** bin/operations.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
-
 **Rule:** a message an agent sends unasked or on a principal's behalf
 leaves only through a send path that checks its purpose, records a
 permanent receipt, and enforces its length cap in code.
@@ -1209,8 +1183,6 @@ routing-note cap at `src/app/tools/main.ts:18`).
 
 *What this buys you:* Events and deliveries that deduplicate by construction, not by vigilance.
 
-**Ship status (3.2.0):** bin/operations.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
-
 **Rule:** identity is derived from content, not assigned by arrival
 order, and deduplication is layered so the same thing cannot enter
 twice under two names.
@@ -1236,8 +1208,6 @@ deepseek-ai/dsh-superagent-prototype at commit 6337fc8, `src/core/ids.ts:4` (det
 ### 15. Queue side effects durably, and never confuse waiting with failure
 
 *What this buys you:* Side effects that survive a crash in a named waiting state, never silently lost and never double-fired.
-
-**Ship status (3.2.0):** bin/operations.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 **Rule:** an intended side effect is a durable queue row before it is an
 action, retried under a stated policy, and deleted only by the attempt
@@ -1289,8 +1259,6 @@ Later distinct from failure).
 
 *What this buys you:* Follow-ups that reach their owner, with a human slot always reserved, instead of pooling where they age unseen.
 
-**Ship status (3.2.0):** bin/operations.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
-
 **Rule:** work that already has a live owner is routed straight to that
 owner without re-triage, and concurrency is a reserved-slot discipline
 that a human follow-up can always break into by exactly one.
@@ -1339,8 +1307,6 @@ and stays an open row until the record is recovered.
 
 *What this buys you:* Gate rejections that teach, in a bounded ledger that can never be cited as proof a class is impossible.
 
-**Ship status (3.2.0):** bin/operations.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
-
 Proposals that matched a gate but were not admitted are recorded in a
 bounded, diagnostics-only ledger: at most 4,096 laws, 512 reported, 4
 samples per law, 400 characters per text; the reason is classified into
@@ -1354,8 +1320,6 @@ the false-green audit (discipline 3) and the memory junk audit
 ### 18. Approvals are content-bound, expiring, and generation-scoped
 
 *What this buys you:* Approvals bound to the exact bytes and target approved, so consent cannot drift onto content nobody saw.
-
-**Ship status (3.2.0):** bin/operations.py. The matrix above governs the artifact and its limits; any required host integration remains UNVERIFIED until demonstrated.
 
 An approval or authorisation binds a stated action once to its resolved
 target identity fields and to the hash of the content it was granted
