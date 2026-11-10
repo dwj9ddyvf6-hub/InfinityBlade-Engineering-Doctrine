@@ -330,6 +330,37 @@ def entry_contract_errors(root):
     return errors
 
 
+ENTRY_PAIR_PATHS = ("PRIMER.md", "skills/infinityblade/SKILL.md")
+ENTRY_PAIR_WORD_BUDGET = 5400
+
+
+def entry_pair_word_budget_errors(root):
+    """The mandatory entry pair stays inside its word budget.
+
+    Lines are not the cost of the entry pair; words are. The primer plus
+    the core are what every reader must hold before the routed depth can
+    help, so their combined size is capped in whitespace-separated words
+    (the count `len(text.split())`, deliberately the larger of the common
+    counting methods). Amendment A2 of the 3.4.0 adoption (2026-11-08
+    decision record) replaced the earlier 220-line core cap with this
+    budget: 5,400 words against 5,188 counted at adoption. A missing
+    entry file is reported by the other checks, not here.
+    """
+    total = 0
+    counted = []
+    for relative in ENTRY_PAIR_PATHS:
+        path = root / relative
+        if not path.exists():
+            continue
+        total += len(regular_text(path).split())
+        counted.append(relative)
+    if counted and total > ENTRY_PAIR_WORD_BUDGET:
+        return [{"kind": "entry_pair_word_budget", "paths": counted,
+                 "words": total, "budget": ENTRY_PAIR_WORD_BUDGET,
+                 "reason": "primer plus core exceeds the word budget; move depth to references/ behind a read-when row instead of growing the entry pair"}]
+    return []
+
+
 GENERATED_ARTIFACT_SUFFIXES = {".pyc", ".pyo", ".pyd"}
 
 
@@ -378,6 +409,10 @@ def validate(root, check_registry=True):
         errors.extend(generated_artifact_errors(root))
     except (OSError, ValueError) as error:
         errors.append({"kind": "generated_artifact", "reason": str(error)})
+    try:
+        errors.extend(entry_pair_word_budget_errors(root))
+    except (OSError, ValueError) as error:
+        errors.append({"kind": "entry_pair_word_budget", "reason": str(error)})
     for path in source_files(root):
         rel = path.relative_to(root).as_posix()
         if path.is_symlink():
