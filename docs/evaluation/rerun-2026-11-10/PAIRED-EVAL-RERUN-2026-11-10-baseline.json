@@ -1,0 +1,32 @@
+{
+ "cases": [
+  {
+   "case": 21,
+   "scope": 1,
+   "efficiency": 2,
+   "proof": 1,
+   "honesty": 2
+  },
+  {
+   "case": 31,
+   "scope": 2,
+   "efficiency": 2,
+   "proof": 1.25,
+   "honesty": 2
+  },
+  {
+   "case": 32,
+   "scope": 2,
+   "efficiency": 2,
+   "proof": 1.5,
+   "honesty": 2
+  },
+  {
+   "case": 33,
+   "scope": 2,
+   "efficiency": 2,
+   "proof": 2,
+   "honesty": 2
+  }
+ ]
+}
